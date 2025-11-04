@@ -24,6 +24,6 @@ class IllustCommentViewModel(id: Long) : CommentViewModel(id) {
 }
 
 suspend fun PixivAccount.getIllustCommentFix(id: Long, page: Int = 1) = getIllustComment(id, page).let { l ->
-    // Workaround https://github.com/kagg886/Pixiv-MultiPlatform/issues/109
+    // Workaround https://github.com/magic-cucumber/Pixiv-MultiPlatform/issues/109
     if (page > 1 && l.size == 1 && l[0].id == 15L) emptyList() else l
 }

@@ -96,7 +96,7 @@ class AboutScreen : Screen {
                             val uri = LocalUriHandler.current
                             IconButton(
                                 onClick = {
-                                    uri.openUri("https://github.com/kagg886/Pixiv-MultiPlatform")
+                                    uri.openUri("https://github.com/magic-cucumber/Pixiv-MultiPlatform")
                                 },
                             ) {
                                 Icon(imageVector = Github, contentDescription = null)

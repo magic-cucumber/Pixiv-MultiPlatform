@@ -81,7 +81,7 @@ class UpdateCheckViewModel(
             return@intent
         }
         val result = kotlin.runCatching {
-            net.get("https://api.github.com/repos/kagg886/Pixiv-MultiPlatform/releases/latest").body<Release>()
+            net.get("https://api.github.com/repos/magic-cucumber/Pixiv-MultiPlatform/releases/latest").body<Release>()
         }
         if (result.isFailure) {
             result.exceptionOrNull()?.let {

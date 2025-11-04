@@ -18,18 +18,18 @@
         <tbody align="center">
             <tr>
                 <td>
-                    <img src="https://img.shields.io/github/license/kagg886/Pixiv-MultiPlatform" alt="" srcset="">
+                    <img src="https://img.shields.io/github/license/magic-cucumber/Pixiv-MultiPlatform" alt="" srcset="">
                 </td>
                 <td>
-                    <img src="https://img.shields.io/github/downloads/kagg886/Pixiv-MultiPlatform/total" alt=""
+                    <img src="https://img.shields.io/github/downloads/magic-cucumber/Pixiv-MultiPlatform/total" alt=""
                         srcset="">
                 </td>
                 <td>
-                    <img src="https://img.shields.io/github/issues/kagg886/Pixiv-MultiPlatform" alt="" srcset="">
-                    <img src="https://img.shields.io/github/issues-closed/kagg886/Pixiv-MultiPlatform" alt="">
+                    <img src="https://img.shields.io/github/issues/magic-cucumber/Pixiv-MultiPlatform" alt="" srcset="">
+                    <img src="https://img.shields.io/github/issues-closed/magic-cucumber/Pixiv-MultiPlatform" alt="">
                 </td>
                 <th>
-                    <img src="https://img.shields.io/github/last-commit/kagg886/Pixiv-MultiPlatform" alt="" srcset="">
+                    <img src="https://img.shields.io/github/last-commit/magic-cucumber/Pixiv-MultiPlatform" alt="" srcset="">
                 </th>
             </tr>
         </tbody>
@@ -42,7 +42,7 @@
 
 ## 1. Download Links
 
-**Click here to download -->** [![release](https://img.shields.io/github/v/release/kagg886/Pixiv-MultiPlatform)](https://github.com/kagg886/Pixiv-MultiPlatform/releases/latest) [![F-Droid](https://img.shields.io/f-droid/v/top.kagg886.pmf.svg?logo=F-Droid)](https://f-droid.org/packages/top.kagg886.pmf/) 
+**Click here to download -->** [![release](https://img.shields.io/github/v/release/magic-cucumber/Pixiv-MultiPlatform)](https://github.com/magic-cucumber/Pixiv-MultiPlatform/releases/latest) [![F-Droid](https://img.shields.io/f-droid/v/top.kagg886.pmf.svg?logo=F-Droid)](https://f-droid.org/packages/top.kagg886.pmf/) 
 
 ## 2. Features Screenshots (Wide and narrow screen colors differ due to different themes)
 

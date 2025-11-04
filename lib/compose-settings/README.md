@@ -1,7 +1,7 @@
 > [!CAUTION]
 > 本项目 fork 自 [https://github.com/alorma/Compose-Settings](https://github.com/alorma/Compose-Settings)
 > 
-> 为了解决：[#122](https://github.com/kagg886/Pixiv-MultiPlatform/issues/122)
+> 为了解决：[#122](https://github.com/magic-cucumber/Pixiv-MultiPlatform/issues/122)
 > 
 > 待新版本发布，测试通过即删掉该库。
 

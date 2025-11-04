@@ -1987,12 +1987,12 @@
       "artifactVersion": "1.8",
       "description": "An api accesser for pixiv writed by kotlin",
       "scm": {
-        "connection": "scm:git:git://github.com/kagg886/Pixko.git",
-        "url": "https://github.com/kagg886/Pixko/",
-        "developerConnection": "scm:git:ssh://git@github.com/kagg886/Pixko.git"
+        "connection": "scm:git:git://github.com/magic-cucumber/Pixko.git",
+        "url": "https://github.com/magic-cucumber/Pixko/",
+        "developerConnection": "scm:git:ssh://git@github.com/magic-cucumber/Pixko.git"
       },
       "name": "Pixko",
-      "website": "https://github.com/kagg886/Pixko/",
+      "website": "https://github.com/magic-cucumber/Pixko/",
       "licenses": [
         "Apache-2.0"
       ]

@@ -241,7 +241,7 @@ class WelcomeScreen : Screen {
                 append(stringResource(Res.string.welcome_text, BuildConfig.APP_NAME))
                 withLink(
                     colors = colors,
-                    link = "https://github.com/kagg886/pixko",
+                    link = "https://github.com/magic-cucumber/pixko",
                     display = " Pixko ",
                 )
                 append(stringResource(Res.string.welcome_text_after_pixko))

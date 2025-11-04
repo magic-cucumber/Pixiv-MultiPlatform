@@ -118,7 +118,7 @@ fun CrashApp(
 
 //                                },
 //                            )
-                            handler.openUri("https://github.com/kagg886/Pixiv-MultiPlatform/issues/new/choose")
+                            handler.openUri("https://github.com/magic-cucumber/Pixiv-MultiPlatform/issues/new/choose")
                         }) {
                             Icon(imageVector = Github, contentDescription = null)
                         }
