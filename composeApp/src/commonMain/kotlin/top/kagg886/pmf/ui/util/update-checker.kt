@@ -109,7 +109,7 @@ class UpdateCheckViewModel(
         }
         val data = result.getOrThrow()
 
-        if ("v${BuildConfig.APP_VERSION_NAME}" == data.tagName) {
+        if ("v${BuildConfig.APP_VERSION_NAME}" != data.tagName) {
             reduce {
                 UpdateCheckState.HaveUpdate(data)
             }
