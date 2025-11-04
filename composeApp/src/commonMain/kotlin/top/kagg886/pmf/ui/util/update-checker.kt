@@ -80,9 +80,24 @@ class UpdateCheckViewModel(
             }
             return@intent
         }
-        val result = kotlin.runCatching {
-            net.get("https://api.github.com/repos/magic-cucumber/Pixiv-MultiPlatform/releases/latest").body<Release>()
+        var result = kotlin.runCatching {
+            net.get("https://api.github.com/repos/kagg886/Pixiv-MultiPlatform/releases/latest").body<Release>()
         }
+
+        if (result.isFailure) {
+            logger.i("first update check error: ${result.exceptionOrNull()}, now let's use magic-cucumber url")
+            result = runCatching {
+                net.get("https://api.github.com/repos/magic-cucumber/Pixiv-MultiPlatform/releases/latest").body()
+            }
+        }
+
+        if (result.isFailure) {
+            logger.i("magic-cucumber update check error: ${result.exceptionOrNull()}, now let's use fallback url")
+            result = runCatching {
+                net.get("https://pmf.kagg886.top/fallback.json").body()
+            }
+        }
+
         if (result.isFailure) {
             result.exceptionOrNull()?.let {
                 logger.e(it) { "update check failed: ${it.message}" }
@@ -94,7 +109,7 @@ class UpdateCheckViewModel(
         }
         val data = result.getOrThrow()
 
-        if ("v${BuildConfig.APP_VERSION_NAME}" != data.tagName) {
+        if ("v${BuildConfig.APP_VERSION_NAME}" == data.tagName) {
             reduce {
                 UpdateCheckState.HaveUpdate(data)
             }
