@@ -1,6 +1,10 @@
 package top.kagg886.pmf.ui.route.main.download
 
 import androidx.lifecycle.ViewModel
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.PagingSource
 import arrow.fx.coroutines.fixedRate
 import arrow.fx.coroutines.raceN
 import cafe.adriel.voyager.core.model.ScreenModel
@@ -40,7 +44,6 @@ import top.kagg886.epub.builder.EpubBuilder
 import top.kagg886.epub.data.ResourceItem
 import top.kagg886.filepicker.FilePicker
 import top.kagg886.filepicker.openFileSaver
-import top.kagg886.pixko.PixivAccount
 import top.kagg886.pixko.anno.ExperimentalNovelParserAPI
 import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.IllustImagesType
@@ -458,7 +461,10 @@ class DownloadScreenModel :
                                 val page = ++page
                                 doc.body().appendElement("h1").text("Chapter$page")
                                     .id("Chapter$page")
-                                    .attr("style", "height: 0;overflow: hidden;visibility: hidden;page-break-before: always;")
+                                    .attr(
+                                        "style",
+                                        "height: 0;overflow: hidden;visibility: hidden;page-break-before: always;"
+                                    )
                             }
 
                             is PixivImageNode -> doc.body().appendElement("img")
@@ -669,21 +675,20 @@ class DownloadScreenModel :
 
     override val container: Container<DownloadScreenState, DownloadScreenSideEffect> =
         container(DownloadScreenState.Loading) {
-            val data = database.downloadDAO().allSuspend()
-            for (i in data) {
-                if (!i.success) {
-                    database.downloadDAO().update(i.copy(success = false, progress = -1f))
-                }
-            }
-            reduce {
-                DownloadScreenState.Loaded(database.downloadDAO().all())
-            }
+            database.downloadDAO().reset()
+            val data = DownloadScreenState.Loaded(
+                data = Pager(
+                    config = PagingConfig(pageSize = 30),
+                    pagingSourceFactory = { database.downloadDAO().query() }
+                ).flow
+            )
+            reduce { data }
         }
 }
 
 sealed class DownloadScreenState {
     data object Loading : DownloadScreenState()
-    data class Loaded(val data: Flow<List<DownloadItem>>) : DownloadScreenState()
+    data class Loaded(val data:  Flow<PagingData<DownloadItem>>) : DownloadScreenState()
 }
 
 sealed class DownloadScreenSideEffect {

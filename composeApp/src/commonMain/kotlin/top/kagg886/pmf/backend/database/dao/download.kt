@@ -1,5 +1,6 @@
 package top.kagg886.pmf.backend.database.dao
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.Insert
@@ -26,10 +27,22 @@ interface DownloadDao {
     suspend fun update(item: DownloadItem)
 
     @Query("SELECT * FROM DownloadItem order by id desc")
-    fun all(): Flow<List<DownloadItem>>
+    fun query(): PagingSource<Int, DownloadItem>
 
-    @Query("SELECT * FROM DownloadItem")
-    suspend fun allSuspend(): List<DownloadItem>
+    //val data = database.downloadDAO().allSuspend()
+    //            for (i in data) {
+    //                if (!i.success) {
+    //                    database.downloadDAO().update(i.copy(success = false, progress = -1f))
+    //                }
+    //            }
+
+    @Query("""
+        UPDATE DownloadItem
+        SET progress = -1
+        WHERE success = 0
+    """)
+    suspend fun reset()
+
 }
 
 enum class DownloadItemType {
