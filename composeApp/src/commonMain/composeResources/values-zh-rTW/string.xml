@@ -370,4 +370,9 @@
     <string name="select_path">選擇</string>
     <string name="show_original_image">顯示原圖</string>
     <string name="show_original_image_hint">可能會拖慢網路速度，請謹慎開啟</string>
+
+    <string name="keyword">關鍵字</string>
+    <string name="please_input_keyword">請輸入關鍵字</string>
+    <string name="search_metadata">搜尋中繼資料</string>
+    <string name="search_type">搜尋類型</string>
 </resources>

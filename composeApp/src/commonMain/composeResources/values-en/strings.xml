@@ -373,4 +373,9 @@
     <string name="illust_details_open_for">Illustration detail page swipe action</string>
     <string name="switch_detail">Switch illustration</string>
     <string name="expand_comment">Expand comments</string>
+
+    <string name="keyword">Keyword</string>
+    <string name="please_input_keyword">Please input keyword</string>
+    <string name="search_metadata">Search metadata</string>
+    <string name="search_type">Search type</string>
 </resources>

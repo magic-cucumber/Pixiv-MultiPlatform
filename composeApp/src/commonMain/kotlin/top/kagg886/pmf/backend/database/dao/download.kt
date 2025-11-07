@@ -26,23 +26,39 @@ interface DownloadDao {
     @Update
     suspend fun update(item: DownloadItem)
 
-    @Query("SELECT * FROM DownloadItem order by id desc")
-    fun query(): PagingSource<Int, DownloadItem>
+    @Query(
+        """
+        SELECT * FROM DownloadItem
+        WHERE 
+            (:type IS NULL OR meta = :type)
+            AND (
+                LOWER(title) LIKE '%' || LOWER(:keyWord) || '%'
+                OR (:searchInData AND LOWER(data) LIKE '%' || LOWER(:keyWord) || '%')
+            )
+        ORDER BY createTime DESC
+    """,
+    )
+    fun query(
+        keyWord: String = "",
+        searchInData: Boolean = false,
+        type: DownloadItemType? = null,
+    ): PagingSource<Int, DownloadItem>
 
-    //val data = database.downloadDAO().allSuspend()
+    // val data = database.downloadDAO().allSuspend()
     //            for (i in data) {
     //                if (!i.success) {
     //                    database.downloadDAO().update(i.copy(success = false, progress = -1f))
     //                }
     //            }
 
-    @Query("""
+    @Query(
+        """
         UPDATE DownloadItem
         SET progress = -1
         WHERE success = 0
-    """)
+    """,
+    )
     suspend fun reset()
-
 }
 
 enum class DownloadItemType {

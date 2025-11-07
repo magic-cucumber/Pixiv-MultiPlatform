@@ -5,13 +5,16 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -22,15 +25,23 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -165,7 +176,7 @@ class DownloadScreen : Screen {
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.KeyboardArrowUp,
-                                                contentDescription = "back to top"
+                                                contentDescription = "back to top",
                                             )
                                         }
 
@@ -178,7 +189,7 @@ class DownloadScreen : Screen {
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Search,
-                                                contentDescription = "search"
+                                                contentDescription = "search",
                                             )
                                         }
                                     }
@@ -190,26 +201,102 @@ class DownloadScreen : Screen {
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Menu,
-                                        contentDescription = "menu"
+                                        contentDescription = "menu",
                                     )
                                 }
                             }
 
                             if (searchDialog) {
+                                var keyword by remember { mutableStateOf(state.keyword) }
+                                var selectedType by remember { mutableStateOf(state.type) }
+                                var searchInData by remember { mutableStateOf(state.searchInData) }
+
                                 AlertDialog(
                                     onDismissRequest = { searchDialog = false },
                                     title = {
+                                        Text(stringResource(Res.string.search))
+                                    },
+                                    text = {
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                                        ) {
+                                            // 搜索类型选择 - 按钮组
+                                            Text(
+                                                text = "搜索类型",
+                                                style = MaterialTheme.typography.labelLarge,
+                                            )
+                                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                                SegmentedButton(
+                                                    selected = selectedType == null,
+                                                    onClick = { selectedType = null },
+                                                    shape = SegmentedButtonDefaults.itemShape(0, 3),
+                                                    label = { Text(stringResource(Res.string.all)) },
+                                                )
+                                                SegmentedButton(
+                                                    selected = selectedType == DownloadItemType.ILLUST,
+                                                    onClick = { selectedType = DownloadItemType.ILLUST },
+                                                    shape = SegmentedButtonDefaults.itemShape(1, 3),
+                                                    label = { Text(stringResource(Res.string.illust)) },
+                                                )
+                                                SegmentedButton(
+                                                    selected = selectedType == DownloadItemType.NOVEL,
+                                                    onClick = { selectedType = DownloadItemType.NOVEL },
+                                                    shape = SegmentedButtonDefaults.itemShape(2, 3),
+                                                    label = { Text(stringResource(Res.string.novel)) },
+                                                )
+                                            }
 
+                                            // 关键词输入框
+                                            OutlinedTextField(
+                                                value = keyword,
+                                                onValueChange = { keyword = it },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                label = { Text(stringResource(Res.string.keyword)) },
+                                                placeholder = { Text(stringResource(Res.string.please_input_keyword)) },
+                                                singleLine = true,
+                                            )
+
+                                            // 搜索元数据选项
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                Checkbox(
+                                                    checked = searchInData,
+                                                    onCheckedChange = { searchInData = it },
+                                                )
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Text(stringResource(Res.string.search_metadata))
+                                            }
+                                        }
                                     },
                                     confirmButton = {
-
-                                    }
+                                        TextButton(
+                                            onClick = {
+                                                model.search(
+                                                    keyWord = keyword,
+                                                    searchInData = searchInData,
+                                                    type = selectedType,
+                                                )
+                                                searchDialog = false
+                                            },
+                                        ) {
+                                            Text(stringResource(Res.string.confirm))
+                                        }
+                                    },
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = { searchDialog = false },
+                                        ) {
+                                            Text(stringResource(Res.string.cancel))
+                                        }
+                                    },
                                 )
                             }
                         }
                     }
                 }
-
             }
         }
     }

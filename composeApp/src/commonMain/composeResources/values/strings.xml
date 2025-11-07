@@ -374,4 +374,9 @@
     <string name="illust_details_open_for">插画详情页面滑动时</string>
     <string name="switch_detail">切换插画</string>
     <string name="expand_comment">展开评论区</string>
+
+    <string name="keyword">关键词</string>
+    <string name="please_input_keyword">请输入关键词</string>
+    <string name="search_metadata">搜索元数据</string>
+    <string name="search_type">搜索类型</string>
 </resources>

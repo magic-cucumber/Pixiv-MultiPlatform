@@ -463,7 +463,7 @@ class DownloadScreenModel :
                                     .id("Chapter$page")
                                     .attr(
                                         "style",
-                                        "height: 0;overflow: hidden;visibility: hidden;page-break-before: always;"
+                                        "height: 0;overflow: hidden;visibility: hidden;page-break-before: always;",
                                     )
                             }
 
@@ -676,19 +676,35 @@ class DownloadScreenModel :
     override val container: Container<DownloadScreenState, DownloadScreenSideEffect> =
         container(DownloadScreenState.Loading) {
             database.downloadDAO().reset()
-            val data = DownloadScreenState.Loaded(
-                data = Pager(
-                    config = PagingConfig(pageSize = 30),
-                    pagingSourceFactory = { database.downloadDAO().query() }
-                ).flow
-            )
-            reduce { data }
+            search().join()
         }
+
+    fun search(
+        keyWord: String = "",
+        searchInData: Boolean = false,
+        type: DownloadItemType? = null,
+    ) = intent {
+        val data = DownloadScreenState.Loaded(
+            data = Pager(
+                config = PagingConfig(pageSize = 30),
+                pagingSourceFactory = { database.downloadDAO().query(keyWord, searchInData, type) },
+            ).flow,
+            keyword = keyWord,
+            searchInData = searchInData,
+            type = type,
+        )
+        reduce { data }
+    }
 }
 
 sealed class DownloadScreenState {
     data object Loading : DownloadScreenState()
-    data class Loaded(val data:  Flow<PagingData<DownloadItem>>) : DownloadScreenState()
+    data class Loaded(
+        val data: Flow<PagingData<DownloadItem>>,
+        val keyword: String,
+        val searchInData: Boolean,
+        val type: DownloadItemType?,
+    ) : DownloadScreenState()
 }
 
 sealed class DownloadScreenSideEffect {
