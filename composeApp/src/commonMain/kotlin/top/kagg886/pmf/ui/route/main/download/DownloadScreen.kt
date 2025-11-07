@@ -5,6 +5,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key.Companion.R
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
@@ -92,210 +94,210 @@ class DownloadScreen : Screen {
 
     @Composable
     private fun DownloadContent(model: DownloadScreenModel, state: DownloadScreenState) {
-        when (state) {
-            DownloadScreenState.Loading -> {
-                Loading()
-            }
+        Box(Modifier.fillMaxSize()) {
+            val lazyColumnState = rememberLazyListState()
+            val scope = rememberCoroutineScope()
 
-            is DownloadScreenState.Loaded -> {
-                val data = state.data.collectAsLazyPagingItems()
-                val scope = rememberCoroutineScope()
-                when {
-                    !data.loadState.isIdle && data.itemCount == 0 -> Loading()
-                    else -> {
-                        if (data.itemCount == 0 && data.loadState.isIdle) {
-                            ErrorPage(text = stringResource(Res.string.page_is_empty)) {
-                                data.retry()
-                            }
-                            return
-                        }
-                        Box(Modifier.fillMaxSize()) {
-                            val lazyColumnState = rememberLazyListState()
-                            LazyColumn(modifier = Modifier.fillMaxSize().padding(5.dp), state = lazyColumnState) {
-                                items(data.itemCount, key = { data.peek(it)!!.id }) { i ->
-                                    val item = data[i]!!
-                                    when (item.meta) {
-                                        DownloadItemType.ILLUST -> {
-                                            IllustDownloadItem(
-                                                item = item,
-                                                model = model,
-                                                modifier = Modifier.padding(5.dp),
-                                            )
-                                        }
+            run container@{
+                when (state) {
+                    is DownloadScreenState.Loading -> {
+                        Loading()
+                    }
 
-                                        DownloadItemType.NOVEL -> {
-                                            NovelDownloadItem(
-                                                item = item,
-                                                model = model,
-                                                modifier = Modifier.padding(5.dp),
-                                            )
+                    is DownloadScreenState.Loaded -> {
+                        val data = state.data.collectAsLazyPagingItems()
+                        when {
+                            !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+                            else -> {
+                                if (data.itemCount == 0 && data.loadState.isIdle) {
+                                    ErrorPage(text = stringResource(Res.string.page_is_empty)) {
+                                        data.retry()
+                                    }
+                                    return@container
+                                }
+                                LazyColumn(modifier = Modifier.fillMaxSize().padding(5.dp), state = lazyColumnState) {
+                                    items(data.itemCount, key = { data.peek(it)!!.id }) { i ->
+                                        val item = data[i]!!
+                                        when (item.meta) {
+                                            DownloadItemType.ILLUST -> {
+                                                IllustDownloadItem(
+                                                    item = item,
+                                                    model = model,
+                                                    modifier = Modifier.padding(5.dp),
+                                                )
+                                            }
+
+                                            DownloadItemType.NOVEL -> {
+                                                NovelDownloadItem(
+                                                    item = item,
+                                                    model = model,
+                                                    modifier = Modifier.padding(5.dp),
+                                                )
+                                            }
                                         }
                                     }
-                                }
 
-                                item {
-                                    if (!data.loadState.isIdle) {
-                                        Loading()
-                                    } else {
-                                        Text(
-                                            textAlign = TextAlign.Center,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            text = stringResource(Res.string.no_more_data),
-                                        )
-                                    }
-                                }
-                            }
-
-                            var searchDialog by remember {
-                                mutableStateOf(false)
-                            }
-                            var fabExpanded by remember {
-                                mutableStateOf(false)
-                            }
-
-                            Column(
-                                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-                                horizontalAlignment = Alignment.End,
-                            ) {
-                                AnimatedVisibility(
-                                    visible = fabExpanded,
-                                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
-                                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
-                                ) {
-                                    Column(
-                                        horizontalAlignment = Alignment.End,
-                                    ) {
-                                        SmallFloatingActionButton(
-                                            onClick = {
-                                                scope.launch {
-                                                    lazyColumnState.animateScrollToItem(0)
-                                                }
-                                                fabExpanded = false
-                                            },
-                                            modifier = Modifier.padding(bottom = 8.dp),
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.KeyboardArrowUp,
-                                                contentDescription = "back to top",
-                                            )
-                                        }
-
-                                        SmallFloatingActionButton(
-                                            onClick = {
-                                                searchDialog = true
-                                                fabExpanded = false
-                                            },
-                                            modifier = Modifier.padding(bottom = 8.dp),
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Search,
-                                                contentDescription = "search",
-                                            )
-                                        }
-                                    }
-                                }
-
-                                // 主 FAB
-                                FloatingActionButton(
-                                    onClick = { fabExpanded = !fabExpanded },
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Menu,
-                                        contentDescription = "menu",
-                                    )
-                                }
-                            }
-
-                            if (searchDialog) {
-                                var keyword by remember { mutableStateOf(state.keyword) }
-                                var selectedType by remember { mutableStateOf(state.type) }
-                                var searchInData by remember { mutableStateOf(state.searchInData) }
-
-                                AlertDialog(
-                                    onDismissRequest = { searchDialog = false },
-                                    title = {
-                                        Text(stringResource(Res.string.search))
-                                    },
-                                    text = {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                                        ) {
-                                            // 搜索类型选择 - 按钮组
+                                    item {
+                                        if (!data.loadState.isIdle) {
+                                            Loading()
+                                        } else {
                                             Text(
-                                                text = "搜索类型",
-                                                style = MaterialTheme.typography.labelLarge,
-                                            )
-                                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                                                SegmentedButton(
-                                                    selected = selectedType == null,
-                                                    onClick = { selectedType = null },
-                                                    shape = SegmentedButtonDefaults.itemShape(0, 3),
-                                                    label = { Text(stringResource(Res.string.all)) },
-                                                )
-                                                SegmentedButton(
-                                                    selected = selectedType == DownloadItemType.ILLUST,
-                                                    onClick = { selectedType = DownloadItemType.ILLUST },
-                                                    shape = SegmentedButtonDefaults.itemShape(1, 3),
-                                                    label = { Text(stringResource(Res.string.illust)) },
-                                                )
-                                                SegmentedButton(
-                                                    selected = selectedType == DownloadItemType.NOVEL,
-                                                    onClick = { selectedType = DownloadItemType.NOVEL },
-                                                    shape = SegmentedButtonDefaults.itemShape(2, 3),
-                                                    label = { Text(stringResource(Res.string.novel)) },
-                                                )
-                                            }
-
-                                            // 关键词输入框
-                                            OutlinedTextField(
-                                                value = keyword,
-                                                onValueChange = { keyword = it },
+                                                textAlign = TextAlign.Center,
                                                 modifier = Modifier.fillMaxWidth(),
-                                                label = { Text(stringResource(Res.string.keyword)) },
-                                                placeholder = { Text(stringResource(Res.string.please_input_keyword)) },
-                                                singleLine = true,
+                                                text = stringResource(Res.string.no_more_data),
                                             )
-
-                                            // 搜索元数据选项
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                            ) {
-                                                Checkbox(
-                                                    checked = searchInData,
-                                                    onCheckedChange = { searchInData = it },
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(stringResource(Res.string.search_metadata))
-                                            }
                                         }
-                                    },
-                                    confirmButton = {
-                                        TextButton(
-                                            onClick = {
-                                                model.search(
-                                                    keyWord = keyword,
-                                                    searchInData = searchInData,
-                                                    type = selectedType,
-                                                )
-                                                searchDialog = false
-                                            },
-                                        ) {
-                                            Text(stringResource(Res.string.confirm))
-                                        }
-                                    },
-                                    dismissButton = {
-                                        TextButton(
-                                            onClick = { searchDialog = false },
-                                        ) {
-                                            Text(stringResource(Res.string.cancel))
-                                        }
-                                    },
-                                )
+                                    }
+                                }
                             }
                         }
                     }
+                }
+            }
+
+            var searchDialog by remember {
+                mutableStateOf(false)
+            }
+            var fabExpanded by remember {
+                mutableStateOf(false)
+            }
+
+            if (searchDialog) {
+                var keyword by remember { mutableStateOf(state.keyword) }
+                var selectedType by remember { mutableStateOf(state.type) }
+                var searchInData by remember { mutableStateOf(state.searchInData) }
+
+                AlertDialog(
+                    onDismissRequest = { searchDialog = false },
+                    title = {
+                        Text(stringResource(Res.string.search))
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            // 搜索类型选择 - 按钮组
+                            Text(
+                                text = "搜索类型",
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                                SegmentedButton(
+                                    selected = selectedType == null,
+                                    onClick = { selectedType = null },
+                                    shape = SegmentedButtonDefaults.itemShape(0, 3),
+                                    label = { Text(stringResource(Res.string.all)) },
+                                )
+                                SegmentedButton(
+                                    selected = selectedType == DownloadItemType.ILLUST,
+                                    onClick = { selectedType = DownloadItemType.ILLUST },
+                                    shape = SegmentedButtonDefaults.itemShape(1, 3),
+                                    label = { Text(stringResource(Res.string.illust)) },
+                                )
+                                SegmentedButton(
+                                    selected = selectedType == DownloadItemType.NOVEL,
+                                    onClick = { selectedType = DownloadItemType.NOVEL },
+                                    shape = SegmentedButtonDefaults.itemShape(2, 3),
+                                    label = { Text(stringResource(Res.string.novel)) },
+                                )
+                            }
+
+                            // 关键词输入框
+                            OutlinedTextField(
+                                value = keyword,
+                                onValueChange = { keyword = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text(stringResource(Res.string.keyword)) },
+                                placeholder = { Text(stringResource(Res.string.please_input_keyword)) },
+                                singleLine = true,
+                            )
+
+                            // 搜索元数据选项
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Checkbox(
+                                    checked = searchInData,
+                                    onCheckedChange = { searchInData = it },
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(stringResource(Res.string.search_metadata))
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                model.search(
+                                    keyWord = keyword,
+                                    searchInData = searchInData,
+                                    type = selectedType,
+                                )
+                                searchDialog = false
+                            },
+                        ) {
+                            Text(stringResource(Res.string.confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { searchDialog = false },
+                        ) {
+                            Text(stringResource(Res.string.cancel))
+                        }
+                    },
+                )
+            }
+
+            Column(
+                modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                horizontalAlignment = Alignment.End,
+            ) {
+                AnimatedVisibility(
+                    visible = fabExpanded,
+                    enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
+                    exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
+                ) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        SmallFloatingActionButton(
+                            onClick = {
+                                scope.launch {
+                                    lazyColumnState.animateScrollToItem(0)
+                                }
+                                fabExpanded = false
+                            },
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowUp,
+                                contentDescription = "back to top",
+                            )
+                        }
+
+                        SmallFloatingActionButton(
+                            onClick = {
+                                searchDialog = true
+                                fabExpanded = false
+                            },
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "search",
+                            )
+                        }
+                    }
+                }
+
+                FloatingActionButton(
+                    onClick = { fabExpanded = !fabExpanded },
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        contentDescription = "menu",
+                    )
                 }
             }
         }

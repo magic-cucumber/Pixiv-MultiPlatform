@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import androidx.paging.PagingSource
 import arrow.fx.coroutines.fixedRate
 import arrow.fx.coroutines.raceN
 import cafe.adriel.voyager.core.model.ScreenModel
@@ -51,14 +50,7 @@ import top.kagg886.pixko.module.illust.get
 import top.kagg886.pixko.module.illust.getIllustDetail
 import top.kagg886.pixko.module.novel.NovelImagesSize
 import top.kagg886.pixko.module.novel.getNovelContent
-import top.kagg886.pixko.module.novel.parser.v2.JumpPageNode
-import top.kagg886.pixko.module.novel.parser.v2.JumpUriNode
-import top.kagg886.pixko.module.novel.parser.v2.NewPageNode
-import top.kagg886.pixko.module.novel.parser.v2.PixivImageNode
-import top.kagg886.pixko.module.novel.parser.v2.TextNode
-import top.kagg886.pixko.module.novel.parser.v2.TitleNode
-import top.kagg886.pixko.module.novel.parser.v2.UploadImageNode
-import top.kagg886.pixko.module.novel.parser.v2.content
+import top.kagg886.pixko.module.novel.parser.v2.*
 import top.kagg886.pmf.backend.*
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.DownloadItem
@@ -674,7 +666,7 @@ class DownloadScreenModel :
     }
 
     override val container: Container<DownloadScreenState, DownloadScreenSideEffect> =
-        container(DownloadScreenState.Loading) {
+        container(DownloadScreenState.Loading(null, "", false)) {
             database.downloadDAO().reset()
             search().join()
         }
@@ -697,14 +689,23 @@ class DownloadScreenModel :
     }
 }
 
-sealed class DownloadScreenState {
-    data object Loading : DownloadScreenState()
+sealed interface DownloadScreenState {
+    val keyword: String
+    val searchInData: Boolean
+    val type: DownloadItemType?
+
+    data class Loading(
+        override val type: DownloadItemType?,
+        override val keyword: String,
+        override val searchInData: Boolean,
+    ) : DownloadScreenState
+
     data class Loaded(
         val data: Flow<PagingData<DownloadItem>>,
-        val keyword: String,
-        val searchInData: Boolean,
-        val type: DownloadItemType?,
-    ) : DownloadScreenState()
+        override val keyword: String,
+        override val searchInData: Boolean,
+        override val type: DownloadItemType?,
+    ) : DownloadScreenState
 }
 
 sealed class DownloadScreenSideEffect {
