@@ -9,6 +9,4 @@ import io.ktor.client.engine.HttpClientEngineConfig
  * ================================================
  */
 
-public class ReqwestEngineConfig: HttpClientEngineConfig() {
-
-}
+class ReqwestEngineConfig : HttpClientEngineConfig()

@@ -13,9 +13,7 @@ import io.ktor.utils.io.InternalAPI
  * Created on: 2025/11/9 21:22
  * ================================================
  */
-internal class ReqwestClientEngine(override val config: ReqwestEngineConfig): HttpClientEngineBase("ktor-reqwest") {
+internal class ReqwestClientEngine(override val config: ReqwestEngineConfig) : HttpClientEngineBase("ktor-reqwest") {
     @InternalAPI
-    override suspend fun execute(data: HttpRequestData): HttpResponseData {
-
-    }
+    override suspend fun execute(data: HttpRequestData): HttpResponseData = TODO()
 }

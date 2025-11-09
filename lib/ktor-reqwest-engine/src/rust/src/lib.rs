@@ -2,7 +2,7 @@ mod jvm;
 
 #[cfg(test)]
 mod tests {
-    use hyper::client::connect::{Connection, Connected};
+    use hyper::client::connect::{Connected, Connection};
     use hyper::service::Service;
     use hyper::{Body, Client, Request, Uri};
     use openssl::ssl::{SslConnector, SslMethod, SslVerifyMode};
@@ -91,21 +91,13 @@ mod tests {
     }
 
     impl AsyncRead for SslConnection {
-        fn poll_read(
-            mut self: Pin<&mut Self>,
-            cx: &mut Context<'_>,
-            buf: &mut tokio::io::ReadBuf<'_>,
-        ) -> Poll<io::Result<()>> {
-        Pin::new(&mut self.0).poll_read(cx, buf)
+        fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut tokio::io::ReadBuf<'_>) -> Poll<io::Result<()>> {
+            Pin::new(&mut self.0).poll_read(cx, buf)
         }
     }
 
     impl AsyncWrite for SslConnection {
-        fn poll_write(
-            mut self: Pin<&mut Self>,
-            cx: &mut Context<'_>,
-            buf: &[u8],
-        ) -> Poll<io::Result<usize>> {
+        fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<io::Result<usize>> {
             Pin::new(&mut self.0).poll_write(cx, buf)
         }
 
@@ -176,7 +168,6 @@ mod tests {
         }
     }
 
-
     // 使用 hyper 上层 API 和自定义 Connector 的测试
     #[tokio::test]
     async fn test_hyper_client_with_custom_connector() {
@@ -189,16 +180,10 @@ mod tests {
         let ssl_connector = builder.build();
 
         // 创建自定义 Connector
-        let connector = CustomConnector {
-            ip: ip.to_string(),
-            sni_hostname: sni_hostname.to_string(),
-            ssl_connector,
-        };
+        let connector = CustomConnector { ip: ip.to_string(), sni_hostname: sni_hostname.to_string(), ssl_connector };
 
         // 使用 hyper 的上层 API 创建客户端，传入自定义 Connector 和 executor
-        let client = Client::builder()
-            .executor(TokioExecutor)
-            .build::<_, Body>(connector);
+        let client = Client::builder().executor(TokioExecutor).build::<_, Body>(connector);
 
         // 构建请求
         let req = Request::builder()
