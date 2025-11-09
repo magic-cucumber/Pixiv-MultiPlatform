@@ -1,0 +1,24 @@
+[package]
+name = "keqwest"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["staticlib", "cdylib"]
+
+[features]
+jvm = ["dep:jni", "dep:jni_fn"]
+
+[dependencies]
+jni = { version = "0.21", optional = true }
+jni_fn = { version = "0.1", optional = true }
+tokio = { version = "1", features = ["full"] }
+hyper = { version = "0.14", features = ["client", "http1"] }
+openssl = { version = "0.10", features = ["vendored"] } # 或者去掉 vendored 根据你平台选择
+tokio-openssl = "0.6.5"
+
+[profile.release]
+panic = "abort"
+strip = true
+lto = true
+codegen-units = 1
