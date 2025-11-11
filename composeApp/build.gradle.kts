@@ -362,8 +362,14 @@ compose.desktop {
             packageName = rootProject.name
             packageVersion = pkgVersion
 
-            windows { iconFile.set(file("icons/pixiv.ico")); shortcut = true }
-            linux { iconFile.set(file("icons/pixiv.png")); shortcut = true }
+            windows {
+                iconFile.set(file("icons/pixiv.ico"))
+                shortcut = true
+            }
+            linux {
+                iconFile.set(file("icons/pixiv.png"))
+                shortcut = true
+            }
             macOS { iconFile.set(file("icons/pixiv.icns")) }
         }
 
@@ -772,8 +778,7 @@ private fun ResourceType.getClassName(): ClassName = when (this) {
     ResourceType.PLURAL_STRING -> ClassName("org.jetbrains.compose.resources", "PluralStringResource")
 }
 
-private fun ResourceType.requiresKeyName() =
-    this in setOf(ResourceType.STRING, ResourceType.STRING_ARRAY, ResourceType.PLURAL_STRING)
+private fun ResourceType.requiresKeyName() = this in setOf(ResourceType.STRING, ResourceType.STRING_ARRAY, ResourceType.PLURAL_STRING)
 
 private val resourceItemClass = ClassName("org.jetbrains.compose.resources", "ResourceItem")
 private val internalAnnotationClass = ClassName("org.jetbrains.compose.resources", "InternalResourceApi")
@@ -803,7 +808,7 @@ private fun CodeBlock.Builder.addQualifiers(resourceItem: ResourceItem): CodeBlo
         when (q) {
             "light",
             "dark",
-                -> {
+            -> {
                 saveQualifier(themeQualifier, q)
             }
 
@@ -813,7 +818,7 @@ private fun CodeBlock.Builder.addQualifiers(resourceItem: ResourceItem): CodeBlo
             "xxhdpi",
             "xxxhdpi",
             "ldpi",
-                -> {
+            -> {
                 saveQualifier(densityQualifier, q)
             }
 
