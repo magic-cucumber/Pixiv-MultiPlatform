@@ -18,6 +18,7 @@ hyper = { version = "0.14", features = ["client", "http1"] }
 # 我们使用 hyper 0.14 原生的连接池功能
 openssl = { version = "0.10", features = ["vendored"] } # 或者去掉 vendored 根据你平台选择
 tokio-openssl = "0.6.5"
+futures = "0.3"
 
 [profile.release]
 panic = "abort"
