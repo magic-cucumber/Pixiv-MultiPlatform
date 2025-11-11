@@ -23,7 +23,7 @@ jobs:
         run: ./gradlew exportLibraryDefinitions
 
       - name: Build MSI And Content with Gradle Wrapper
-        run: ./gradlew packageDistributionForCurrentOS
+        run: ./gradlew packageReleaseDistributionForCurrentOS
         env:
           APP_VERSION_NAME: ${{ github.ref_name }}
 
