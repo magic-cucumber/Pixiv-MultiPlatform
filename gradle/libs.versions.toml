@@ -86,7 +86,7 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 benmanes-versions = "com.github.ben-manes.versions:0.53.0"
 buildConfig = "com.github.gmazzo.buildconfig:5.7.1"
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-jetbrainsCompose = "org.jetbrains.compose:1.9.3"
+jetbrainsCompose = "org.jetbrains.compose:1.10.0-beta01"
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
