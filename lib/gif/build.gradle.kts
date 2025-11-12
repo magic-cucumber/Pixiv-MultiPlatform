@@ -16,7 +16,7 @@ version = "1.0"
 fun prop(key: String) = project.findProperty(key) as String
 
 android {
-    ndkVersion = "28.1.13356709"
+    ndkVersion = "29.0.14206865"
     namespace = "top.kagg886.gif"
 
     compileSdk = prop("TARGET_SDK").toInt()
