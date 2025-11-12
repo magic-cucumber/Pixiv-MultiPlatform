@@ -2,12 +2,10 @@ package top.kagg886.pmf.ui.route.login.v2
 
 import androidx.lifecycle.ViewModel
 import cafe.adriel.voyager.core.model.ScreenModel
-import io.ktor.utils.io.core.readAvailable
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.io.buffered
 import okio.Path
 import okio.buffer
 import okio.use

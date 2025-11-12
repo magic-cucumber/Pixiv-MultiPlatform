@@ -2,27 +2,17 @@ package top.kagg886.pmf.ui.route.main.detail.novel
 
 import androidx.compose.ui.geometry.Size
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import cafe.adriel.voyager.core.model.ScreenModel
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.size.Size as CoilSize
-import com.fleeksoft.ksoup.nodes.Document
-import com.fleeksoft.ksoup.nodes.Entities
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.statement.bodyAsBytes
 import kotlin.collections.set
 import kotlin.time.Clock
-import kotlin.use
-import kotlin.uuid.Uuid
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -30,18 +20,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import okio.Buffer
-import okio.buffer
-import okio.use
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.annotation.OrbitExperimental
-import top.kagg886.epub.builder.EpubBuilder
-import top.kagg886.epub.data.ResourceItem
-import top.kagg886.filepicker.FilePicker
-import top.kagg886.filepicker.openFileSaver
 import top.kagg886.pixko.Tag
 import top.kagg886.pixko.anno.ExperimentalNovelParserAPI
 import top.kagg886.pixko.module.illust.BookmarkVisibility
@@ -68,17 +51,14 @@ import top.kagg886.pixko.module.user.UserLikePublicity
 import top.kagg886.pixko.module.user.followUser
 import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
-import top.kagg886.pmf.backend.cachePath
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.NovelHistory
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.container
-import top.kagg886.pmf.util.delete
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
-import top.kagg886.pmf.util.source
 
 class NovelDetailViewModel(
     val id: Long,

@@ -1,10 +1,8 @@
-import kotlin.jvm.java
 import okio.HashingSink
 import okio.blackholeSink
 import okio.buffer
 import okio.source
 import org.gradle.kotlin.dsl.assign
-import org.jetbrains.compose.desktop.application.tasks.AbstractProguardTask
 
 plugins {
     alias(libs.plugins.androidLibrary)

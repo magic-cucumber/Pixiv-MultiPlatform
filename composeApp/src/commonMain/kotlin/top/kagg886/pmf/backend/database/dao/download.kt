@@ -9,7 +9,6 @@ import androidx.room.Query
 import androidx.room.TypeConverters
 import androidx.room.Update
 import kotlin.time.Clock
-import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.Json
 import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.novel.Novel
