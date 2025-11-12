@@ -155,7 +155,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.androidx.paging)
+            implementation(libs.androidx.paging.compose)
 
             // voyager
             implementation(libs.voyager.navigator)
