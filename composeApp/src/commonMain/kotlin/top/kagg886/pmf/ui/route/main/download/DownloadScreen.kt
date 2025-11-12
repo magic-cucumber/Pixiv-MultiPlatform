@@ -54,6 +54,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -74,7 +75,6 @@ import top.kagg886.pmf.ui.component.icon.Download
 import top.kagg886.pmf.ui.component.icon.Save
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
-import top.kagg886.pmf.ui.util.collectAsLazyPagingItems
 import top.kagg886.pmf.util.stringResource
 
 class DownloadScreen : Screen {

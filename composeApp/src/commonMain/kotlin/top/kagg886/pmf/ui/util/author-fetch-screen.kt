@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import top.kagg886.pmf.res.*
