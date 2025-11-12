@@ -43,9 +43,9 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                api(compose.ui)
-                api(compose.foundation)
-                api(compose.material3)
+                api(libs.compose.ui)
+                api(libs.compose.foundation)
+                api(libs.compose.material3)
             }
         }
     }
