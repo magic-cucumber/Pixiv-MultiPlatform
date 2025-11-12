@@ -11,6 +11,7 @@ compose-multiplatform = "1.10.0-beta01"
 composeWebviewMultiplatform = "2.0.3"
 filekitCompose = "0.12.0"
 kermit = "2.0.8"
+koin = "4.2.0-alpha2"
 korlibsIo = "6.0.2"
 kotlin = "2.2.21"
 kotlinx-coroutines = "1.10.2"
@@ -62,6 +63,8 @@ compose-webview-multiplatform = { module = "io.github.kevinnzou:compose-webview-
 filekit-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
+koin-compose-navigation3 = { module = "io.insert-koin:koin-compose-navigation3", version.ref = "koin" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
 koin-core = "io.insert-koin:koin-core:4.1.1"
 korlibs-io = { module = "com.soywiz:korlibs-io", version.ref = "korlibsIo" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }

@@ -67,7 +67,6 @@ import top.kagg886.pmf.shareFile
 import top.kagg886.pmf.ui.component.settings.SettingsDropdownMenu
 import top.kagg886.pmf.ui.component.settings.SettingsFileUpload
 import top.kagg886.pmf.ui.component.settings.SettingsTextField
-import top.kagg886.pmf.ui.route.login.v2.LoginScreen
 import top.kagg886.pmf.ui.route.main.about.AboutScreen
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
@@ -951,7 +950,7 @@ class SettingScreen : Screen {
                         confirmButton = {
                             TextButton(
                                 onClick = {
-                                    nav.replaceAll(LoginScreen(true))
+                                    // nav.replaceAll(LoginScreen(true))
                                 },
                             ) {
                                 Text(stringResource(Res.string.confirm))

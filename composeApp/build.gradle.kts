@@ -114,6 +114,7 @@ kotlin {
             "kotlinx.coroutines.FlowPreview",
             "kotlinx.serialization.ExperimentalSerializationApi",
             "org.jetbrains.compose.resources.ExperimentalResourceApi",
+            "org.koin.core.annotation.KoinExperimentalAPI",
         )
         freeCompilerArgs.addAll("-Xexpect-actual-classes")
     }
@@ -137,6 +138,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.androidx.paging.compose)
+
+            implementation(libs.koin.compose.navigation3)
+            implementation(libs.koin.compose.viewmodel)
 
             // voyager
             implementation(libs.voyager.navigator)

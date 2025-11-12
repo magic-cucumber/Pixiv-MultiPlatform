@@ -6,9 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Modifier
+import androidx.navigation3.runtime.NavKey
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import kotlinx.serialization.Serializable
 import top.kagg886.pixko.module.illust.RankCategory
 import top.kagg886.pmf.NavigationItem
 import top.kagg886.pmf.composeWithAppBar
@@ -16,6 +18,9 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.TabContainer
 import top.kagg886.pmf.ui.util.IllustFetchScreen
 import top.kagg886.pmf.util.stringResource
+
+@Serializable
+data object RankRoute : NavKey
 
 class RankScreen : Screen {
     @Composable

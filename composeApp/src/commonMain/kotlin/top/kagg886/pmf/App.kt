@@ -1,8 +1,5 @@
 package top.kagg886.pmf
 
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -23,11 +20,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -40,18 +34,16 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.transitions.ScreenTransition
 import co.touchlab.kermit.Severity
 import coil3.ComponentRegistry
 import coil3.ImageLoader
@@ -72,8 +64,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import okio.Path
 import org.jetbrains.compose.resources.StringResource
+import org.koin.compose.navigation3.koinEntryProvider
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -85,9 +82,9 @@ import org.koin.core.logger.Level.WARNING
 import org.koin.core.logger.Logger
 import org.koin.core.logger.MESSAGE
 import org.koin.dsl.module
+import org.koin.dsl.navigation3.navigation
 import org.koin.ext.getFullName
 import org.koin.mp.KoinPlatform
-import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.PlatformConfig
 import top.kagg886.pmf.backend.PlatformEngine
@@ -97,33 +94,33 @@ import top.kagg886.pmf.backend.database.databaseBuilder
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.pixiv.PixivTokenStorage
 import top.kagg886.pmf.res.*
-import top.kagg886.pmf.ui.component.dialog.CheckUpdateDialog
+import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
-import top.kagg886.pmf.ui.route.main.download.DownloadScreenSideEffect
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
-import top.kagg886.pmf.ui.route.main.profile.ProfileItem
-import top.kagg886.pmf.ui.route.main.profile.ProfileScreen
-import top.kagg886.pmf.ui.route.main.rank.RankScreen
+import top.kagg886.pmf.ui.route.main.rank.RankRoute
 import top.kagg886.pmf.ui.route.main.recommend.RecommendIllustViewModel
 import top.kagg886.pmf.ui.route.main.recommend.RecommendNovelViewModel
+import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
 import top.kagg886.pmf.ui.route.main.recommend.RecommendScreen
-import top.kagg886.pmf.ui.route.main.search.v2.EmptySearchScreen
 import top.kagg886.pmf.ui.route.main.space.NewestIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceIllustViewModel
-import top.kagg886.pmf.ui.route.main.space.SpaceScreen
+import top.kagg886.pmf.ui.route.main.space.SpaceRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeModel
+import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
-import top.kagg886.pmf.ui.util.rememberSupportPixivNavigateUriHandler
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.SerializedTheme
 import top.kagg886.pmf.util.UgoiraFetcher
-import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.initFileLogger
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toColorScheme
+
+val LocalNavBackStack = compositionLocalOf<NavBackStack<NavKey>> {
+    error("not provided")
+}
 
 val LocalSnackBarHost = compositionLocalOf<SnackbarHostState> {
     error("not provided")
@@ -141,10 +138,20 @@ val LocalKeyStateFlow = compositionLocalOf<SharedFlow<KeyEvent>> {
     error("not provided")
 }
 
+private val config = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(baseClass = NavKey::class) {
+            subclass(serializer = WelcomeRoute.serializer())
+            subclass(serializer = LoginRoute.serializer())
+            subclass(serializer = RecommendRoute.serializer())
+        }
+    }
+}
+
 @OptIn(ExperimentalVoyagerApi::class)
 @Composable
 @Preview
-fun App(initScreen: Screen = WelcomeScreen()) {
+fun App() {
     val darkModeValue = remember {
         mutableStateOf(AppConfig.darkMode)
     }
@@ -169,10 +176,24 @@ fun App(initScreen: Screen = WelcomeScreen()) {
             Surface(
                 color = MaterialTheme.colorScheme.background,
             ) {
+                val backStack = rememberNavBackStack(config, WelcomeRoute)
+                CompositionLocalProvider(
+                    // LocalUriHandler provides rememberSupportPixivNavigateUriHandler(),
+                    LocalNavBackStack provides backStack,
+                ) {
+                    AppScaffold { modifier ->
+                        NavDisplay(
+                            backStack = backStack,
+                            modifier = modifier.fillMaxSize(),
+                            onBack = { backStack.removeLastOrNull() },
+                            entryProvider = koinEntryProvider(),
+                        )
+                    }
+                }
+
+                /*
                 Navigator(initScreen) {
-                    CompositionLocalProvider(
-                        LocalUriHandler provides rememberSupportPixivNavigateUriHandler(),
-                    ) {
+
                         val s = LocalSnackBarHost.current
                         CheckUpdateDialog()
 
@@ -209,16 +230,10 @@ fun App(initScreen: Screen = WelcomeScreen()) {
                                 }
                             }
                         }
-                        AppScaffold { modifier ->
-                            ScreenTransition(
-                                navigator = it,
-                                contentAlignment = Alignment.Center,
-                                transition = { fadeIn() togetherWith fadeOut() },
-                                modifier = modifier.fillMaxSize(),
-                            )
-                        }
+
                     }
-                }
+
+                 */
             }
         }
     }
@@ -226,7 +241,7 @@ fun App(initScreen: Screen = WelcomeScreen()) {
 
 @Composable
 fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
-    val nav = LocalNavigator.currentOrThrow
+    val stack = LocalNavBackStack.current
     val type = this
     if (useWideScreenMode) {
         Row(modifier = Modifier.fillMaxSize()) {
@@ -235,7 +250,7 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
                 for (entry in NavigationItem.entries) {
                     NavigationRailItem(
                         selected = entry == type,
-                        onClick = { if (entry != type) nav.push(entry()) },
+                        onClick = { stack[0] = entry.content },
                         icon = { Icon(imageVector = entry.icon, null) },
                         label = { Text(stringResource(entry.title)) },
                     )
@@ -260,7 +275,7 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
                     for (entry in NavigationItem.entries) {
                         NavigationBarItem(
                             selected = entry == type,
-                            onClick = { if (entry != type) nav.push(entry()) },
+                            onClick = { stack[0] = entry.content },
                             icon = { Icon(imageVector = entry.icon, null) },
                             label = { Text(stringResource(entry.title)) },
                         )
@@ -286,12 +301,10 @@ fun AppScaffold(content: @Composable (Modifier) -> Unit) {
 
 @Composable
 fun ProfileAvatar() {
-    val nav = LocalNavigator.currentOrThrow
     val profile = PixivConfig.pixiv_user!!
 
     IconButton(
         onClick = {
-            nav.push(ProfileScreen(profile))
         },
     ) {
         AsyncImage(
@@ -303,10 +316,8 @@ fun ProfileAvatar() {
 
 @Composable
 fun SearchButton() {
-    val nav = LocalNavigator.currentOrThrow
     IconButton(
         onClick = {
-            nav.push(EmptySearchScreen())
         },
     ) {
         Icon(imageVector = Icons.Default.Search, contentDescription = null)
@@ -389,12 +400,10 @@ fun setupEnv() {
         modules(
             // vm
             module {
-                single {
-                    WelcomeModel()
-                }
-                single {
-                    RecommendIllustViewModel()
-                }
+                single { WelcomeModel() }
+                navigation<WelcomeRoute> { WelcomeScreen(model = koinViewModel()) }
+                navigation<RecommendRoute> { RecommendScreen() }
+                single { RecommendIllustViewModel() }
                 single {
                     RecommendNovelViewModel()
                 }
@@ -492,14 +501,11 @@ expect suspend fun copyImageToClipboard(bitmap: ByteArray)
 enum class NavigationItem(
     val title: StringResource,
     val icon: ImageVector,
-    val content: () -> Screen,
+    val content: NavKey,
 ) {
-    RECOMMEND(Res.string.recommend, Icons.Default.Home, { RecommendScreen() }),
-    RANK(Res.string.rank, Icons.Default.DateRange, { RankScreen() }),
-    SPACE(Res.string.space, Icons.Default.Star, { SpaceScreen() }),
-    ;
-
-    operator fun invoke(): Screen = content()
+    RECOMMEND(Res.string.recommend, Icons.Default.Home, RecommendRoute),
+    RANK(Res.string.rank, Icons.Default.DateRange, RankRoute),
+    SPACE(Res.string.space, Icons.Default.Star, SpaceRoute),
 }
 
 expect fun ComponentRegistry.Builder.installGifDecoder(): ComponentRegistry.Builder
