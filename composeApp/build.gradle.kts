@@ -84,7 +84,6 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.room)
     alias(libs.plugins.aboutlibrariesPlugin)
-    id("top.kagg886.compose.installer.windows")
 }
 
 room {
@@ -363,8 +362,14 @@ compose.desktop {
             packageName = rootProject.name
             packageVersion = pkgVersion
 
-            windows { iconFile.set(file("icons/pixiv.ico")) }
-            linux { iconFile.set(file("icons/pixiv.png")) }
+            windows {
+                iconFile.set(file("icons/pixiv.ico"))
+                shortcut = true
+            }
+            linux {
+                iconFile.set(file("icons/pixiv.png"))
+                shortcut = true
+            }
             macOS { iconFile.set(file("icons/pixiv.icns")) }
         }
 
@@ -444,14 +449,6 @@ if (proguardEnable) {
     compose.desktop.application.buildTypes.release.proguard {
         isEnabled = false
     }
-}
-
-configureComposeWindowsInstaller {
-    appName = rootProject.name
-    appVersion = pkgVersion
-    shortcutName = rootProject.name
-    iconFile = project.file("icons/pixiv.ico")
-    manufacturer = "kagg886"
 }
 
 val ktlintVersion = libs.ktlint.get().version
@@ -693,59 +690,60 @@ abstract class IdeaImportTask : DefaultTask() {
     abstract fun safeAction()
 }
 
-tasks.named<org.jetbrains.compose.resources.GenerateActualResourceCollectorsTask>("generateActualResourceCollectorsForAndroidMain").configure {
-    doLast {
-        val kotlinDir = codeDir.get().asFile
-        val inputDirs = resourceAccessorDirs.files
+tasks.named<org.jetbrains.compose.resources.GenerateActualResourceCollectorsTask>("generateActualResourceCollectorsForAndroidMain")
+    .configure {
+        doLast {
+            val kotlinDir = codeDir.get().asFile
+            val inputDirs = resourceAccessorDirs.files
 
-        logger.info("Clean directory $kotlinDir")
-        kotlinDir.deleteRecursively()
-        kotlinDir.mkdirs()
+            logger.info("Clean directory $kotlinDir")
+            kotlinDir.deleteRecursively()
+            kotlinDir.mkdirs()
 
-        val inputFiles = inputDirs.flatMap { dir ->
-            dir.walkTopDown().filter { !it.isHidden && it.isFile && it.extension == "kt" }.toList()
-        }
-        logger.info("Generate actual ResourceCollectors for $kotlinDir")
-        val funNames = inputFiles.mapNotNull { inputFile ->
-            if (inputFile.nameWithoutExtension.contains('.')) {
-                val (fileName, suffix) = inputFile.nameWithoutExtension.split('.')
-                // https://github.com/JetBrains/compose-multiplatform/pull/5446
-                val type = ResourceType.values().sorted().firstOrNull { fileName.startsWith(it.accessorName, true) }
-                val name = "_collect${suffix.uppercaseFirstChar()}${fileName}Resources"
-
-                if (type == null) {
-                    logger.warn("Unknown resources type: `$inputFile`")
-                    null
-                } else if (!inputFile.readText().contains(name)) {
-                    logger.warn("A function '$name' is not found in the `$inputFile` file!")
-                    null
-                } else {
-                    logger.info("Found collector function: `$name`")
-                    type to name
-                }
-            } else {
-                logger.warn("Unknown file name: `$inputFile`")
-                null
+            val inputFiles = inputDirs.flatMap { dir ->
+                dir.walkTopDown().filter { !it.isHidden && it.isFile && it.extension == "kt" }.toList()
             }
-        }
-            .groupBy({ it.first }, { it.second })
-            .mapValues { (_, values) -> values.sorted() }
+            logger.info("Generate actual ResourceCollectors for $kotlinDir")
+            val funNames = inputFiles.mapNotNull { inputFile ->
+                if (inputFile.nameWithoutExtension.contains('.')) {
+                    val (fileName, suffix) = inputFile.nameWithoutExtension.split('.')
+                    // https://github.com/JetBrains/compose-multiplatform/pull/5446
+                    val type = ResourceType.values().sorted().firstOrNull { fileName.startsWith(it.accessorName, true) }
+                    val name = "_collect${suffix.uppercaseFirstChar()}${fileName}Resources"
 
-        val pkgName = packageName.get()
-        val resClassName = resClassName.get()
-        val isPublic = makeAccessorsPublic.get()
-        val useActual = useActualModifier.get()
-        val spec = getActualResourceCollectorsFileSpec(
-            packageName = pkgName,
-            fileName = "ActualResourceCollectors",
-            resClassName = resClassName,
-            isPublic = isPublic,
-            useActualModifier = useActual,
-            typeToCollectorFunctions = funNames,
-        )
-        spec.writeTo(kotlinDir)
+                    if (type == null) {
+                        logger.warn("Unknown resources type: `$inputFile`")
+                        null
+                    } else if (!inputFile.readText().contains(name)) {
+                        logger.warn("A function '$name' is not found in the `$inputFile` file!")
+                        null
+                    } else {
+                        logger.info("Found collector function: `$name`")
+                        type to name
+                    }
+                } else {
+                    logger.warn("Unknown file name: `$inputFile`")
+                    null
+                }
+            }
+                .groupBy({ it.first }, { it.second })
+                .mapValues { (_, values) -> values.sorted() }
+
+            val pkgName = packageName.get()
+            val resClassName = resClassName.get()
+            val isPublic = makeAccessorsPublic.get()
+            val useActual = useActualModifier.get()
+            val spec = getActualResourceCollectorsFileSpec(
+                packageName = pkgName,
+                fileName = "ActualResourceCollectors",
+                resClassName = resClassName,
+                isPublic = isPublic,
+                useActualModifier = useActual,
+                typeToCollectorFunctions = funNames,
+            )
+            spec.writeTo(kotlinDir)
+        }
     }
-}
 
 internal enum class ResourceType(val typeName: String, val accessorName: String) {
     DRAWABLE("drawable", "drawable"),
