@@ -4,12 +4,10 @@ import androidx.lifecycle.ViewModel
 import cafe.adriel.voyager.core.model.ScreenModel
 import coil3.Uri
 import coil3.toUri
-import io.ktor.http.Url
 import io.ktor.util.encodeBase64
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonArray
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
