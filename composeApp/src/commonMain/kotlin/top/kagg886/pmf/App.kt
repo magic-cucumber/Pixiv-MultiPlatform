@@ -70,7 +70,6 @@ import kotlinx.serialization.modules.subclass
 import okio.Path
 import org.jetbrains.compose.resources.StringResource
 import org.koin.compose.navigation3.koinEntryProvider
-import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -99,6 +98,7 @@ import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
 import top.kagg886.pmf.ui.route.main.rank.RankRoute
+import top.kagg886.pmf.ui.route.main.rank.RankScreen
 import top.kagg886.pmf.ui.route.main.recommend.RecommendIllustViewModel
 import top.kagg886.pmf.ui.route.main.recommend.RecommendNovelViewModel
 import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
@@ -106,6 +106,7 @@ import top.kagg886.pmf.ui.route.main.recommend.RecommendScreen
 import top.kagg886.pmf.ui.route.main.space.NewestIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceRoute
+import top.kagg886.pmf.ui.route.main.space.SpaceScreen
 import top.kagg886.pmf.ui.route.welcome.WelcomeModel
 import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
@@ -144,6 +145,8 @@ private val config = SavedStateConfiguration {
             subclass(serializer = WelcomeRoute.serializer())
             subclass(serializer = LoginRoute.serializer())
             subclass(serializer = RecommendRoute.serializer())
+            subclass(serializer = SpaceRoute.serializer())
+            subclass(serializer = RankRoute.serializer())
         }
     }
 }
@@ -401,16 +404,13 @@ fun setupEnv() {
             // vm
             module {
                 single { WelcomeModel() }
-                navigation<WelcomeRoute> { WelcomeScreen(model = koinViewModel()) }
+                navigation<WelcomeRoute> { WelcomeScreen() }
                 navigation<RecommendRoute> { RecommendScreen() }
                 single { RecommendIllustViewModel() }
-                single {
-                    RecommendNovelViewModel()
-                }
-
-                single {
-                    SpaceIllustViewModel()
-                }
+                single { RecommendNovelViewModel() }
+                navigation<SpaceRoute> { SpaceScreen() }
+                single { SpaceIllustViewModel() }
+                navigation<RankRoute> { RankScreen() }
 
                 single {
                     HistoryIllustViewModel()

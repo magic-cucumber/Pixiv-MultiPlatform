@@ -5,11 +5,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
 import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
 import kotlinx.serialization.Serializable
 import top.kagg886.pixko.module.illust.RankCategory
 import top.kagg886.pmf.NavigationItem
@@ -22,13 +21,6 @@ import top.kagg886.pmf.util.stringResource
 @Serializable
 data object RankRoute : NavKey
 
-class RankScreen : Screen {
-    @Composable
-    override fun Content() = NavigationItem.RANK.composeWithAppBar {
-        RankScreen()
-    }
-}
-
 private val tabTitleResources = mapOf(
     "day" to Res.string.rank_day,
     "week" to Res.string.rank_week,
@@ -40,8 +32,8 @@ private val tabTitleResources = mapOf(
 )
 
 @Composable
-private fun Screen.RankScreen() {
-    val page = rememberScreenModel {
+fun RankScreen() = NavigationItem.RANK.composeWithAppBar {
+    val page = remember {
         object : ScreenModel {
             val page = mutableIntStateOf(0)
         }
@@ -66,7 +58,7 @@ private fun Screen.RankScreen() {
         scrollable = true,
         onCurrentChange = { page.page.value = RankCategory.entries.indexOf(it) },
     ) {
-        val model = rememberScreenModel(it.toString()) {
+        val model = remember(it.toString()) {
             IllustRankScreenModel(it)
         }
         IllustFetchScreen(model)

@@ -54,6 +54,7 @@ import kotlinx.serialization.json.jsonObject
 import okio.BufferedSource
 import okio.buffer
 import okio.use
+import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.filepicker.FilePicker
@@ -94,7 +95,8 @@ import top.kagg886.pmf.util.stringResource
 data object WelcomeRoute : NavKey
 
 @Composable
-fun WelcomeScreen(model: WelcomeModel) {
+fun WelcomeScreen() {
+    val model = koinViewModel<WelcomeModel>()
     val state by model.collectAsState()
     val stack = LocalNavBackStack.current
 
