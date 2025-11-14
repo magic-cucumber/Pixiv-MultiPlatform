@@ -3,7 +3,7 @@ aboutlibraries = "13.1.0"
 agp = "8.13.1"
 #androidx-documentfile = "1.1.0"
 androidx-documentfile = "1.2"
-androidx-lifecycle = "2.9.6"
+androidx-lifecycle = "2.10.0-alpha04"
 arrow = "2.2.0"
 coil = "3.3.0"
 compose-settings = "2.13.0"
@@ -37,7 +37,7 @@ androidx-activity-compose = "androidx.activity:activity-compose:1.12.0-rc01"
 #androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "androidx-documentfile" }
 androidx-documentfile = { module = "com.lazygeniouz:dfc", version.ref = "androidx-documentfile" }
 androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
-androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
