@@ -208,9 +208,7 @@ fun ProfileScreen(route: ProfileRoute) {
                             AuthorScreenWithoutCollapse(PixivConfig.pixiv_user!!.userId).Content()
                         }
 
-                        History -> {
-                            HistoryScreen().Content()
-                        }
+                        History -> HistoryScreen()
 
                         Download -> {
                             DownloadScreen().Content()

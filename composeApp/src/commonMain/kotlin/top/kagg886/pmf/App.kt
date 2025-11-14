@@ -444,13 +444,8 @@ fun setupEnv() {
                 viewModelOf(::BookmarkNovelViewModel)
                 navigation<BookmarkRoute> { BookmarkScreen() }
 
-                single {
-                    HistoryIllustViewModel()
-                }
-
-                single {
-                    HistoryNovelViewModel()
-                }
+                single { HistoryIllustViewModel() }
+                single { HistoryNovelViewModel() }
 
                 single {
                     NewestIllustViewModel()
