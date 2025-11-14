@@ -102,6 +102,8 @@ import top.kagg886.pmf.ui.route.login.v2.LoginScreenViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
+import top.kagg886.pmf.ui.route.main.profile.ProfileRoute
+import top.kagg886.pmf.ui.route.main.profile.ProfileScreen
 import top.kagg886.pmf.ui.route.main.rank.IllustRankScreenModel
 import top.kagg886.pmf.ui.route.main.rank.RankRoute
 import top.kagg886.pmf.ui.route.main.rank.RankScreen
@@ -153,6 +155,7 @@ private val config = SavedStateConfiguration {
             subclass(serializer = RecommendRoute.serializer())
             subclass(serializer = SpaceRoute.serializer())
             subclass(serializer = RankRoute.serializer())
+            subclass(serializer = ProfileRoute.serializer())
         }
     }
 }
@@ -315,11 +318,8 @@ fun AppScaffold(content: @Composable (Modifier) -> Unit) {
 @Composable
 fun ProfileAvatar() {
     val profile = PixivConfig.pixiv_user!!
-
-    IconButton(
-        onClick = {
-        },
-    ) {
+    val stack = LocalNavBackStack.current
+    IconButton(onClick = { stack += ProfileRoute(profile) }) {
         AsyncImage(
             model = profile.profileImageUrls.content,
             contentDescription = null,
@@ -428,6 +428,8 @@ fun setupEnv() {
 
                 viewModelOf(::IllustRankScreenModel)
                 navigation<RankRoute> { RankScreen() }
+
+                navigation<ProfileRoute> { key -> ProfileScreen(key) }
 
                 single {
                     HistoryIllustViewModel()
