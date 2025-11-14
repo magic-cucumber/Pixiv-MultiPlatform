@@ -99,6 +99,8 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.login.v2.LoginScreen
 import top.kagg886.pmf.ui.route.login.v2.LoginScreenViewModel
+import top.kagg886.pmf.ui.route.main.about.AboutRoute
+import top.kagg886.pmf.ui.route.main.about.AboutScreen
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkIllustViewModel
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkNovelViewModel
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
@@ -163,6 +165,7 @@ private val config = SavedStateConfiguration {
             subclass(serializer = RankRoute.serializer())
             subclass(serializer = ProfileRoute.serializer())
             subclass(serializer = BookmarkRoute.serializer())
+            subclass(serializer = AboutRoute.serializer())
         }
     }
 }
@@ -444,6 +447,8 @@ fun setupEnv() {
                 viewModelOf(::BookmarkNovelViewModel)
                 navigation<BookmarkRoute> { BookmarkScreen() }
 
+                navigation<AboutRoute> { AboutScreen() }
+
                 single { HistoryIllustViewModel() }
                 single { HistoryNovelViewModel() }
 
@@ -483,9 +488,7 @@ fun setupEnv() {
                         setQueryCoroutineContext(Dispatchers.IO)
                     }.build()
                 }
-                single {
-                    DownloadScreenModel()
-                }
+                single { DownloadScreenModel() }
                 single {
                     UpdateCheckViewModel()
                 }

@@ -215,7 +215,7 @@ fun ProfileScreen(route: ProfileRoute) {
                         }
 
                         Setting -> {
-                            SettingScreen().Content()
+                            SettingScreen()
                         }
                     }
                 }
