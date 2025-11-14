@@ -205,7 +205,7 @@ fun ProfileScreen(route: ProfileRoute) {
                 ) {
                     when (it) {
                         ViewProfile -> {
-                            AuthorScreenWithoutCollapse(PixivConfig.pixiv_user!!.userId).Content()
+                            AuthorScreenWithoutCollapse(PixivConfig.pixiv_user!!.userId)
                         }
 
                         History -> HistoryScreen()

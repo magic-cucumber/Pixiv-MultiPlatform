@@ -11,46 +11,42 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.util.stringResource
 
-class NovelSimilarScreen(val id: Long) : Screen {
-    @Composable
-    override fun Content() {
-        val similarModel = koinViewModel<NovelSimilarViewModel>(key = "similar_novel_$id") {
-            parametersOf(id)
-        }
-        val nav = LocalNavigator.currentOrThrow
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(stringResource(Res.string.find_similar_novel))
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                nav.pop()
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null,
-                            )
-                        }
-                    },
-                )
-            },
-        ) {
-            Box(Modifier.padding(it)) {
-                NovelFetchScreen(similarModel)
-            }
+@Serializable
+data class NovelSimilarRoute(val id: Long) : NavKey
+
+@Composable
+fun NovelSimilarScreen(route: NovelSimilarRoute) {
+    val id = route.id
+    val similarModel = koinViewModel<NovelSimilarViewModel>(key = "similar_novel_$id") {
+        parametersOf(id)
+    }
+    val stack = LocalNavBackStack.current
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(Res.string.find_similar_novel)) },
+                navigationIcon = {
+                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                },
+            )
+        },
+    ) {
+        Box(Modifier.padding(it)) {
+            NovelFetchScreen(similarModel)
         }
     }
 }

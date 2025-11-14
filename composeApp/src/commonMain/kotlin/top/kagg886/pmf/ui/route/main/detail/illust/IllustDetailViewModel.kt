@@ -1,7 +1,6 @@
 package top.kagg886.pmf.ui.route.main.detail.illust
 
 import androidx.lifecycle.ViewModel
-import cafe.adriel.voyager.core.model.ScreenModel
 import coil3.Uri
 import coil3.toUri
 import io.ktor.util.encodeBase64
@@ -36,15 +35,8 @@ import top.kagg886.pmf.ui.util.notifyLike
 import top.kagg886.pmf.util.UGOIRA_SCHEME
 import top.kagg886.pmf.util.getString
 
-class IllustDetailViewModel(private val illust: Illust) :
-    ContainerHost<IllustDetailViewState, IllustDetailSideEffect>,
-    ViewModel(),
-    ScreenModel,
-    KoinComponent {
-    override val container: Container<IllustDetailViewState, IllustDetailSideEffect> =
-        container(IllustDetailViewState.Loading()) {
-            load()
-        }
+class IllustDetailViewModel(private val illust: Illust) : ContainerHost<IllustDetailViewState, IllustDetailSideEffect>, ViewModel(), KoinComponent {
+    override val container: Container<IllustDetailViewState, IllustDetailSideEffect> = container(IllustDetailViewState.Loading()) { load() }
 
     private val client = PixivConfig.newAccountFromConfig()
 

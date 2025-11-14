@@ -106,6 +106,14 @@ import top.kagg886.pmf.ui.route.main.bookmark.BookmarkNovelViewModel
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkScreen
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreen
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreenModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorFollowViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorIllustBookmarkViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorIllustViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelBookmarkViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelViewModel
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustCommentViewModel
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchScreen
@@ -119,6 +127,9 @@ import top.kagg886.pmf.ui.route.main.detail.novel.NovelCommentViewModel
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailViewModel
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarRoute
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
@@ -183,6 +194,8 @@ private val config = SavedStateConfiguration {
             subclass(serializer = IllustDetailPreFetchRoute.serializer())
             subclass(serializer = IllustSimilarRoute.serializer())
             subclass(serializer = NovelDetailRoute.serializer())
+            subclass(serializer = NovelSimilarRoute.serializer())
+            subclass(serializer = AuthorRoute.serializer())
         }
     }
 }
@@ -477,6 +490,17 @@ fun setupEnv() {
                 viewModelOf(::NovelDetailViewModel)
                 viewModelOf(::NovelCommentViewModel)
                 navigation<NovelDetailRoute> { key -> NovelDetailScreen(key) }
+
+                viewModelOf(::NovelSimilarViewModel)
+                navigation<NovelSimilarRoute> { key -> NovelSimilarScreen(key) }
+
+                viewModelOf(::AuthorNovelBookmarkViewModel)
+                viewModelOf(::AuthorIllustBookmarkViewModel)
+                viewModelOf(::AuthorNovelViewModel)
+                viewModelOf(::AuthorIllustViewModel)
+                viewModelOf(::AuthorFollowViewModel)
+                viewModelOf(::AuthorScreenModel)
+                navigation<AuthorRoute> { key -> AuthorScreen(key) }
 
                 single { HistoryIllustViewModel() }
                 single { HistoryNovelViewModel() }

@@ -167,6 +167,7 @@ fun NovelDetailScreen(route: NovelDetailRoute) {
 @Composable
 private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: NovelDetailViewState) {
     val coil = LocalPlatformContext.current
+    val stack = LocalNavBackStack.current
     when (state) {
         is NovelDetailViewState.Error -> ErrorPage(text = state.cause) {
             model.reload(coil)
@@ -440,7 +441,7 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                             Text(stringResource(Res.string.find_similar_novel))
                                         },
                                         modifier = Modifier.clickable {
-                                            // nav.push(NovelSimilarScreen(state.novel.id.toLong()))
+                                            stack += NovelSimilarRoute(state.novel.id.toLong())
                                         },
                                     )
                                 }

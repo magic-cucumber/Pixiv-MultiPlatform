@@ -38,18 +38,18 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.core.screen.ScreenKey
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavKey
 import coil3.compose.AsyncImage
 import coil3.toUri
 import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.openBrowser
 import top.kagg886.pmf.res.*
@@ -68,218 +68,212 @@ import top.kagg886.pmf.ui.util.AuthorCard
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
 import top.kagg886.pmf.util.stringResource
 
-open class AuthorScreen(open val id: Int) : Screen {
+@Serializable
+data class AuthorRoute(val id: Int) : NavKey
 
-    override val key: ScreenKey
-        get() = "author_$id"
+@Composable
+fun AuthorScreen(route: AuthorRoute) {
+    val id = route.id
+    val model = koinViewModel<AuthorScreenModel>(key = "$id") {
+        parametersOf(id)
+    }
+    val state by model.collectAsState()
 
-    @Composable
-    override fun Content() {
-        val model = rememberScreenModel {
-            AuthorScreenModel(id)
-        }
-        val state by model.collectAsState()
-
-        val host = LocalSnackBarHost.current
-        model.collectSideEffect {
-            when (it) {
-                is AuthorScreenSideEffect.Toast -> host.showSnackbar(it.msg)
-            }
-        }
-        Box(Modifier.fillMaxSize()) {
-            AuthorContent(state)
+    val host = LocalSnackBarHost.current
+    model.collectSideEffect {
+        when (it) {
+            is AuthorScreenSideEffect.Toast -> host.showSnackbar(it.msg)
         }
     }
+    Box(Modifier.fillMaxSize()) {
+        AuthorContent(id, state)
+    }
+}
 
-    @Composable
-    open fun AuthorContent(state: AuthorScreenState) {
-        val model = rememberScreenModel {
-            AuthorScreenModel(id)
+@Composable
+private fun AuthorContent(id: Int, state: AuthorScreenState) {
+    val model = koinViewModel<AuthorScreenModel>(key = "$id") {
+        parametersOf(id)
+    }
+    when (state) {
+        AuthorScreenState.Error -> {
+            ErrorPage(text = stringResource(Res.string.load_failed), showBackButton = true) {
+                model.loadUserById(id)
+            }
         }
-        when (state) {
-            AuthorScreenState.Error -> {
-                ErrorPage(text = stringResource(Res.string.load_failed), showBackButton = true) {
-                    model.loadUserById(id)
-                }
-            }
 
-            AuthorScreenState.Loading -> {
-                Loading()
-            }
+        AuthorScreenState.Loading -> {
+            Loading()
+        }
 
-            is AuthorScreenState.Success -> {
-                val pager = rememberPagerState(initialPage = state.initPage) { 5 }
+        is AuthorScreenState.Success -> {
+            val pager = rememberPagerState(initialPage = state.initPage) { 5 }
 
-                KeyListenerFromGlobalPipe {
-                    if (it.type != KeyEventType.KeyUp) return@KeyListenerFromGlobalPipe
-                    when (it.key) {
-                        Key.DirectionRight -> {
-                            pager.animateScrollToPage(
-                                min(
-                                    pager.currentPage + 1,
-                                    pager.pageCount - 1,
-                                ),
-                            )
-                        }
+            KeyListenerFromGlobalPipe {
+                if (it.type != KeyEventType.KeyUp) return@KeyListenerFromGlobalPipe
+                when (it.key) {
+                    Key.DirectionRight -> {
+                        pager.animateScrollToPage(
+                            min(
+                                pager.currentPage + 1,
+                                pager.pageCount - 1,
+                            ),
+                        )
+                    }
 
-                        Key.DirectionLeft -> {
-                            pager.animateScrollToPage(max(pager.currentPage - 1, 0))
-                        }
+                    Key.DirectionLeft -> {
+                        pager.animateScrollToPage(max(pager.currentPage - 1, 0))
                     }
                 }
+            }
 
-                var infoDialog by remember {
-                    mutableStateOf(false)
-                }
+            var infoDialog by remember {
+                mutableStateOf(false)
+            }
 
-                if (infoDialog) {
-                    AlertDialog(
-                        onDismissRequest = { infoDialog = false },
-                        confirmButton = {
-                            TextButton(onClick = { infoDialog = false }) {
-                                Text(stringResource(Res.string.closed))
-                            }
-                        },
-                        title = {
-                            Text(stringResource(Res.string.personal_profile))
-                        },
-                        text = {
-                            Box(Modifier.fillMaxHeight(0.8f)) {
-                                AuthorProfile(state.user)
-                            }
-                        },
-                    )
-                }
-
-                CollapsableTopAppBarScaffold(
-                    background = {
-                        Box(modifier = it.fillMaxWidth().height(280.dp)) {
-                            var preview by remember { mutableStateOf(false) }
-                            if (preview && state.user.profile.backgroundImageUrl != null) {
-                                ImagePreviewer(
-                                    data = listOf(state.user.profile.backgroundImageUrl!!.toUri()),
-                                    onDismiss = { preview = false },
-                                )
-                            }
-
-                            AsyncImage(
-                                model = state.user.profile.backgroundImageUrl,
-                                modifier = Modifier.fillMaxSize()
-                                    .clickable(
-                                        interactionSource = MutableInteractionSource(),
-                                        indication = null,
-                                        onClick = { preview = true },
-                                    ),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                            )
-                            AuthorCard(
-                                modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
-                                user = state.user.user,
-                                onCardClick = {
-                                    infoDialog = true
-                                },
-                                onFavoritePrivateClick = {
-                                    model.followUser(true).join()
-                                },
-                                followNumber = state.user.profile.totalFollowUsers,
-                            ) {
-                                if (it) {
-                                    model.followUser().join()
-                                } else {
-                                    model.unFollowUser().join()
-                                }
-                            }
-                        }
-                    },
-                    navigationIcon = {
-                        val nav = LocalNavigator.currentOrThrow
-                        IconButton(
-                            onClick = {
-                                nav.pop()
-                            },
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null,
-                            )
-                        }
-                    },
-                    actions = {
-                        var show by remember {
-                            mutableStateOf(false)
-                        }
-                        DropdownMenu(
-                            expanded = show,
-                            onDismissRequest = { show = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(stringResource(Res.string.open_in_browser))
-                                },
-                                onClick = {
-                                    openBrowser(
-                                        "https://www.pixiv.net/users/${state.user.user.id}",
-                                    )
-                                    show = false
-                                },
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                show = true
-                            },
-                        ) {
-                            Icon(Icons.Default.Menu, null)
+            if (infoDialog) {
+                AlertDialog(
+                    onDismissRequest = { infoDialog = false },
+                    confirmButton = {
+                        TextButton(onClick = { infoDialog = false }) {
+                            Text(stringResource(Res.string.closed))
                         }
                     },
                     title = {
-                        Text(state.user.user.name)
+                        Text(stringResource(Res.string.personal_profile))
                     },
-                ) {
-                    Column(it) {
-                        ScrollableTabRow(
-                            selectedTabIndex = pager.currentPage,
-                            modifier = Modifier.fillMaxWidth(),
-                            divider = {},
+                    text = {
+                        Box(Modifier.fillMaxHeight(0.8f)) {
+                            AuthorProfile(state.user)
+                        }
+                    },
+                )
+            }
+
+            CollapsableTopAppBarScaffold(
+                background = {
+                    Box(modifier = it.fillMaxWidth().height(280.dp)) {
+                        var preview by remember { mutableStateOf(false) }
+                        if (preview && state.user.profile.backgroundImageUrl != null) {
+                            ImagePreviewer(
+                                data = listOf(state.user.profile.backgroundImageUrl!!.toUri()),
+                                onDismiss = { preview = false },
+                            )
+                        }
+
+                        AsyncImage(
+                            model = state.user.profile.backgroundImageUrl,
+                            modifier = Modifier.fillMaxSize()
+                                .clickable(
+                                    interactionSource = MutableInteractionSource(),
+                                    indication = null,
+                                    onClick = { preview = true },
+                                ),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                        )
+                        AuthorCard(
+                            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp),
+                            user = state.user.user,
+                            onCardClick = {
+                                infoDialog = true
+                            },
+                            onFavoritePrivateClick = {
+                                model.followUser(true).join()
+                            },
+                            followNumber = state.user.profile.totalFollowUsers,
                         ) {
-                            val scope = rememberCoroutineScope()
-                            val tabList = listOf(
-                                Res.string.illustration_works,
-                                Res.string.novel_works,
-                                Res.string.illustration_bookmarks,
-                                Res.string.novel_bookmarks,
-                                Res.string.follow,
-                            ).map { res ->
-                                stringResource(res)
-                            }
-                            tabList.forEachIndexed { index, s ->
-                                Tab(
-                                    selected = pager.currentPage == index,
-                                    modifier = Modifier.height(48.dp),
-                                    onClick = {
-                                        scope.launch {
-                                            pager.animateScrollToPage(index)
-                                        }
-                                    },
-                                ) {
-                                    Text(s)
-                                }
+                            if (it) {
+                                model.followUser().join()
+                            } else {
+                                model.unFollowUser().join()
                             }
                         }
-                        // 修复电脑端滚轮
-                        CompositionLocalProvider(LocalConnectedStateKey provides this@CollapsableTopAppBarScaffold.connectedScrollState) {
-                            HorizontalPager(
-                                state = pager,
-                                modifier = Modifier.fillMaxWidth(),
-                            ) { index ->
-                                when (index) {
-                                    0 -> AuthorIllust(state.user)
-                                    1 -> AuthorNovel(state.user)
-                                    2 -> AuthorIllustBookmark(state.user)
-                                    3 -> AuthorNovelBookmark(state.user)
-                                    4 -> AuthorFollow(state.user)
-                                }
+                    }
+                },
+                navigationIcon = {
+                    val stack = LocalNavBackStack.current
+                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                        )
+                    }
+                },
+                actions = {
+                    var show by remember {
+                        mutableStateOf(false)
+                    }
+                    DropdownMenu(
+                        expanded = show,
+                        onDismissRequest = { show = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(stringResource(Res.string.open_in_browser))
+                            },
+                            onClick = {
+                                openBrowser(
+                                    "https://www.pixiv.net/users/${state.user.user.id}",
+                                )
+                                show = false
+                            },
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            show = true
+                        },
+                    ) {
+                        Icon(Icons.Default.Menu, null)
+                    }
+                },
+                title = {
+                    Text(state.user.user.name)
+                },
+            ) {
+                Column(it) {
+                    ScrollableTabRow(
+                        selectedTabIndex = pager.currentPage,
+                        modifier = Modifier.fillMaxWidth(),
+                        divider = {},
+                    ) {
+                        val scope = rememberCoroutineScope()
+                        val tabList = listOf(
+                            Res.string.illustration_works,
+                            Res.string.novel_works,
+                            Res.string.illustration_bookmarks,
+                            Res.string.novel_bookmarks,
+                            Res.string.follow,
+                        ).map { res ->
+                            stringResource(res)
+                        }
+                        tabList.forEachIndexed { index, s ->
+                            Tab(
+                                selected = pager.currentPage == index,
+                                modifier = Modifier.height(48.dp),
+                                onClick = {
+                                    scope.launch {
+                                        pager.animateScrollToPage(index)
+                                    }
+                                },
+                            ) {
+                                Text(s)
+                            }
+                        }
+                    }
+                    // 修复电脑端滚轮
+                    CompositionLocalProvider(LocalConnectedStateKey provides this@CollapsableTopAppBarScaffold.connectedScrollState) {
+                        HorizontalPager(
+                            state = pager,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { index ->
+                            when (index) {
+                                0 -> AuthorIllust(state.user)
+                                1 -> AuthorNovel(state.user)
+                                2 -> AuthorIllustBookmark(state.user)
+                                3 -> AuthorNovelBookmark(state.user)
+                                4 -> AuthorFollow(state.user)
                             }
                         }
                     }
