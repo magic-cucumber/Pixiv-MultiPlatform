@@ -27,7 +27,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -71,12 +70,6 @@ private fun BookmarkContent(model: BookmarkViewModel, state: BookmarkViewState, 
         is BookmarkViewState.LoadSuccess -> {
             val tagModel = koinViewModel<TagsFetchViewModel>(key = "favorite_${state.restrict}_${state.mode}") {
                 parametersOf(state.restrict, state.mode)
-            }
-
-            BackHandler(drawerState.isOpen) {
-                scope.launch {
-                    drawerState.close()
-                }
             }
 
             SupportRTLModalNavigationDrawer(

@@ -133,7 +133,6 @@ kotlin {
             implementation(libs.compose.material.icons.core)
             implementation(libs.compose.navigation3.ui)
             implementation(libs.compose.ui)
-            implementation(libs.compose.ui.backhandler)
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.compose.components.resources)
             implementation(libs.androidx.lifecycle.viewmodel.navigation3)

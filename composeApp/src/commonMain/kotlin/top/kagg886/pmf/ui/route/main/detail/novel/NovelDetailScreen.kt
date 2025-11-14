@@ -50,7 +50,6 @@ import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
@@ -143,13 +142,7 @@ fun NovelDetailScreen(route: NovelDetailRoute) {
     }
 
     val drawer = rememberDrawerState(DrawerValue.Closed)
-
     val scope = rememberCoroutineScope()
-    BackHandler(drawer.isOpen) {
-        scope.launch {
-            drawer.close()
-        }
-    }
 
     SupportRTLModalNavigationDrawer(
         drawerContent = {
