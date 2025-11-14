@@ -56,7 +56,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
-import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.ui.route.main.search.v2.components.SearchPropertiesPanel
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreen
 import top.kagg886.pmf.ui.util.AuthorCard
@@ -297,7 +297,7 @@ class SearchPanelScreen(
                                                 Text(currentState.novel.caption, maxLines = 3)
                                             },
                                             modifier = Modifier.clickable {
-                                                navigator.push(NovelDetailScreen(currentState.novel.id.toLong()))
+                                                stack += NovelDetailRoute(currentState.novel.id.toLong())
                                             },
                                         )
                                     }

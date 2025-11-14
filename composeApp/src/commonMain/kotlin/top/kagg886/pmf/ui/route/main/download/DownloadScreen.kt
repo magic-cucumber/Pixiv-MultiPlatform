@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -42,7 +41,6 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,8 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
@@ -75,7 +71,7 @@ import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.icon.Download
 import top.kagg886.pmf.ui.component.icon.Save
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
-import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.util.stringResource
 
 class DownloadScreen : Screen {
@@ -400,10 +396,10 @@ class DownloadScreen : Screen {
         model: DownloadScreenModel,
         modifier: Modifier = Modifier,
     ) {
-        val nav = LocalNavigator.currentOrThrow
+        val stack = LocalNavBackStack.current
         OutlinedCard(
             modifier = modifier,
-            onClick = { nav.push(NovelDetailScreen(item.novel.id.toLong())) },
+            onClick = { stack += NovelDetailRoute(item.novel.id.toLong()) },
         ) {
             Row(
                 modifier = Modifier.padding(5.dp).fillMaxWidth(),
@@ -423,8 +419,8 @@ class DownloadScreen : Screen {
                         Text(item.novel.title, maxLines = 1)
                     },
                     trailingContent = {
-                        when {
-                            item.progress == -1f && !item.success -> {
+                        when (item.progress) {
+                            -1f if !item.success -> {
                                 IconButton(
                                     onClick = {
                                         model.startNovelDownload(item.novel)
@@ -436,8 +432,7 @@ class DownloadScreen : Screen {
                                     )
                                 }
                             }
-
-                            item.progress == -1f && item.success -> {
+                            -1f if item.success -> {
                                 Row {
                                     IconButton(
                                         onClick = {
@@ -467,7 +462,6 @@ class DownloadScreen : Screen {
                                     }
                                 }
                             }
-
                             else -> CircularProgressIndicator()
                         }
                     },

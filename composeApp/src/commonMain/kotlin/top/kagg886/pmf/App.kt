@@ -115,6 +115,10 @@ import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewModel
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarRoute
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarScreen
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarViewModel
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelCommentViewModel
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
@@ -178,6 +182,7 @@ private val config = SavedStateConfiguration {
             subclass(serializer = IllustDetailRoute.serializer())
             subclass(serializer = IllustDetailPreFetchRoute.serializer())
             subclass(serializer = IllustSimilarRoute.serializer())
+            subclass(serializer = NovelDetailRoute.serializer())
         }
     }
 }
@@ -468,6 +473,10 @@ fun setupEnv() {
 
                 viewModelOf(::IllustSimilarViewModel)
                 navigation<IllustSimilarRoute> { key -> IllustSimilarScreen(key) }
+
+                viewModelOf(::NovelDetailViewModel)
+                viewModelOf(::NovelCommentViewModel)
+                navigation<NovelDetailRoute> { key -> NovelDetailScreen(key) }
 
                 single { HistoryIllustViewModel() }
                 single { HistoryNovelViewModel() }

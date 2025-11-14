@@ -18,7 +18,7 @@ import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreen
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
-import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.util.stringResource
 
 @Composable
@@ -67,7 +67,7 @@ fun rememberSupportPixivNavigateUriHandler(): UriHandler {
                         val uri = Url(url.trim())
                         when {
                             uri.encodedPath.startsWith("/users/") -> nav.push(AuthorScreen(uri.encodedPath.split("/")[2].toInt()))
-                            uri.encodedPath.startsWith("/novel/show.php") -> nav.push(NovelDetailScreen(uri.encodedPath.split("=")[1].toLong()))
+                            uri.encodedPath.startsWith("/novel/show.php") -> stack += NovelDetailRoute(uri.encodedPath.split("=")[1].toLong())
                             uri.encodedPath.startsWith("/artworks/") -> stack += IllustDetailPreFetchRoute(uri.encodedPath.split("/")[2].toLong())
                         }
                         return@runCatching true
