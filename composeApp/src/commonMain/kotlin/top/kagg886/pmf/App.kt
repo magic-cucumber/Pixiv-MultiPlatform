@@ -99,6 +99,11 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.login.v2.LoginScreen
 import top.kagg886.pmf.ui.route.login.v2.LoginScreenViewModel
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkIllustViewModel
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkNovelViewModel
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkScreen
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
@@ -118,6 +123,7 @@ import top.kagg886.pmf.ui.route.main.space.SpaceScreen
 import top.kagg886.pmf.ui.route.welcome.WelcomeModel
 import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
+import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.SerializedTheme
@@ -156,6 +162,7 @@ private val config = SavedStateConfiguration {
             subclass(serializer = SpaceRoute.serializer())
             subclass(serializer = RankRoute.serializer())
             subclass(serializer = ProfileRoute.serializer())
+            subclass(serializer = BookmarkRoute.serializer())
         }
     }
 }
@@ -430,6 +437,12 @@ fun setupEnv() {
                 navigation<RankRoute> { RankScreen() }
 
                 navigation<ProfileRoute> { key -> ProfileScreen(key) }
+
+                viewModelOf(::BookmarkViewModel)
+                viewModelOf(::TagsFetchViewModel)
+                viewModelOf(::BookmarkIllustViewModel)
+                viewModelOf(::BookmarkNovelViewModel)
+                navigation<BookmarkRoute> { BookmarkScreen() }
 
                 single {
                     HistoryIllustViewModel()

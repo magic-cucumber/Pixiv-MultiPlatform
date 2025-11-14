@@ -42,15 +42,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import top.kagg886.pixko.module.user.SimpleMeProfile
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
-import top.kagg886.pmf.ui.route.main.bookmark.BookmarkScreen
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreenWithoutCollapse
 import top.kagg886.pmf.ui.route.main.download.DownloadScreen
 import top.kagg886.pmf.ui.route.main.history.HistoryScreen
@@ -84,7 +83,7 @@ fun ProfileScreen(route: ProfileRoute) {
         state = drawer,
         drawerContent = {
             ModalDrawerSheet {
-                val nav = LocalNavigator.currentOrThrow
+                val stack = LocalNavBackStack.current
                 OutlinedCard(
                     modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp),
                 ) {
@@ -97,7 +96,7 @@ fun ProfileScreen(route: ProfileRoute) {
                         },
                         leadingContent = {
                             IconButton(
-                                onClick = { nav.pop() },
+                                onClick = { stack.removeLastOrNull() },
                             ) {
                                 Icon(Icons.AutoMirrored.Default.ArrowBack, "")
                             }
@@ -139,7 +138,7 @@ fun ProfileScreen(route: ProfileRoute) {
                     },
                     selected = false,
                     onClick = {
-                        nav.push(BookmarkScreen())
+                        stack += BookmarkRoute
                         scope.launch {
                             drawer.close()
                         }

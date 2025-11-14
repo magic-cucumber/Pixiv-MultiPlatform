@@ -27,18 +27,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.annotation.InternalVoyagerApi
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.internal.BackHandler
+import androidx.compose.ui.backhandler.BackHandler
+import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
 import top.kagg886.pixko.module.user.FavoriteTagsType
 import top.kagg886.pixko.module.user.FavoriteTagsType.Illust
 import top.kagg886.pixko.module.user.FavoriteTagsType.Novel
 import top.kagg886.pixko.module.user.UserLikePublicity
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.SupportRTLModalNavigationDrawer
@@ -48,170 +48,171 @@ import top.kagg886.pmf.ui.util.TagsFetchDrawerSheetContainer
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.util.stringResource
 
-class BookmarkScreen : Screen {
-    @Composable
-    override fun Content() {
-        val model = rememberScreenModel {
-            BookmarkViewModel()
-        }
-        val nav = LocalNavigator.currentOrThrow
-        val state by model.collectAsState()
-        BookmarkContent(model, state) {
-            nav.pop()
-        }
+@Serializable
+data object BookmarkRoute : NavKey
+
+@Composable
+fun BookmarkScreen() {
+    val model = koinViewModel<BookmarkViewModel>()
+    val stack = LocalNavBackStack.current
+    val state by model.collectAsState()
+    BookmarkContent(model, state) {
+        stack.removeLastOrNull()
     }
+}
 
-    @OptIn(InternalVoyagerApi::class)
-    @Composable
-    private fun BookmarkContent(model: BookmarkViewModel, state: BookmarkViewState, goBack: () -> Unit) {
-        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-        val scope = rememberCoroutineScope()
-        when (state) {
-            is BookmarkViewState.Loading -> Loading()
+@Composable
+private fun BookmarkContent(model: BookmarkViewModel, state: BookmarkViewState, goBack: () -> Unit) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    when (state) {
+        is BookmarkViewState.Loading -> Loading()
 
-            is BookmarkViewState.LoadSuccess -> {
-                val tagModel = rememberScreenModel(tag = "favorite_${state.restrict}_${state.mode}") {
-                    TagsFetchViewModel(state.restrict, state.mode)
+        is BookmarkViewState.LoadSuccess -> {
+            val tagModel = koinViewModel<TagsFetchViewModel>(key = "favorite_${state.restrict}_${state.mode}") {
+                parametersOf(state.restrict, state.mode)
+            }
+
+            BackHandler(drawerState.isOpen) {
+                scope.launch {
+                    drawerState.close()
                 }
+            }
 
-                BackHandler(drawerState.isOpen) {
-                    scope.launch {
-                        drawerState.close()
-                    }
-                }
-
-                SupportRTLModalNavigationDrawer(
-                    rtlLayout = true,
-                    drawerContent = {
-                        ModalDrawerSheet {
-                            Column(Modifier.width(DrawerDefaults.MaximumDrawerWidth)) {
-                                TopAppBar(
-                                    title = {
-                                        Text(stringResource(Res.string.bookmark_settings))
-                                    },
-                                )
-                                ListItem(
-                                    overlineContent = {
-                                        Text(stringResource(Res.string.visibility))
-                                    },
-                                    headlineContent = {
-                                        TabRow(
-                                            selectedTabIndex = state.restrict.ordinal,
-                                            containerColor = MaterialTheme.colorScheme.surface,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            divider = {},
-                                            tabs = {
-                                                for (entry in UserLikePublicity.entries) {
-                                                    Tab(
-                                                        selected = state.restrict == entry,
-                                                        onClick = {
-                                                            model.selectPublicity(entry)
-                                                        },
-                                                        text = {
-                                                            when (entry) {
-                                                                UserLikePublicity.PUBLIC -> Text(stringResource(Res.string.public))
-                                                                UserLikePublicity.PRIVATE -> Text(stringResource(Res.string.private))
-                                                            }
-                                                        },
-                                                    )
-                                                }
-                                            },
-                                        )
-                                    },
-                                )
-                                ListItem(
-                                    overlineContent = {
-                                        Text(stringResource(Res.string.type))
-                                    },
-                                    headlineContent = {
-                                        TabRow(
-                                            selectedTabIndex = state.mode.ordinal,
-                                            containerColor = MaterialTheme.colorScheme.surface,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            divider = {},
-                                            tabs = {
-                                                for (entry in FavoriteTagsType.entries) {
-                                                    Tab(
-                                                        selected = state.mode == entry,
-                                                        onClick = {
-                                                            model.selectMode(entry)
-                                                        },
-                                                        text = {
-                                                            when (entry) {
-                                                                Illust -> Text(stringResource(Res.string.illust))
-                                                                Novel -> Text(stringResource(Res.string.novel))
-                                                            }
-                                                        },
-                                                    )
-                                                }
-                                            },
-                                        )
-                                    },
-                                )
-                                TagsFetchDrawerSheetContainer(tagModel)
-                            }
-                        }
-                    },
-                    drawerState = drawerState,
-                ) {
-                    Scaffold(
-                        topBar = {
+            SupportRTLModalNavigationDrawer(
+                rtlLayout = true,
+                drawerContent = {
+                    ModalDrawerSheet {
+                        Column(Modifier.width(DrawerDefaults.MaximumDrawerWidth)) {
                             TopAppBar(
                                 title = {
-                                    Text(stringResource(Res.string.bookmark))
-                                },
-                                navigationIcon = {
-                                    IconButton(
-                                        onClick = {
-                                            goBack()
-                                        },
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                            contentDescription = null,
-                                        )
-                                    }
-                                },
-                                actions = {
-                                    IconButton(
-                                        onClick = {
-                                            scope.launch {
-                                                drawerState.open()
-                                            }
-                                        },
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Star,
-                                            contentDescription = null,
-                                        )
-                                    }
+                                    Text(stringResource(Res.string.bookmark_settings))
                                 },
                             )
-                        },
-                    ) {
-                        Box(Modifier.padding(it).fillMaxSize()) {
-                            val tagState by tagModel.collectAsState()
-                            LaunchedEffect(tagState) {
-                                drawerState.close()
-                                model.selectTagFilter(tagState.selectedTagsFilter)
+                            ListItem(
+                                overlineContent = {
+                                    Text(stringResource(Res.string.visibility))
+                                },
+                                headlineContent = {
+                                    TabRow(
+                                        selectedTabIndex = state.restrict.ordinal,
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        divider = {},
+                                        tabs = {
+                                            for (entry in UserLikePublicity.entries) {
+                                                Tab(
+                                                    selected = state.restrict == entry,
+                                                    onClick = {
+                                                        model.selectPublicity(entry)
+                                                    },
+                                                    text = {
+                                                        when (entry) {
+                                                            UserLikePublicity.PUBLIC -> Text(
+                                                                stringResource(Res.string.public),
+                                                            )
+
+                                                            UserLikePublicity.PRIVATE -> Text(
+                                                                stringResource(Res.string.private),
+                                                            )
+                                                        }
+                                                    },
+                                                )
+                                            }
+                                        },
+                                    )
+                                },
+                            )
+                            ListItem(
+                                overlineContent = {
+                                    Text(stringResource(Res.string.type))
+                                },
+                                headlineContent = {
+                                    TabRow(
+                                        selectedTabIndex = state.mode.ordinal,
+                                        containerColor = MaterialTheme.colorScheme.surface,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        divider = {},
+                                        tabs = {
+                                            for (entry in FavoriteTagsType.entries) {
+                                                Tab(
+                                                    selected = state.mode == entry,
+                                                    onClick = {
+                                                        model.selectMode(entry)
+                                                    },
+                                                    text = {
+                                                        when (entry) {
+                                                            Illust -> Text(stringResource(Res.string.illust))
+                                                            Novel -> Text(stringResource(Res.string.novel))
+                                                        }
+                                                    },
+                                                )
+                                            }
+                                        },
+                                    )
+                                },
+                            )
+                            TagsFetchDrawerSheetContainer(tagModel)
+                        }
+                    }
+                },
+                drawerState = drawerState,
+            ) {
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = {
+                                Text(stringResource(Res.string.bookmark))
+                            },
+                            navigationIcon = {
+                                IconButton(
+                                    onClick = {
+                                        goBack()
+                                    },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                            actions = {
+                                IconButton(
+                                    onClick = {
+                                        scope.launch {
+                                            drawerState.open()
+                                        }
+                                    },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                        )
+                    },
+                ) {
+                    Box(Modifier.padding(it).fillMaxSize()) {
+                        val tagState by tagModel.collectAsState()
+                        LaunchedEffect(tagState) {
+                            drawerState.close()
+                            model.selectTagFilter(tagState.selectedTagsFilter)
+                        }
+
+                        when (state.mode) {
+                            Illust -> {
+                                val illustModel = koinViewModel<BookmarkIllustViewModel>(key = "favorite_${state.restrict}_${state.tagFilter}") {
+                                    parametersOf(state.restrict, state.tagFilter)
+                                }
+                                IllustFetchScreen(illustModel)
                             }
 
-                            when (state.mode) {
-                                Illust -> {
-                                    val illustModel =
-                                        rememberScreenModel(tag = "favorite_${state.restrict}_${state.tagFilter}") {
-                                            BookmarkIllustViewModel(state.restrict, state.tagFilter)
-                                        }
-                                    IllustFetchScreen(illustModel)
+                            Novel -> {
+                                val novelModel = koinViewModel<BookmarkNovelViewModel>(key = "favorite_${state.restrict}_${state.tagFilter}") {
+                                    parametersOf(state.restrict, state.tagFilter)
                                 }
-
-                                Novel -> {
-                                    val novelModel =
-                                        rememberScreenModel(tag = "favorite_${state.restrict}_${state.tagFilter}") {
-                                            BookmarkNovelViewModel(state.restrict, state.tagFilter)
-                                        }
-                                    NovelFetchScreen(novelModel)
-                                }
+                                NovelFetchScreen(novelModel)
                             }
                         }
                     }
