@@ -5,11 +5,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
-import cafe.adriel.voyager.core.model.ScreenModel
 import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import top.kagg886.pixko.module.illust.RankCategory
 import top.kagg886.pmf.NavigationItem
 import top.kagg886.pmf.composeWithAppBar
@@ -33,12 +35,7 @@ private val tabTitleResources = mapOf(
 
 @Composable
 fun RankScreen() = NavigationItem.RANK.composeWithAppBar {
-    val page = remember {
-        object : ScreenModel {
-            val page = mutableIntStateOf(0)
-        }
-    }
-    val index by page.page
+    var index by rememberSerializable { mutableIntStateOf(0) }
     TabContainer(
         modifier = Modifier.fillMaxSize(),
         tab = RankCategory.entries,
@@ -56,10 +53,10 @@ fun RankScreen() = NavigationItem.RANK.composeWithAppBar {
         },
         current = RankCategory.entries[index],
         scrollable = true,
-        onCurrentChange = { page.page.value = RankCategory.entries.indexOf(it) },
-    ) {
-        val model = remember(it.toString()) {
-            IllustRankScreenModel(it)
+        onCurrentChange = { index = RankCategory.entries.indexOf(it) },
+    ) { type ->
+        val model = koinViewModel<IllustRankScreenModel>(key = "$type") {
+            parametersOf(type)
         }
         IllustFetchScreen(model)
     }

@@ -29,14 +29,14 @@ data object RecommendRoute : NavKey
 @Composable
 fun RecommendScreen() = NavigationItem.RECOMMEND.composeWithAppBar {
     val snackbarHostState = LocalSnackBarHost.current
-    var page by rememberSerializable { mutableIntStateOf(0) }
+    var index by rememberSerializable { mutableIntStateOf(0) }
     val tab = listOf(Res.string.illust, Res.string.novel)
     TabContainer(
         modifier = Modifier.fillMaxSize(),
         tab = tab,
         tabTitle = { Text(stringResource(it)) },
-        current = tab[page],
-        onCurrentChange = { page = tab.indexOf(it) },
+        current = tab[index],
+        onCurrentChange = { index = tab.indexOf(it) },
     ) {
         when (it) {
             Res.string.illust -> {

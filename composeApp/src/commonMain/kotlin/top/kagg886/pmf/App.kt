@@ -82,6 +82,7 @@ import org.koin.core.logger.Level.NONE
 import org.koin.core.logger.Level.WARNING
 import org.koin.core.logger.Logger
 import org.koin.core.logger.MESSAGE
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 import org.koin.dsl.navigation3.navigation
 import org.koin.ext.getFullName
@@ -99,6 +100,7 @@ import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
+import top.kagg886.pmf.ui.route.main.rank.IllustRankScreenModel
 import top.kagg886.pmf.ui.route.main.rank.RankRoute
 import top.kagg886.pmf.ui.route.main.rank.RankScreen
 import top.kagg886.pmf.ui.route.main.recommend.RecommendIllustViewModel
@@ -417,6 +419,7 @@ fun setupEnv() {
                 navigation<SpaceRoute> { SpaceScreen() }
                 single { SpaceIllustViewModel() }
                 navigation<RankRoute> { RankScreen() }
+                viewModelOf(::IllustRankScreenModel)
 
                 single {
                     HistoryIllustViewModel()
