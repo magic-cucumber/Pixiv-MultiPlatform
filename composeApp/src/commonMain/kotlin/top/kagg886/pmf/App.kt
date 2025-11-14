@@ -259,7 +259,7 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
                 for (entry in NavigationItem.entries) {
                     NavigationRailItem(
                         selected = entry == type,
-                        onClick = { stack[0] = entry.content },
+                        onClick = { stack += entry.content },
                         icon = { Icon(imageVector = entry.icon, null) },
                         label = { Text(stringResource(entry.title)) },
                     )
@@ -284,7 +284,7 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
                     for (entry in NavigationItem.entries) {
                         NavigationBarItem(
                             selected = entry == type,
-                            onClick = { stack[0] = entry.content },
+                            onClick = { stack += entry.content },
                             icon = { Icon(imageVector = entry.icon, null) },
                             label = { Text(stringResource(entry.title)) },
                         )

@@ -5,10 +5,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
-import cafe.adriel.voyager.core.model.ScreenModel
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -29,19 +29,14 @@ data object RecommendRoute : NavKey
 @Composable
 fun RecommendScreen() = NavigationItem.RECOMMEND.composeWithAppBar {
     val snackbarHostState = LocalSnackBarHost.current
-    val page = remember {
-        object : ScreenModel {
-            val page = mutableIntStateOf(0)
-        }
-    }
-    val index by page.page
+    var page by rememberSerializable { mutableIntStateOf(0) }
     val tab = listOf(Res.string.illust, Res.string.novel)
     TabContainer(
         modifier = Modifier.fillMaxSize(),
         tab = tab,
         tabTitle = { Text(stringResource(it)) },
-        current = tab[index],
-        onCurrentChange = { page.page.value = tab.indexOf(it) },
+        current = tab[page],
+        onCurrentChange = { page = tab.indexOf(it) },
     ) {
         when (it) {
             Res.string.illust -> {
