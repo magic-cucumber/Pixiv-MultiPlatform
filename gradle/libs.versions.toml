@@ -35,8 +35,7 @@ aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref
 androidx-activity-compose = "androidx.activity:activity-compose:1.12.0-rc01"
 #androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "androidx-documentfile" }
 androidx-documentfile = { module = "com.lazygeniouz:dfc", version.ref = "androidx-documentfile" }
-androidx-lifecycle-runtime-compose = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
-androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
@@ -65,7 +64,6 @@ filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "file
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 koin-compose-navigation3 = { module = "io.insert-koin:koin-compose-navigation3", version.ref = "koin" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
-koin-core = "io.insert-koin:koin-core:4.1.1"
 korlibs-io = { module = "com.soywiz:korlibs-io", version.ref = "korlibsIo" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }

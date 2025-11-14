@@ -136,13 +136,11 @@ kotlin {
             implementation(libs.compose.ui.backhandler)
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.compose.components.resources)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation(libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(libs.androidx.paging.compose)
 
             implementation(libs.koin.compose.navigation3)
             implementation(libs.koin.compose.viewmodel)
-            implementation(libs.koin.core)
 
             // orbit
             implementation(libs.orbit.core)
