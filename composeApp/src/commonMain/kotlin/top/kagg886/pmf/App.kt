@@ -228,7 +228,7 @@ private val config = SavedStateConfiguration {
 
 @Composable
 @Preview
-fun App() {
+fun App(start: NavKey = WelcomeRoute) {
     val darkModeValue = remember {
         mutableStateOf(AppConfig.darkMode)
     }
@@ -253,7 +253,7 @@ fun App() {
             Surface(
                 color = MaterialTheme.colorScheme.background,
             ) {
-                val stack = rememberNavBackStack(config, WelcomeRoute)
+                val stack = rememberNavBackStack(config, start)
                 CompositionLocalProvider(
                     LocalNavBackStack provides stack,
                     LocalUriHandler provides rememberSupportPixivNavigateUriHandler(stack),

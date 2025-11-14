@@ -2,6 +2,7 @@ package top.kagg886.pmf
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.*
+import androidx.navigation3.runtime.NavKey
 import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -12,8 +13,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.crash.CrashApp
+import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 
-fun main() {
+fun launch(start: () -> NavKey) {
     setupEnv()
     SingletonImageLoader.setSafe {
         ImageLoader.Builder(PlatformContext.INSTANCE).applyCustomConfig().build()
@@ -51,7 +53,7 @@ fun main() {
                         true
                     },
                 ) {
-                    App()
+                    App(start())
                 }
             }
         }
@@ -65,3 +67,5 @@ fun main() {
     }
     exitProcess(0)
 }
+
+fun main() = launch { WelcomeRoute }
