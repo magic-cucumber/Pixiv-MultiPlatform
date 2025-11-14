@@ -71,6 +71,8 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.novel.Novel
 import top.kagg886.pixko.module.novel.SeriesInfo
+import top.kagg886.pixko.module.search.SearchSort
+import top.kagg886.pixko.module.search.SearchTarget
 import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.backend.AppConfig
@@ -91,6 +93,8 @@ import top.kagg886.pmf.ui.component.icon.View
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
 import top.kagg886.pmf.ui.util.AuthorCard
 import top.kagg886.pmf.ui.util.CommentPanel
 import top.kagg886.pmf.ui.util.HTMLRichText
@@ -374,16 +378,11 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                             Text(text = tag.name)
                                                         },
                                                         onClick = {
-                                                            /*
-                                                            nav.push(
-                                                                SearchResultScreen(
-                                                                    keyword = listOf(tag.name),
-                                                                    sort = SearchSort.DATE_DESC,
-                                                                    target = SearchTarget.PARTIAL_MATCH_FOR_TAGS,
-                                                                ),
+                                                            stack += SearchResultRoute(
+                                                                keyword = listOf(tag.name),
+                                                                sort = SearchSort.DATE_DESC,
+                                                                target = SearchTarget.PARTIAL_MATCH_FOR_TAGS,
                                                             )
-
-                                                             */
                                                         },
                                                     )
                                                 }
@@ -405,14 +404,7 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                 Text(state.novel.series.title)
                                             },
                                             modifier = Modifier.clickable {
-                                                /*
-                                                nav.push(
-                                                    NovelSeriesScreen(
-                                                        state.novel.series.id!!.toInt(),
-                                                    ),
-                                                )
-
-                                                 */
+                                                stack += NovelSeriesRoute(state.novel.series.id!!)
                                             },
                                         )
                                     }

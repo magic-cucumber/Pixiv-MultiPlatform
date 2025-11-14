@@ -204,19 +204,10 @@ fun ProfileScreen(route: ProfileRoute) {
                     },
                 ) {
                     when (it) {
-                        ViewProfile -> {
-                            AuthorScreenWithoutCollapse(PixivConfig.pixiv_user!!.userId)
-                        }
-
+                        ViewProfile -> AuthorScreenWithoutCollapse(PixivConfig.pixiv_user!!.userId)
                         History -> HistoryScreen()
-
-                        Download -> {
-                            DownloadScreen().Content()
-                        }
-
-                        Setting -> {
-                            SettingScreen()
-                        }
+                        Download -> DownloadScreen()
+                        Setting -> SettingScreen()
                     }
                 }
             }

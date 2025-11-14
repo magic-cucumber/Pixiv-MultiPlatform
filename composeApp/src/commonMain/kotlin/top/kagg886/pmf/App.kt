@@ -20,8 +20,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -37,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -45,7 +49,6 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
-import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
 import co.touchlab.kermit.Severity
 import coil3.ComponentRegistry
 import coil3.ImageLoader
@@ -72,6 +75,7 @@ import kotlinx.serialization.modules.subclass
 import okio.Path
 import org.jetbrains.compose.resources.StringResource
 import org.koin.compose.navigation3.koinEntryProvider
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -87,6 +91,7 @@ import org.koin.dsl.module
 import org.koin.dsl.navigation3.navigation
 import org.koin.ext.getFullName
 import org.koin.mp.KoinPlatform
+import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.PlatformConfig
 import top.kagg886.pmf.backend.PlatformEngine
@@ -96,6 +101,7 @@ import top.kagg886.pmf.backend.database.databaseBuilder
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.pixiv.PixivTokenStorage
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.ui.component.dialog.CheckUpdateDialog
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.login.v2.LoginScreen
 import top.kagg886.pmf.ui.route.login.v2.LoginScreenViewModel
@@ -131,8 +137,10 @@ import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarScreen
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
+import top.kagg886.pmf.ui.route.main.download.DownloadScreenSideEffect
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
+import top.kagg886.pmf.ui.route.main.profile.ProfileItem
 import top.kagg886.pmf.ui.route.main.profile.ProfileRoute
 import top.kagg886.pmf.ui.route.main.profile.ProfileScreen
 import top.kagg886.pmf.ui.route.main.rank.IllustRankScreenModel
@@ -142,6 +150,18 @@ import top.kagg886.pmf.ui.route.main.recommend.RecommendIllustViewModel
 import top.kagg886.pmf.ui.route.main.recommend.RecommendNovelViewModel
 import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
 import top.kagg886.pmf.ui.route.main.recommend.RecommendScreen
+import top.kagg886.pmf.ui.route.main.search.v2.EmptySearchRoute
+import top.kagg886.pmf.ui.route.main.search.v2.EmptySearchScreen
+import top.kagg886.pmf.ui.route.main.search.v2.EmptySearchViewModel
+import top.kagg886.pmf.ui.route.main.search.v2.SearchPanelRoute
+import top.kagg886.pmf.ui.route.main.search.v2.SearchPanelScreen
+import top.kagg886.pmf.ui.route.main.search.v2.SearchPanelViewModel
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultScreen
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultViewModel
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreen
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreenModel
 import top.kagg886.pmf.ui.route.main.space.NewestIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceRoute
@@ -151,9 +171,11 @@ import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
+import top.kagg886.pmf.ui.util.rememberSupportPixivNavigateUriHandler
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.SerializedTheme
 import top.kagg886.pmf.util.UgoiraFetcher
+import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.initFileLogger
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
@@ -196,11 +218,14 @@ private val config = SavedStateConfiguration {
             subclass(serializer = NovelDetailRoute.serializer())
             subclass(serializer = NovelSimilarRoute.serializer())
             subclass(serializer = AuthorRoute.serializer())
+            subclass(serializer = NovelSeriesRoute.serializer())
+            subclass(serializer = EmptySearchRoute.serializer())
+            subclass(serializer = SearchResultRoute.serializer())
+            subclass(serializer = SearchPanelRoute.serializer())
         }
     }
 }
 
-@OptIn(ExperimentalVoyagerApi::class)
 @Composable
 @Preview
 fun App() {
@@ -228,16 +253,48 @@ fun App() {
             Surface(
                 color = MaterialTheme.colorScheme.background,
             ) {
-                val backStack = rememberNavBackStack(config, WelcomeRoute)
+                val stack = rememberNavBackStack(config, WelcomeRoute)
                 CompositionLocalProvider(
-                    // LocalUriHandler provides rememberSupportPixivNavigateUriHandler(),
-                    LocalNavBackStack provides backStack,
+                    LocalNavBackStack provides stack,
+                    LocalUriHandler provides rememberSupportPixivNavigateUriHandler(stack),
                 ) {
+                    val s = LocalSnackBarHost.current
+                    CheckUpdateDialog()
+                    val model = koinViewModel<DownloadScreenModel>()
+                    model.collectSideEffect { toast ->
+                        when (toast) {
+                            is DownloadScreenSideEffect.Toast -> {
+                                if (toast.jump) {
+                                    val actionYes = getString(Res.string.yes)
+                                    val result = s.showSnackbar(
+                                        object : SnackbarVisuals {
+                                            override val actionLabel: String
+                                                get() = actionYes
+                                            override val duration: SnackbarDuration
+                                                get() = SnackbarDuration.Long
+                                            override val message: String
+                                                get() = toast.msg
+                                            override val withDismissAction: Boolean
+                                                get() = true
+                                        },
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        stack += ProfileRoute(
+                                            PixivConfig.pixiv_user!!,
+                                            ProfileItem.Download,
+                                        )
+                                    }
+                                    return@collectSideEffect
+                                }
+                                s.showSnackbar(toast.msg, withDismissAction = true)
+                            }
+                        }
+                    }
                     AppScaffold { modifier ->
                         NavDisplay(
-                            backStack = backStack,
+                            backStack = stack,
                             modifier = modifier.fillMaxSize(),
-                            onBack = { backStack.removeLastOrNull() },
+                            onBack = { stack.removeLastOrNull() },
                             entryDecorators = listOf(
                                 rememberSaveableStateHolderNavEntryDecorator(),
                                 rememberViewModelStoreNavEntryDecorator(),
@@ -246,50 +303,6 @@ fun App() {
                         )
                     }
                 }
-
-                /*
-                Navigator(initScreen) {
-
-                        val s = LocalSnackBarHost.current
-                        CheckUpdateDialog()
-
-                        val model = KoinPlatform.getKoin()
-                            .get<DownloadScreenModel>(clazz = DownloadScreenModel::class)
-                        model.collectSideEffect { toast ->
-                            when (toast) {
-                                is DownloadScreenSideEffect.Toast -> {
-                                    if (toast.jump) {
-                                        val actionYes = getString(Res.string.yes)
-                                        val result = s.showSnackbar(
-                                            object : SnackbarVisuals {
-                                                override val actionLabel: String
-                                                    get() = actionYes
-                                                override val duration: SnackbarDuration
-                                                    get() = SnackbarDuration.Long
-                                                override val message: String
-                                                    get() = toast.msg
-                                                override val withDismissAction: Boolean
-                                                    get() = true
-                                            },
-                                        )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            it.push(
-                                                ProfileScreen(
-                                                    PixivConfig.pixiv_user!!,
-                                                    ProfileItem.Download,
-                                                ),
-                                            )
-                                        }
-                                        return@collectSideEffect
-                                    }
-                                    s.showSnackbar(toast.msg, withDismissAction = true)
-                                }
-                            }
-                        }
-
-                    }
-
-                 */
             }
         }
     }
@@ -369,10 +382,8 @@ fun ProfileAvatar() {
 
 @Composable
 fun SearchButton() {
-    IconButton(
-        onClick = {
-        },
-    ) {
+    val stack = LocalNavBackStack.current
+    IconButton(onClick = { stack += EmptySearchRoute }) {
         Icon(imageVector = Icons.Default.Search, contentDescription = null)
     }
 }
@@ -502,6 +513,18 @@ fun setupEnv() {
                 viewModelOf(::AuthorScreenModel)
                 navigation<AuthorRoute> { key -> AuthorScreen(key) }
 
+                viewModelOf(::NovelSeriesScreenModel)
+                navigation<NovelSeriesRoute> { key -> NovelSeriesScreen(key) }
+
+                viewModelOf(::EmptySearchViewModel)
+                navigation<EmptySearchRoute> { EmptySearchScreen() }
+
+                viewModelOf(::SearchResultViewModel)
+                navigation<SearchResultRoute> { key -> SearchResultScreen(key) }
+
+                viewModelOf(::SearchPanelViewModel)
+                navigation<SearchPanelRoute> { key -> SearchPanelScreen(key) }
+
                 single { HistoryIllustViewModel() }
                 single { HistoryNovelViewModel() }
 
@@ -540,9 +563,7 @@ fun setupEnv() {
                     }.build()
                 }
                 single { DownloadScreenModel() }
-                single {
-                    UpdateCheckViewModel()
-                }
+                single { UpdateCheckViewModel() }
             },
         )
     }

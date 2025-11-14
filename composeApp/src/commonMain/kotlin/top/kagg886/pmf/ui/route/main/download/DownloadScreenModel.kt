@@ -6,7 +6,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import arrow.fx.coroutines.fixedRate
 import arrow.fx.coroutines.raceN
-import cafe.adriel.voyager.core.model.ScreenModel
 import com.fleeksoft.ksoup.nodes.Document
 import com.fleeksoft.ksoup.nodes.Entities
 import io.ktor.client.*
@@ -62,11 +61,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.*
 
-class DownloadScreenModel :
-    ContainerHost<DownloadScreenState, DownloadScreenSideEffect>,
-    ViewModel(),
-    ScreenModel,
-    KoinComponent {
+class DownloadScreenModel : ContainerHost<DownloadScreenState, DownloadScreenSideEffect>, ViewModel(), KoinComponent {
     private val database by inject<AppDatabase>()
 
     private val net by inject<HttpClient>()

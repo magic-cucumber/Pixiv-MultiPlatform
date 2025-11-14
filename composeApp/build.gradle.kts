@@ -142,11 +142,6 @@ kotlin {
 
             implementation(libs.koin.compose.navigation3)
             implementation(libs.koin.compose.viewmodel)
-
-            // voyager
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.koin)
-            implementation(libs.voyager.transitions)
             implementation(libs.koin.core)
 
             // orbit

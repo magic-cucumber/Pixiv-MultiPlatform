@@ -11,8 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import io.ktor.http.Url
-import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
@@ -20,7 +21,7 @@ import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.util.stringResource
 
 @Composable
-fun rememberSupportPixivNavigateUriHandler(): UriHandler {
+fun rememberSupportPixivNavigateUriHandler(stack: NavBackStack<NavKey>): UriHandler {
     val origin = LocalUriHandler.current
     var wantToOpenLink by remember {
         mutableStateOf("")
@@ -55,7 +56,6 @@ fun rememberSupportPixivNavigateUriHandler(): UriHandler {
         )
     }
 
-    val stack = LocalNavBackStack.current
     return remember(origin) {
         object : UriHandler {
             override fun openUri(url: String) {

@@ -35,17 +35,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.core.screen.ScreenKey
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.novel.SeriesDetail
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.openBrowser
 import top.kagg886.pmf.res.*
@@ -57,208 +55,205 @@ import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.ui.util.NovelFetchViewModel
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.stringResource
-class NovelSeriesScreen(private val id: Int) : Screen {
-    override val key: ScreenKey = "novel_series_$id"
 
-    @Composable
-    override fun Content() {
-        val model = rememberScreenModel {
-            NovelSeriesScreenModel(id)
-        }
-        val snack = LocalSnackBarHost.current
-        model.collectSideEffect {
-            when (it) {
-                is NovelSeriesScreenSideEffect.Toast -> {
-                    snack.showSnackbar(it.msg)
-                }
-            }
-        }
-        val state by model.collectAsState()
-        NovelSeriesScreenContent(state, model)
+@Serializable
+data class NovelSeriesRoute(val id: Int) : NavKey
+
+@Composable
+fun NovelSeriesScreen(route: NovelSeriesRoute) {
+    val id = route.id
+    val model = koinViewModel<NovelSeriesScreenModel>(key = "$id") {
+        parametersOf(id)
     }
-
-    @Composable
-    private fun NovelSeriesScreenContent(state: NovelSeriesScreenState, model: NovelSeriesScreenModel) {
-        when (state) {
-            NovelSeriesScreenState.Loading -> Loading()
-            is NovelSeriesScreenState.LoadingFailed -> ErrorPage(text = state.msg) {
-                model.reload()
-            }
-
-            is NovelSeriesScreenState.LoadingSuccess -> {
-                val novelModel = koinViewModel<NovelSeriesFetchModel>(key = "$id") {
-                    parametersOf(id)
-                }
-
-                if (useWideScreenMode) {
-                    WideNovelSeriesScreenContent(state.info, novelModel)
-                    return
-                }
-                NovelSeriesScreenContent(state.info, novelModel)
+    val snack = LocalSnackBarHost.current
+    model.collectSideEffect {
+        when (it) {
+            is NovelSeriesScreenSideEffect.Toast -> {
+                snack.showSnackbar(it.msg)
             }
         }
     }
+    val state by model.collectAsState()
+    NovelSeriesScreenContent(id, state, model)
+}
 
-    @Composable
-    private fun WideNovelSeriesScreenContent(info: SeriesDetail, model: NovelFetchViewModel) {
-        PermanentNavigationDrawer(
-            drawerContent = {
-                NovelSeriesScreenDrawerContent(info)
-            },
-        ) {
-            NovelFetchScreen(model)
+@Composable
+private fun NovelSeriesScreenContent(id: Int, state: NovelSeriesScreenState, model: NovelSeriesScreenModel) {
+    when (state) {
+        NovelSeriesScreenState.Loading -> Loading()
+        is NovelSeriesScreenState.LoadingFailed -> ErrorPage(text = state.msg) {
+            model.reload()
         }
-    }
 
-    @Composable
-    private fun NovelSeriesScreenContent(info: SeriesDetail, model: NovelFetchViewModel) {
-        val state = rememberDrawerState(DrawerValue.Open)
-        SupportRTLModalNavigationDrawer(
-            drawerContent = {
-                NovelSeriesScreenDrawerContent(info)
-            },
-            drawerState = state,
-        ) {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            Text(stringResource(Res.string.novel_series))
-                        },
-                        navigationIcon = {
-                            val scope = rememberCoroutineScope()
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        state.open()
-                                    }
-                                },
-                            ) {
-                                Icon(
-                                    Icons.Default.Menu,
-                                    null,
-                                )
-                            }
-                        },
-                        actions = {
-                            var expanded by remember { mutableStateOf(false) }
-                            IconButton(
-                                onClick = {
-                                    expanded = true
-                                },
-                            ) {
-                                Icon(Icons.Default.Menu, null)
-                            }
-                            DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false },
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(Res.string.open_in_browser)) },
-                                    onClick = {
-                                        openBrowser("https://www.pixiv.net/novel/series/$id")
-                                        expanded = false
-                                    },
-                                )
-                            }
-                        },
-                    )
-                },
-            ) {
-                Box(Modifier.padding(it)) {
-                    NovelFetchScreen(model)
-                }
+        is NovelSeriesScreenState.LoadingSuccess -> {
+            val novelModel = koinViewModel<NovelSeriesFetchModel>(key = "$id") {
+                parametersOf(id)
             }
+
+            if (useWideScreenMode) {
+                WideNovelSeriesScreenContent(id, state.info, novelModel)
+                return
+            }
+            NovelSeriesScreenContent(id, state.info, novelModel)
         }
     }
+}
 
-    @Composable
-    private fun NovelSeriesScreenDrawerContent(info: SeriesDetail) {
-        PermanentDrawerSheet {
-            Column(Modifier.width(DrawerDefaults.MaximumDrawerWidth)) {
+@Composable
+private fun WideNovelSeriesScreenContent(id: Int, info: SeriesDetail, model: NovelFetchViewModel) {
+    PermanentNavigationDrawer(
+        drawerContent = {
+            NovelSeriesScreenDrawerContent(id, info)
+        },
+    ) {
+        NovelFetchScreen(model)
+    }
+}
+
+@Composable
+private fun NovelSeriesScreenContent(id: Int, info: SeriesDetail, model: NovelFetchViewModel) {
+    val state = rememberDrawerState(DrawerValue.Open)
+    SupportRTLModalNavigationDrawer(
+        drawerContent = {
+            NovelSeriesScreenDrawerContent(id, info)
+        },
+        drawerState = state,
+    ) {
+        Scaffold(
+            topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = info.title,
-                            style = MaterialTheme.typography.titleMedium,
-                        )
+                        Text(stringResource(Res.string.novel_series))
                     },
                     navigationIcon = {
-                        val nav = LocalNavigator.currentOrThrow
+                        val scope = rememberCoroutineScope()
                         IconButton(
                             onClick = {
-                                nav.pop()
+                                scope.launch {
+                                    state.open()
+                                }
                             },
                         ) {
                             Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
+                                Icons.Default.Menu,
                                 null,
                             )
                         }
                     },
-                )
-
-                LazyColumn {
-                    item {
-                        OutlinedCard(modifier = Modifier.padding(horizontal = 8.dp)) {
-                            ListItem(
-                                headlineContent = {
-                                    Text(info.caption)
+                    actions = {
+                        var expanded by remember { mutableStateOf(false) }
+                        IconButton(
+                            onClick = {
+                                expanded = true
+                            },
+                        ) {
+                            Icon(Icons.Default.Menu, null)
+                        }
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.open_in_browser)) },
+                                onClick = {
+                                    openBrowser("https://www.pixiv.net/novel/series/$id")
+                                    expanded = false
                                 },
                             )
                         }
-                    }
+                    },
+                )
+            },
+        ) {
+            Box(Modifier.padding(it)) {
+                NovelFetchScreen(model)
+            }
+        }
+    }
+}
 
-                    item {
-                        Spacer(Modifier.height(16.dp))
-                        // TODO 添加关注
-                        val model = rememberScreenModel {
-                            NovelSeriesScreenModel(id)
-                        }
-                        AuthorCard(
-                            modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth()
-                                .padding(horizontal = 8.dp),
-                            info.user,
-                            onFavoriteClick = {
-                                val job = if (it) model.followUser(false) else model.unFollowUser()
-                                job.join()
-                            },
-                            onFavoritePrivateClick = {
-                                val job = model.followUser(true)
-                                job.join()
+@Composable
+private fun NovelSeriesScreenDrawerContent(id: Int, info: SeriesDetail) {
+    PermanentDrawerSheet {
+        Column(Modifier.width(DrawerDefaults.MaximumDrawerWidth)) {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = info.title,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                navigationIcon = {
+                    val stack = LocalNavBackStack.current
+                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            null,
+                        )
+                    }
+                },
+            )
+
+            LazyColumn {
+                item {
+                    OutlinedCard(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        ListItem(
+                            headlineContent = {
+                                Text(info.caption)
                             },
                         )
                     }
+                }
 
-                    item {
-                        Spacer(Modifier.height(16.dp))
-                        OutlinedCard(modifier = Modifier.padding(horizontal = 8.dp)) {
-                            ListItem(
-                                overlineContent = {
-                                    Text(stringResource(Res.string.novel_count))
-                                },
-                                headlineContent = {
-                                    Text(info.pageCount.toString())
-                                },
-                            )
-                        }
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    // TODO 添加关注
+                    val model = koinViewModel<NovelSeriesScreenModel>(key = "$id") {
+                        parametersOf(id)
                     }
-                    item {
-                        Spacer(Modifier.height(16.dp))
-                        OutlinedCard(modifier = Modifier.padding(horizontal = 8.dp)) {
-                            ListItem(
-                                overlineContent = {
-                                    Text(stringResource(Res.string.word_count))
-                                },
-                                headlineContent = {
-                                    Text(info.totalCharacterCount.toString())
-                                },
-                            )
-                        }
+                    AuthorCard(
+                        modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth()
+                            .padding(horizontal = 8.dp),
+                        info.user,
+                        onFavoriteClick = {
+                            val job = if (it) model.followUser(false) else model.unFollowUser()
+                            job.join()
+                        },
+                        onFavoritePrivateClick = {
+                            val job = model.followUser(true)
+                            job.join()
+                        },
+                    )
+                }
+
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedCard(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        ListItem(
+                            overlineContent = {
+                                Text(stringResource(Res.string.novel_count))
+                            },
+                            headlineContent = {
+                                Text(info.pageCount.toString())
+                            },
+                        )
                     }
-                    item {
-                        Spacer(Modifier.height(16.dp))
+                }
+                item {
+                    Spacer(Modifier.height(16.dp))
+                    OutlinedCard(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        ListItem(
+                            overlineContent = {
+                                Text(stringResource(Res.string.word_count))
+                            },
+                            headlineContent = {
+                                Text(info.totalCharacterCount.toString())
+                            },
+                        )
                     }
+                }
+                item {
+                    Spacer(Modifier.height(16.dp))
                 }
             }
         }

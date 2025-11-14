@@ -29,13 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.annotation.InternalVoyagerApi
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.core.screen.ScreenKey
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.internal.BackHandler
+import androidx.navigation3.runtime.NavKey
 import coil3.compose.AsyncImage
 import com.dokar.chiptextfield.Chip
 import com.dokar.chiptextfield.ChipTextFieldState
@@ -44,6 +38,9 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.Tag
@@ -58,297 +55,277 @@ import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.ui.route.main.search.v2.components.SearchPropertiesPanel
-import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreen
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
 import top.kagg886.pmf.ui.util.AuthorCard
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.stringResource
 
-class SearchPanelScreen(
-    private val sort: SearchSort = SearchSort.DATE_DESC,
-    private val target: SearchTarget = SearchTarget.PARTIAL_MATCH_FOR_TAGS,
-    private val keyword: List<String> = listOf(),
-    private val initialText: String = "",
-) : Screen {
-    override val key: ScreenKey by lazy {
-        "search_panel_${sort}_${target}_${keyword}_$initialText"
+@Serializable
+data class SearchPanelRoute(
+    val sort: SearchSort = SearchSort.DATE_DESC,
+    val target: SearchTarget = SearchTarget.PARTIAL_MATCH_FOR_TAGS,
+    val keyword: List<String> = listOf(),
+    val initialText: String = "",
+) : NavKey
+
+@Composable
+fun SearchPanelScreen(route: SearchPanelRoute) {
+    val (sort, target, keyword, initialText) = route
+    val model = koinViewModel<SearchPanelViewModel> { parametersOf(sort, target, keyword, initialText) }
+    val state by model.collectAsState()
+    val stack = LocalNavBackStack.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    model.collectSideEffect { sideEffect ->
+        when (sideEffect) {
+            is SearchPanelSideEffect.Toast -> {
+                snackbarHostState.showSnackbar(sideEffect.message)
+            }
+        }
     }
 
-    @OptIn(InternalVoyagerApi::class)
-    @Composable
-    override fun Content() {
-        val model = rememberScreenModel { SearchPanelViewModel(sort, target, keyword, initialText) }
-        val state by model.collectAsState()
-        val navigator = LocalNavigator.currentOrThrow
-        val stack = LocalNavBackStack.current
-        val snackbarHostState = remember { SnackbarHostState() }
+    val chipState = remember(state.keyword) {
+        ChipTextFieldState(chips = state.keyword.map { Chip(it) })
+    }
 
-        model.collectSideEffect { sideEffect ->
-            when (sideEffect) {
-                is SearchPanelSideEffect.Toast -> {
-                    snackbarHostState.showSnackbar(sideEffect.message)
-                }
-            }
+    LaunchedEffect(chipState.chips) {
+        val target = chipState.chips.map { it.text }
+        if (target.size == state.keyword.size && (target zip state.keyword).all { it.first == it.second }) {
+            return@LaunchedEffect
         }
+        model.updateKeywords(target)
+    }
 
-        BackHandler(true) {
-            navigator.pop()
-        }
-
-        val chipState = remember(state.keyword) {
-            ChipTextFieldState(chips = state.keyword.map { Chip(it) })
-        }
-
-        LaunchedEffect(chipState.chips) {
-            val target = chipState.chips.map { it.text }
-            if (target.size == state.keyword.size && (target zip state.keyword).all { it.first == it.second }) {
-                return@LaunchedEffect
-            }
-            model.updateKeywords(target)
-        }
-
-        Scaffold(
-            topBar = {
-                when (state.target) {
-                    SearchTarget.EXACT_MATCH_FOR_TAGS, SearchTarget.PARTIAL_MATCH_FOR_TAGS -> {
-                        LaunchedEffect(Unit) {
-                            snapshotFlow { state.text }.debounce(0.5.seconds)
-                                .distinctUntilChanged()
-                                .collectLatest { msg ->
-                                    if (msg.isNotBlank()) {
-                                        model.searchTagOrExactSearch(msg)
-                                    }
+    Scaffold(
+        topBar = {
+            when (state.target) {
+                SearchTarget.EXACT_MATCH_FOR_TAGS, SearchTarget.PARTIAL_MATCH_FOR_TAGS -> {
+                    LaunchedEffect(Unit) {
+                        snapshotFlow { state.text }.debounce(0.5.seconds)
+                            .distinctUntilChanged()
+                            .collectLatest { msg ->
+                                if (msg.isNotBlank()) {
+                                    model.searchTagOrExactSearch(msg)
                                 }
-                        }
-                        ChipTextField(
-                            state = chipState,
-                            value = state.text,
-                            onValueChange = { model.updateText(it) },
-                            onSubmit = {
-                                model.selectTag(Tag(it))
-                                model.updateText("")
-                                Chip(it)
-                            },
-                            leadingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        navigator.pop()
-                                    },
-                                ) {
-                                    Icon(Icons.AutoMirrored.Default.ArrowBack, null)
-                                }
-                            },
-                            trailingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        if (state.keyword.isNotEmpty()) {
-                                            navigator.push(
-                                                SearchResultScreen(
-                                                    state.keyword,
-                                                    state.sort,
-                                                    state.target,
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    enabled = state.keyword.isNotEmpty() && state.panelState !is SearchPanelState.RedirectToPage,
-                                ) {
-                                    Icon(Icons.Default.Search, null)
-                                }
-                            },
-                        )
+                            }
                     }
-                    else -> {
-                        LaunchedEffect(Unit) {
-                            model.updateKeywords(listOf())
-                            model.updateText(initialText)
-                        }
-                        TextField(
-                            value = state.text,
-                            modifier = Modifier.fillMaxWidth(),
-                            onValueChange = { model.updateText(it) },
-                            leadingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        navigator.pop()
-                                    },
-                                ) {
-                                    Icon(Icons.AutoMirrored.Default.ArrowBack, null)
-                                }
-                            },
-                            trailingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        if (state.text.isNotEmpty()) {
-                                            navigator.replace(
-                                                SearchResultScreen(
-                                                    listOf(state.text),
-                                                    state.sort,
-                                                    state.target,
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    enabled = state.text.isNotEmpty(),
-                                ) {
-                                    Icon(Icons.Default.Search, null)
-                                }
-                            },
-                        )
-                    }
-                }
-            },
-        ) { paddingValues ->
-            Column(Modifier.padding(paddingValues)) {
-                AnimatedContent(state.panelState) { currentState ->
-                    when (currentState) {
-                        is SearchPanelState.SettingProperties -> {
-                            SearchPropertiesPanel(
-                                modifier = Modifier.verticalScroll(rememberScrollState()),
-                                sort = state.sort,
-                                target = state.target,
-                                tag = state.hotTag,
-                                onSortChange = { model.updateSort(it) },
-                                onTargetChange = { model.updateTarget(it) },
-                                onTagRequestRefresh = { model.refreshHotTag() },
-                                onTagClicked = { t -> model.selectTag(t.tag) },
-                            )
-                        }
-
-                        is SearchPanelState.Searching -> {
-                            Loading()
-                        }
-
-                        is SearchPanelState.SearchingFailed -> {
-                            ErrorPage(
-                                text = currentState.msg,
+                    ChipTextField(
+                        state = chipState,
+                        value = state.text,
+                        onValueChange = { model.updateText(it) },
+                        onSubmit = {
+                            model.selectTag(Tag(it))
+                            model.updateText("")
+                            Chip(it)
+                        },
+                        leadingIcon = {
+                            IconButton(onClick = { stack.removeLastOrNull() }) {
+                                Icon(Icons.AutoMirrored.Default.ArrowBack, null)
+                            }
+                        },
+                        trailingIcon = {
+                            IconButton(
                                 onClick = {
-                                    model.searchTagOrExactSearch(state.text)
+                                    if (state.keyword.isNotEmpty()) {
+                                        stack += SearchResultRoute(
+                                            state.keyword,
+                                            state.sort,
+                                            state.target,
+                                        )
+                                    }
                                 },
-                            )
-                        }
+                                enabled = state.keyword.isNotEmpty() && state.panelState !is SearchPanelState.RedirectToPage,
+                            ) {
+                                Icon(Icons.Default.Search, null)
+                            }
+                        },
+                    )
+                }
+                else -> {
+                    LaunchedEffect(Unit) {
+                        model.updateKeywords(listOf())
+                        model.updateText(initialText)
+                    }
+                    TextField(
+                        value = state.text,
+                        modifier = Modifier.fillMaxWidth(),
+                        onValueChange = { model.updateText(it) },
+                        leadingIcon = {
+                            IconButton(onClick = { stack.removeLastOrNull() }) {
+                                Icon(Icons.AutoMirrored.Default.ArrowBack, null)
+                            }
+                        },
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    if (state.text.isNotEmpty()) {
+                                        stack += SearchResultRoute(
+                                            listOf(state.text),
+                                            state.sort,
+                                            state.target,
+                                        )
+                                    }
+                                },
+                                enabled = state.text.isNotEmpty(),
+                            ) {
+                                Icon(Icons.Default.Search, null)
+                            }
+                        },
+                    )
+                }
+            }
+        },
+    ) { paddingValues ->
+        Column(Modifier.padding(paddingValues)) {
+            AnimatedContent(state.panelState) { currentState ->
+                when (currentState) {
+                    is SearchPanelState.SettingProperties -> {
+                        SearchPropertiesPanel(
+                            modifier = Modifier.verticalScroll(rememberScrollState()),
+                            sort = state.sort,
+                            target = state.target,
+                            tag = state.hotTag,
+                            onSortChange = { model.updateSort(it) },
+                            onTargetChange = { model.updateTarget(it) },
+                            onTagRequestRefresh = { model.refreshHotTag() },
+                            onTagClicked = { t -> model.selectTag(t.tag) },
+                        )
+                    }
 
-                        is SearchPanelState.SelectTag -> {
-                            LazyColumn {
-                                items(currentState.tags) {
+                    is SearchPanelState.Searching -> {
+                        Loading()
+                    }
+
+                    is SearchPanelState.SearchingFailed -> {
+                        ErrorPage(
+                            text = currentState.msg,
+                            onClick = {
+                                model.searchTagOrExactSearch(state.text)
+                            },
+                        )
+                    }
+
+                    is SearchPanelState.SelectTag -> {
+                        LazyColumn {
+                            items(currentState.tags) {
+                                ListItem(
+                                    headlineContent = {
+                                        Text(it.name)
+                                    },
+                                    supportingContent = {
+                                        Text(it.translatedName ?: "")
+                                    },
+                                    modifier = Modifier.clickable {
+                                        model.selectTag(it)
+                                    },
+                                )
+                            }
+                        }
+                    }
+
+                    is SearchPanelState.RedirectToPage -> {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            item {
+                                if (currentState.illust != null) {
                                     ListItem(
+                                        overlineContent = {
+                                            Text(stringResource(Res.string.found_illust))
+                                        },
+                                        leadingContent = {
+                                            AsyncImage(
+                                                model = currentState.illust.contentImages.get()!![0],
+                                                modifier = Modifier.height(144.dp).aspectRatio(
+                                                    ratio = currentState.illust.width / currentState.illust.height.toFloat(),
+                                                ),
+                                                contentDescription = null,
+                                            )
+                                        },
                                         headlineContent = {
-                                            Text(it.name)
+                                            Text(currentState.illust.title)
                                         },
                                         supportingContent = {
-                                            Text(it.translatedName ?: "")
+                                            AuthorCard(
+                                                user = currentState.illust.user,
+                                            )
                                         },
                                         modifier = Modifier.clickable {
-                                            model.selectTag(it)
+                                            stack += IllustDetailRoute(currentState.illust)
                                         },
                                     )
                                 }
                             }
-                        }
 
-                        is SearchPanelState.RedirectToPage -> {
-                            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                                item {
-                                    if (currentState.illust != null) {
-                                        ListItem(
-                                            overlineContent = {
-                                                Text(stringResource(Res.string.found_illust))
-                                            },
-                                            leadingContent = {
-                                                AsyncImage(
-                                                    model = currentState.illust.contentImages.get()!![0],
-                                                    modifier = Modifier.height(144.dp).aspectRatio(
-                                                        ratio = currentState.illust.width / currentState.illust.height.toFloat(),
-                                                    ),
-                                                    contentDescription = null,
-                                                )
-                                            },
-                                            headlineContent = {
-                                                Text(currentState.illust.title)
-                                            },
-                                            supportingContent = {
-                                                AuthorCard(
-                                                    user = currentState.illust.user,
-                                                )
-                                            },
-                                            modifier = Modifier.clickable {
-                                                stack += IllustDetailRoute(currentState.illust)
-                                            },
-                                        )
-                                    }
+                            item {
+                                if (currentState.novel != null) {
+                                    ListItem(
+                                        overlineContent = {
+                                            Text(stringResource(Res.string.found_novel))
+                                        },
+                                        leadingContent = {
+                                            AsyncImage(
+                                                model = currentState.novel.imageUrls.medium!!,
+                                                modifier = Modifier.height(144.dp).aspectRatio(70 / 144f),
+                                                contentDescription = null,
+                                            )
+                                        },
+                                        headlineContent = {
+                                            Text(currentState.novel.title)
+                                        },
+                                        supportingContent = {
+                                            Text(currentState.novel.caption, maxLines = 3)
+                                        },
+                                        modifier = Modifier.clickable {
+                                            stack += NovelDetailRoute(currentState.novel.id.toLong())
+                                        },
+                                    )
                                 }
+                            }
 
-                                item {
-                                    if (currentState.novel != null) {
-                                        ListItem(
-                                            overlineContent = {
-                                                Text(stringResource(Res.string.found_novel))
-                                            },
-                                            leadingContent = {
-                                                AsyncImage(
-                                                    model = currentState.novel.imageUrls.medium!!,
-                                                    modifier = Modifier.height(144.dp).aspectRatio(70 / 144f),
-                                                    contentDescription = null,
-                                                )
-                                            },
-                                            headlineContent = {
-                                                Text(currentState.novel.title)
-                                            },
-                                            supportingContent = {
-                                                Text(currentState.novel.caption, maxLines = 3)
-                                            },
-                                            modifier = Modifier.clickable {
-                                                stack += NovelDetailRoute(currentState.novel.id.toLong())
-                                            },
-                                        )
-                                    }
+                            item {
+                                if (currentState.series != null) {
+                                    ListItem(
+                                        overlineContent = {
+                                            Text(stringResource(Res.string.found_novel_series))
+                                        },
+                                        headlineContent = {
+                                            Text(currentState.series.novelSeriesDetail.title)
+                                        },
+                                        modifier = Modifier.clickable {
+                                            stack += NovelSeriesRoute(currentState.series.novelSeriesDetail.id)
+                                        },
+                                    )
                                 }
+                            }
 
-                                item {
-                                    if (currentState.series != null) {
-                                        ListItem(
-                                            overlineContent = {
-                                                Text(stringResource(Res.string.found_novel_series))
-                                            },
-                                            headlineContent = {
-                                                Text(currentState.series.novelSeriesDetail.title)
-                                            },
-                                            modifier = Modifier.clickable {
-                                                navigator.push(NovelSeriesScreen(currentState.series.novelSeriesDetail.id))
-                                            },
-                                        )
-                                    }
+                            item {
+                                if (currentState.user != null) {
+                                    val toast = LocalSnackBarHost.current
+                                    ListItem(
+                                        overlineContent = {
+                                            Text(stringResource(Res.string.found_user))
+                                        },
+                                        headlineContent = {},
+                                        supportingContent = {
+                                            AuthorCard(
+                                                user = currentState.user.user,
+                                                onFavoriteClick = {
+                                                    toast.showSnackbar(getString(Res.string.please_bookmark_author_to_detail))
+                                                },
+                                            )
+                                        },
+                                    )
                                 }
+                            }
 
-                                item {
-                                    if (currentState.user != null) {
-                                        val toast = LocalSnackBarHost.current
-                                        ListItem(
-                                            overlineContent = {
-                                                Text(stringResource(Res.string.found_user))
-                                            },
-                                            headlineContent = {},
-                                            supportingContent = {
-                                                AuthorCard(
-                                                    user = currentState.user.user,
-                                                    onFavoriteClick = {
-                                                        toast.showSnackbar(getString(Res.string.please_bookmark_author_to_detail))
-                                                    },
-                                                )
-                                            },
-                                        )
-                                    }
-                                }
-
-                                item {
-                                    if (currentState.illust == null &&
-                                        currentState.novel == null &&
-                                        currentState.user == null &&
-                                        currentState.series == null
-                                    ) {
-                                        ErrorPage(
-                                            text = stringResource(Res.string.search_result_none),
-                                        ) {}
-                                    }
+                            item {
+                                if (currentState.illust == null &&
+                                    currentState.novel == null &&
+                                    currentState.user == null &&
+                                    currentState.series == null
+                                ) {
+                                    ErrorPage(
+                                        text = stringResource(Res.string.search_result_none),
+                                    ) {}
                                 }
                             }
                         }

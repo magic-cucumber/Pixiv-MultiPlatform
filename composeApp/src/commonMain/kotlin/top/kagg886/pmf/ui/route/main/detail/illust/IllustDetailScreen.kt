@@ -50,6 +50,8 @@ import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.IllustImagesType
 import top.kagg886.pixko.module.illust.get
 import top.kagg886.pixko.module.illust.getIllustDetail
+import top.kagg886.pixko.module.search.SearchSort
+import top.kagg886.pixko.module.search.SearchTarget
 import top.kagg886.pmf.*
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.Platform
@@ -66,6 +68,7 @@ import top.kagg886.pmf.ui.component.icon.View
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
 import top.kagg886.pmf.ui.util.*
 import top.kagg886.pmf.util.*
 
@@ -631,13 +634,11 @@ private fun IllustPreview(
                                     AssistChip(
                                         modifier = Modifier.padding(4.dp),
                                         onClick = {
-//                                            nav.push(
-//                                                SearchResultScreen(
-//                                                    keyword = listOf(tag.name),
-//                                                    sort = SearchSort.DATE_DESC,
-//                                                    target = SearchTarget.PARTIAL_MATCH_FOR_TAGS,
-//                                                ),
-//                                            )
+                                            stack += SearchResultRoute(
+                                                keyword = listOf(tag.name),
+                                                sort = SearchSort.DATE_DESC,
+                                                target = SearchTarget.PARTIAL_MATCH_FOR_TAGS,
+                                            )
                                         },
                                         label = {
                                             Column {

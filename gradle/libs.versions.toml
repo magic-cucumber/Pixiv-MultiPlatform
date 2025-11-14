@@ -28,7 +28,6 @@ room = "2.7.2"
 sqliteBundled = "2.6.0"
 telephoto = "0.18.0"
 versionCatalogUpdate = "1.0.1"
-voyagerVersion = "1.1.0-beta03"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
@@ -88,9 +87,6 @@ okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 orbit-core = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
 pixko = { module = "top.kagg886:pixko", version.ref = "pixko" }
 telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
-voyager-koin = { module = "cafe.adriel.voyager:voyager-koin", version.ref = "voyagerVersion" }
-voyager-navigator = { module = "cafe.adriel.voyager:voyager-navigator", version.ref = "voyagerVersion" }
-voyager-transitions = { module = "cafe.adriel.voyager:voyager-transitions", version.ref = "voyagerVersion" }
 
 [plugins]
 aboutlibrariesPlugin = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
