@@ -234,9 +234,15 @@ kotlin {
     }
 }
 
-aboutLibraries.library {
-    duplicationMode = MERGE
-    duplicationRule = GROUP
+aboutLibraries {
+    library {
+        duplicationMode = MERGE
+        duplicationRule = GROUP
+    }
+    export {
+        outputFile = file("src/commonMain/composeResources/files/aboutlibraries.json")
+        prettyPrint = true
+    }
 }
 
 android {
