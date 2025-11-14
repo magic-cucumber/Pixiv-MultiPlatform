@@ -11,9 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import top.kagg886.pixko.User
 import top.kagg886.pmf.res.*
@@ -31,8 +29,8 @@ fun AuthorCard(
     onFavoritePrivateClick: suspend () -> Unit = {},
     onFavoriteClick: suspend (Boolean) -> Unit = {},
 ) {
-    val nav = LocalNavigator.currentOrThrow
-    OutlinedCard(modifier = modifier, onClick = { onCardClick(nav) }) {
+    // val nav = LocalNavigator.currentOrThrow
+    OutlinedCard(modifier = modifier, onClick = { /*onCardClick(nav) */ }) {
         ListItem(
             headlineContent = {
                 Text(user.name)

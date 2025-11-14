@@ -4,7 +4,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
-import cafe.adriel.voyager.core.model.ScreenModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -16,10 +15,7 @@ import top.kagg886.pixko.Tag
 import top.kagg886.pixko.module.user.*
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 
-class TagsFetchViewModel(
-    val restrict: UserLikePublicity = UserLikePublicity.PUBLIC,
-    val tagsType: FavoriteTagsType = FavoriteTagsType.Illust,
-) : ContainerHost<TagsFetchViewState, TagsFetchSideEffect>, ViewModel(), ScreenModel {
+class TagsFetchViewModel(val restrict: UserLikePublicity = UserLikePublicity.PUBLIC, val tagsType: FavoriteTagsType = FavoriteTagsType.Illust) : ContainerHost<TagsFetchViewState, TagsFetchSideEffect>, ViewModel() {
     private val client = PixivConfig.newAccountFromConfig()
     private val refreshSignal = MutableSharedFlow<Unit>()
 

@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
-import cafe.adriel.voyager.core.model.ScreenModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
@@ -25,10 +24,8 @@ import top.kagg886.pixko.module.illust.deleteBookmarkIllust
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
-abstract class IllustFetchViewModel :
-    ContainerHost<IllustFetchViewState, IllustFetchSideEffect>,
-    ViewModel(),
-    ScreenModel {
+
+abstract class IllustFetchViewModel : ContainerHost<IllustFetchViewState, IllustFetchSideEffect>, ViewModel() {
     protected val client = PixivConfig.newAccountFromConfig()
     private val signal = MutableSharedFlow<Unit>()
     override val container: Container<IllustFetchViewState, IllustFetchSideEffect> = container(IllustFetchViewState())

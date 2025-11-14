@@ -29,6 +29,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.BackToTopOrRefreshButton
@@ -44,6 +45,7 @@ import top.kagg886.pmf.ui.component.icon.R18G
 import top.kagg886.pmf.ui.component.icon.Robot
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.util.stringResource
 
 @Composable
@@ -54,6 +56,7 @@ fun IllustFetchScreen(model: IllustFetchViewModel) {
 
 @Composable
 private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchViewModel) {
+    val stack = LocalNavBackStack.current
     val scope = rememberCoroutineScope()
     val data = model.data.collectAsLazyPagingItems()
     when {
@@ -110,7 +113,7 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
                         Box(modifier = Modifier.padding(5.dp)) {
                             Card(
                                 modifier = Modifier.fillMaxSize(),
-                                onClick = { },
+                                onClick = { stack += IllustDetailRoute(i, data.itemSnapshotList.items) },
                             ) {
                                 AsyncImage(
                                     model = item.imageUrls.content,

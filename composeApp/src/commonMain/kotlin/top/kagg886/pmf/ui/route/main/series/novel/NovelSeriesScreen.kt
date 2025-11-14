@@ -41,6 +41,8 @@ import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.coroutines.launch
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.novel.SeriesDetail
@@ -84,8 +86,8 @@ class NovelSeriesScreen(private val id: Int) : Screen {
             }
 
             is NovelSeriesScreenState.LoadingSuccess -> {
-                val novelModel = rememberScreenModel {
-                    NovelSeriesFetchModel(id)
+                val novelModel = koinViewModel<NovelSeriesFetchModel>(key = "$id") {
+                    parametersOf(id)
                 }
 
                 if (useWideScreenMode) {

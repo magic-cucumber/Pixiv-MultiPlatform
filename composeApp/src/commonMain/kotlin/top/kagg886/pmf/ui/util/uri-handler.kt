@@ -14,11 +14,13 @@ import androidx.compose.ui.platform.UriHandler
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import io.ktor.http.Url
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreen
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
 import top.kagg886.pmf.util.stringResource
+
 @Composable
 fun rememberSupportPixivNavigateUriHandler(): UriHandler {
     val origin = LocalUriHandler.current
@@ -55,6 +57,7 @@ fun rememberSupportPixivNavigateUriHandler(): UriHandler {
         )
     }
 
+    val stack = LocalNavBackStack.current
     val nav = LocalNavigator.currentOrThrow
     return remember(origin) {
         object : UriHandler {
@@ -65,7 +68,7 @@ fun rememberSupportPixivNavigateUriHandler(): UriHandler {
                         when {
                             uri.encodedPath.startsWith("/users/") -> nav.push(AuthorScreen(uri.encodedPath.split("/")[2].toInt()))
                             uri.encodedPath.startsWith("/novel/show.php") -> nav.push(NovelDetailScreen(uri.encodedPath.split("=")[1].toLong()))
-                            uri.encodedPath.startsWith("/artworks/") -> nav.push(IllustDetailScreen.PreFetch(uri.encodedPath.split("/")[2].toLong()))
+                            uri.encodedPath.startsWith("/artworks/") -> stack += IllustDetailPreFetchRoute(uri.encodedPath.split("/")[2].toLong())
                         }
                         return@runCatching true
                     }
@@ -73,7 +76,7 @@ fun rememberSupportPixivNavigateUriHandler(): UriHandler {
                         val uri = Url(url.trim())
                         when (uri.host) {
                             "novels" -> nav.push(AuthorScreen(uri.encodedPath.substring(1).toInt()))
-                            "illusts" -> nav.push(IllustDetailScreen.PreFetch(uri.encodedPath.substring(1).toLong()))
+                            "illusts" -> stack += IllustDetailPreFetchRoute(uri.encodedPath.substring(1).toLong())
                             "users" -> nav.push(AuthorScreen(uri.encodedPath.substring(1).toInt()))
                         }
                         return@runCatching true

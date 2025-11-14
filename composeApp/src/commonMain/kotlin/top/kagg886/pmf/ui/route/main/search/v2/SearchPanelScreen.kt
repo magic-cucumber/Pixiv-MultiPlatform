@@ -50,11 +50,12 @@ import top.kagg886.pixko.Tag
 import top.kagg886.pixko.module.illust.get
 import top.kagg886.pixko.module.search.SearchSort
 import top.kagg886.pixko.module.search.SearchTarget
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.Loading
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
 import top.kagg886.pmf.ui.route.main.search.v2.components.SearchPropertiesPanel
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreen
@@ -78,6 +79,7 @@ class SearchPanelScreen(
         val model = rememberScreenModel { SearchPanelViewModel(sort, target, keyword, initialText) }
         val state by model.collectAsState()
         val navigator = LocalNavigator.currentOrThrow
+        val stack = LocalNavBackStack.current
         val snackbarHostState = remember { SnackbarHostState() }
 
         model.collectSideEffect { sideEffect ->
@@ -269,7 +271,7 @@ class SearchPanelScreen(
                                                 )
                                             },
                                             modifier = Modifier.clickable {
-                                                navigator.push(IllustDetailScreen(currentState.illust))
+                                                stack += IllustDetailRoute(currentState.illust)
                                             },
                                         )
                                     }

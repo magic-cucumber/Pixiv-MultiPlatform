@@ -63,6 +63,7 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import top.kagg886.pixko.module.illust.get
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.backend.Platform
 import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.backend.database.dao.DownloadItemType
@@ -73,7 +74,7 @@ import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.icon.Download
 import top.kagg886.pmf.ui.component.icon.Save
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
 import top.kagg886.pmf.util.stringResource
 
@@ -305,10 +306,10 @@ class DownloadScreen : Screen {
         model: DownloadScreenModel,
         modifier: Modifier = Modifier,
     ) {
-        val nav = LocalNavigator.currentOrThrow
+        val stack = LocalNavBackStack.current
         OutlinedCard(
             modifier = modifier,
-            onClick = { nav.push(IllustDetailScreen(item.illust)) },
+            onClick = { stack += IllustDetailRoute(item.illust) },
         ) {
             Row(
                 modifier = Modifier.padding(5.dp).fillMaxWidth(),

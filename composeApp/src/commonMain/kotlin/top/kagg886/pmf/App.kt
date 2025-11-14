@@ -106,6 +106,15 @@ import top.kagg886.pmf.ui.route.main.bookmark.BookmarkNovelViewModel
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkScreen
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkViewModel
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustCommentViewModel
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewModel
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
@@ -166,6 +175,9 @@ private val config = SavedStateConfiguration {
             subclass(serializer = ProfileRoute.serializer())
             subclass(serializer = BookmarkRoute.serializer())
             subclass(serializer = AboutRoute.serializer())
+            subclass(serializer = IllustDetailRoute.serializer())
+            subclass(serializer = IllustDetailPreFetchRoute.serializer())
+            subclass(serializer = IllustSimilarRoute.serializer())
         }
     }
 }
@@ -449,12 +461,18 @@ fun setupEnv() {
 
                 navigation<AboutRoute> { AboutScreen() }
 
+                viewModelOf(::IllustDetailViewModel)
+                viewModelOf(::IllustCommentViewModel)
+                navigation<IllustDetailRoute> { key -> IllustDetailScreen(key) }
+                navigation<IllustDetailPreFetchRoute> { key -> IllustDetailPreFetchScreen(key) }
+
+                viewModelOf(::IllustSimilarViewModel)
+                navigation<IllustSimilarRoute> { key -> IllustSimilarScreen(key) }
+
                 single { HistoryIllustViewModel() }
                 single { HistoryNovelViewModel() }
 
-                single {
-                    NewestIllustViewModel()
-                }
+                single { NewestIllustViewModel() }
             },
             // pixiv
             module(createdAtStart = true) {

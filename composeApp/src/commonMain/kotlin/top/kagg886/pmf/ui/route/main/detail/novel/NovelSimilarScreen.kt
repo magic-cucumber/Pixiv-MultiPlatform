@@ -11,10 +11,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.util.stringResource
@@ -22,8 +23,8 @@ import top.kagg886.pmf.util.stringResource
 class NovelSimilarScreen(val id: Long) : Screen {
     @Composable
     override fun Content() {
-        val similarModel = rememberScreenModel("similar_novel_$id") {
-            NovelSimilarViewModel(id)
+        val similarModel = koinViewModel<NovelSimilarViewModel>(key = "similar_novel_$id") {
+            parametersOf(id)
         }
         val nav = LocalNavigator.currentOrThrow
         Scaffold(
