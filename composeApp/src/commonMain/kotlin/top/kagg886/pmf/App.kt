@@ -1,5 +1,8 @@
 package top.kagg886.pmf
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -299,6 +302,9 @@ fun App(start: NavKey = WelcomeRoute) {
                                 rememberSaveableStateHolderNavEntryDecorator(),
                                 rememberViewModelStoreNavEntryDecorator(),
                             ),
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            popTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                            predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
                             entryProvider = koinEntryProvider(),
                         )
                     }
