@@ -62,7 +62,7 @@ data class LoginRoute(val clearOldSession: Boolean = false) : NavKey {
 }
 
 @Composable
-fun LoginScreen(route: LoginRoute) {
+fun LoginScreen() {
     val stack = LocalNavBackStack.current
     val model = koinViewModel<LoginScreenViewModel>()
     val snack = LocalSnackBarHost.current
@@ -266,11 +266,9 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
 
 @Composable
 private fun WebViewLogin(model: LoginScreenViewModel) {
-    val auth = remember {
-        PixivAccountFactory.newAccount(PlatformEngine)
-    }
+    val auth = remember { PixivAccountFactory.newAccount(PlatformEngine) }
     val state = rememberWebViewState(auth.url)
-//    val state = rememberWebViewState("https://useragent.buyaocha.com/")
+    // val state = rememberWebViewState("https://useragent.buyaocha.com/")
     // 不能使用LaunchedEffect，初始化后不能修改UA
     // issue: https://github.com/KevinnZou/compose-webview-multiplatform/issues/142
     state.webSettings.customUserAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36 EdgA/135.0.0.0"
@@ -297,7 +295,7 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
     }
 
     Column {
-        if (progress >= 0.0f && progress < 1.0f) {
+        if (progress in 0.0f..<1.0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
         WebView(

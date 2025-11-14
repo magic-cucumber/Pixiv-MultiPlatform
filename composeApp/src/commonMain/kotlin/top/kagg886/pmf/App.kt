@@ -97,6 +97,8 @@ import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.pixiv.PixivTokenStorage
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
+import top.kagg886.pmf.ui.route.login.v2.LoginScreen
+import top.kagg886.pmf.ui.route.login.v2.LoginScreenViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
@@ -413,13 +415,19 @@ fun setupEnv() {
             module {
                 single { WelcomeModel() }
                 navigation<WelcomeRoute> { WelcomeScreen() }
-                navigation<RecommendRoute> { RecommendScreen() }
+
+                viewModelOf(::LoginScreenViewModel)
+                navigation<LoginRoute> { LoginScreen() }
+
                 single { RecommendIllustViewModel() }
                 single { RecommendNovelViewModel() }
-                navigation<SpaceRoute> { SpaceScreen() }
+                navigation<RecommendRoute> { RecommendScreen() }
+
                 single { SpaceIllustViewModel() }
-                navigation<RankRoute> { RankScreen() }
+                navigation<SpaceRoute> { SpaceScreen() }
+
                 viewModelOf(::IllustRankScreenModel)
+                navigation<RankRoute> { RankScreen() }
 
                 single {
                     HistoryIllustViewModel()
