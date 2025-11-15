@@ -33,11 +33,15 @@ import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.dokar.chiptextfield.util.runIf
+import com.russhwolf.settings.get
+import com.russhwolf.settings.set
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
@@ -59,6 +63,7 @@ import top.kagg886.pixko.module.search.SearchTarget
 import top.kagg886.pmf.*
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.Platform
+import top.kagg886.pmf.backend.SystemConfig
 import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.useTempFile
@@ -76,13 +81,22 @@ import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
 import top.kagg886.pmf.ui.util.*
 import top.kagg886.pmf.util.*
 
-private val genericIllustSerializer = object : KSerializer<Illust> {
-    override val descriptor = Illust.serializer().descriptor
-    override fun serialize(encoder: Encoder, value: Illust) = encoder.encodeString(Json.encodeToString(value))
-    override fun deserialize(decoder: Decoder): Illust = Json.decodeFromString(decoder.decodeString())
-}
+private val cache = SystemConfig.getConfig("cache")
 
-class TodoSerializer : KSerializer<List<Illust>> by ListSerializer(genericIllustSerializer)
+class TodoSerializer : KSerializer<List<Illust>> {
+    override val descriptor = PrimitiveSerialDescriptor("Todo", PrimitiveKind.STRING)
+    override fun serialize(encoder: Encoder, value: List<Illust>) {
+        val json = Json.encodeToString(value)
+        val uuid = Uuid.random()
+        cache["$uuid"] = json
+        encoder.encodeSerializableValue(Uuid.serializer(), uuid)
+    }
+    override fun deserialize(decoder: Decoder): List<Illust> {
+        val uuid = decoder.decodeSerializableValue(Uuid.serializer())
+        val json: String = cache["$uuid"]!!
+        return Json.decodeFromString(json)
+    }
+}
 
 @Serializable
 data class IllustDetailRoute(
