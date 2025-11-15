@@ -40,12 +40,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.BackToTopOrRefreshButton
@@ -54,7 +53,7 @@ import top.kagg886.pmf.ui.component.FavoriteButton
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
-import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreen
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toReadableString
 
@@ -66,6 +65,7 @@ fun CommentPanel(model: CommentViewModel, modifier: Modifier = Modifier) {
 
 @Composable
 private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewState, modifier: Modifier) {
+    val stack = LocalNavBackStack.current
     val data = model.data.collectAsLazyPagingItems()
     when {
         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
@@ -120,7 +120,6 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                             OutlinedCard(
                                 modifier = Modifier.fillMaxWidth().padding(5.dp),
                             ) {
-                                val nav = LocalNavigator.currentOrThrow
                                 ListItem(
                                     overlineContent = {
                                         Text(comment.date.toReadableString())
@@ -131,7 +130,7 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                     leadingContent = {
                                         AsyncImage(
                                             model = comment.user.profileImageUrls.content,
-                                            modifier = Modifier.size(35.dp).clickable { nav.push(AuthorScreen(comment.user.id)) },
+                                            modifier = Modifier.size(35.dp).clickable { stack += AuthorRoute(comment.user.id) },
                                             contentDescription = null,
                                         )
                                     },
@@ -200,7 +199,7 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                                 leadingContent = {
                                                     AsyncImage(
                                                         model = item.user.profileImageUrls.content,
-                                                        modifier = Modifier.size(25.dp).clickable { nav.push(AuthorScreen(item.user.id)) },
+                                                        modifier = Modifier.size(25.dp).clickable { stack += AuthorRoute(item.user.id) },
                                                         contentDescription = null,
                                                     )
                                                 },

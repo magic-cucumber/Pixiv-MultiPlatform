@@ -16,104 +16,92 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.annotation.InternalVoyagerApi
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.core.screen.ScreenKey
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.navigator.internal.BackHandler
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.search.SearchSort
 import top.kagg886.pixko.module.search.SearchTarget
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.TabContainer
 import top.kagg886.pmf.ui.util.AuthorFetchScreen
 import top.kagg886.pmf.ui.util.IllustFetchScreen
 import top.kagg886.pmf.ui.util.NovelFetchScreen
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
-class SearchResultScreen(
-    private val keyword: List<String>,
-    private val sort: SearchSort,
-    private val target: SearchTarget,
-) : Screen {
-    override val key: ScreenKey by lazy {
-        "search_result_${keyword}_${sort}_$target"
+@Serializable
+data class SearchResultRoute(
+    val keyword: List<String>,
+    val sort: SearchSort,
+    val target: SearchTarget,
+) : NavKey
+
+@Composable
+fun SearchResultScreen(route: SearchResultRoute) {
+    val (keyword, sort, target) = route
+    val model = koinViewModel<SearchResultViewModel> { parametersOf(keyword, sort, target) }
+    val state by model.collectAsState()
+    val stack = LocalNavBackStack.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    model.collectSideEffect { sideEffect ->
+        when (sideEffect) {
+            is SearchResultSideEffect.Toast -> {
+                snackbarHostState.showSnackbar(sideEffect.message)
+            }
+        }
     }
 
-    @OptIn(InternalVoyagerApi::class)
-    @Composable
-    override fun Content() {
-        val model = rememberScreenModel { SearchResultViewModel(keyword, sort, target) }
-        val state by model.collectAsState()
-        val navigator = LocalNavigator.currentOrThrow
-        val snackbarHostState = remember { SnackbarHostState() }
-
-        model.collectSideEffect { sideEffect ->
-            when (sideEffect) {
-                is SearchResultSideEffect.Toast -> {
-                    snackbarHostState.showSnackbar(sideEffect.message)
-                }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        stringResource(
+                            Res.string.search_result_for,
+                            state.keyword.joinToString(" "),
+                        ),
+                        maxLines = 1,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
+                        Icon(Icons.AutoMirrored.Default.ArrowBack, null)
+                    }
+                },
+            )
+        },
+    ) { paddingValues ->
+        val data = buildMap<String, (@Composable () -> Unit)> {
+            state.illustRepo?.let {
+                put(stringResource(Res.string.illust), { IllustFetchScreen(it) })
+            }
+            state.novelRepo?.let {
+                put(stringResource(Res.string.novel), { NovelFetchScreen(it) })
+            }
+            state.authorRepo?.let {
+                put(stringResource(Res.string.user), { AuthorFetchScreen(it) })
             }
         }
 
-        BackHandler(true) {
-            navigator.pop()
+        var tab by rememberSaveable {
+            mutableStateOf(
+                data.keys.first(),
+            )
         }
 
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            stringResource(
-                                Res.string.search_result_for,
-                                state.keyword.joinToString(" "),
-                            ),
-                            maxLines = 1,
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = {
-                                navigator.pop()
-                            },
-                        ) {
-                            Icon(Icons.AutoMirrored.Default.ArrowBack, null)
-                        }
-                    },
-                )
-            },
-        ) { paddingValues ->
-            val data = buildMap<String, (@Composable () -> Unit)> {
-                state.illustRepo?.let {
-                    put(stringResource(Res.string.illust), { IllustFetchScreen(it) })
-                }
-                state.novelRepo?.let {
-                    put(stringResource(Res.string.novel), { NovelFetchScreen(it) })
-                }
-                state.authorRepo?.let {
-                    put(stringResource(Res.string.user), { AuthorFetchScreen(it) })
-                }
-            }
-
-            var tab by rememberSaveable {
-                mutableStateOf(
-                    data.keys.first(),
-                )
-            }
-
-            TabContainer(
-                modifier = Modifier.padding(paddingValues),
-                tab = data.keys.toList(),
-                tabTitle = { Text(it) },
-                current = tab,
-                onCurrentChange = { tab = it },
-            ) {
-                data[it]?.invoke()
-            }
+        TabContainer(
+            modifier = Modifier.padding(paddingValues),
+            tab = data.keys.toList(),
+            tabTitle = { Text(it) },
+            current = tab,
+            onCurrentChange = { tab = it },
+        ) {
+            data[it]?.invoke()
         }
     }
 }

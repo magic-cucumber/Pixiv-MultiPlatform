@@ -1,7 +1,6 @@
 package top.kagg886.pmf.ui.route.main.series.novel
 
 import androidx.lifecycle.ViewModel
-import cafe.adriel.voyager.core.model.ScreenModel
 import org.koin.core.component.KoinComponent
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
@@ -16,17 +15,9 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
 
-class NovelSeriesScreenModel(
-    private val seriesId: Int,
-) : ViewModel(),
-    ScreenModel,
-    KoinComponent,
-    ContainerHost<NovelSeriesScreenState, NovelSeriesScreenSideEffect> {
+class NovelSeriesScreenModel(private val seriesId: Int) : ViewModel(), KoinComponent, ContainerHost<NovelSeriesScreenState, NovelSeriesScreenSideEffect> {
     private val client = PixivConfig.newAccountFromConfig()
-    override val container: Container<NovelSeriesScreenState, NovelSeriesScreenSideEffect> =
-        container(NovelSeriesScreenState.Loading) {
-            reload()
-        }
+    override val container: Container<NovelSeriesScreenState, NovelSeriesScreenSideEffect> = container(NovelSeriesScreenState.Loading) { reload() }
 
     fun reload() = intent {
         reduce {

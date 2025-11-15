@@ -24,12 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.buildAnnotatedString
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.core.screen.ScreenKey
-import cafe.adriel.voyager.core.screen.uniqueScreenKey
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavKey
 import com.multiplatform.webview.request.RequestInterceptor
 import com.multiplatform.webview.request.WebRequest
 import com.multiplatform.webview.request.WebRequestInterceptResult
@@ -39,52 +34,53 @@ import com.multiplatform.webview.web.WebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewNavigator
 import com.multiplatform.webview.web.rememberWebViewState
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.PixivAccountFactory
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
-import top.kagg886.pmf.NavigationItem
 import top.kagg886.pmf.backend.PlatformEngine
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.guide.GuideScaffold
+import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
 import top.kagg886.pmf.ui.util.withClickable
 import top.kagg886.pmf.ui.util.withLink
 import top.kagg886.pmf.util.setText
 import top.kagg886.pmf.util.stringResource
 
-class LoginScreen(clearOldSession: Boolean = false) : Screen {
-    override val key: ScreenKey = uniqueScreenKey
-
+@Serializable
+data class LoginRoute(val clearOldSession: Boolean = false) : NavKey {
     init {
         if (clearOldSession) {
             PixivConfig.clear()
         }
     }
+}
 
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        val model = rememberScreenModel { LoginScreenViewModel() }
+@Composable
+fun LoginScreen() {
+    val stack = LocalNavBackStack.current
+    val model = koinViewModel<LoginScreenViewModel>()
+    val snack = LocalSnackBarHost.current
 
-        val snack = LocalSnackBarHost.current
+    model.collectSideEffect {
+        when (it) {
+            LoginSideEffect.NavigateToMain -> {
+                stack[0] = RecommendRoute
+            }
 
-        model.collectSideEffect {
-            when (it) {
-                LoginSideEffect.NavigateToMain -> {
-                    navigator.replace(NavigationItem.RECOMMEND())
-                }
-
-                is LoginSideEffect.Toast -> {
-                    snack.showSnackbar(it.msg)
-                }
+            is LoginSideEffect.Toast -> {
+                snack.showSnackbar(it.msg)
             }
         }
-
-        val state by model.collectAsState()
-        WaitLoginContent(state, model)
     }
+
+    val state by model.collectAsState()
+    WaitLoginContent(state, model)
 }
 
 @Composable
@@ -270,11 +266,9 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
 
 @Composable
 private fun WebViewLogin(model: LoginScreenViewModel) {
-    val auth = remember {
-        PixivAccountFactory.newAccount(PlatformEngine)
-    }
+    val auth = remember { PixivAccountFactory.newAccount(PlatformEngine) }
     val state = rememberWebViewState(auth.url)
-//    val state = rememberWebViewState("https://useragent.buyaocha.com/")
+    // val state = rememberWebViewState("https://useragent.buyaocha.com/")
     // 不能使用LaunchedEffect，初始化后不能修改UA
     // issue: https://github.com/KevinnZou/compose-webview-multiplatform/issues/142
     state.webSettings.customUserAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36 EdgA/135.0.0.0"
@@ -301,7 +295,7 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
     }
 
     Column {
-        if (progress >= 0.0f && progress < 1.0f) {
+        if (progress in 0.0f..<1.0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
         WebView(

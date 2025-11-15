@@ -11,16 +11,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import io.ktor.http.Url
 import top.kagg886.pmf.res.*
-import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreen
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
-import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.util.stringResource
+
 @Composable
-fun rememberSupportPixivNavigateUriHandler(): UriHandler {
+fun rememberSupportPixivNavigateUriHandler(stack: NavBackStack<NavKey>): UriHandler {
     val origin = LocalUriHandler.current
     var wantToOpenLink by remember {
         mutableStateOf("")
@@ -55,7 +56,6 @@ fun rememberSupportPixivNavigateUriHandler(): UriHandler {
         )
     }
 
-    val nav = LocalNavigator.currentOrThrow
     return remember(origin) {
         object : UriHandler {
             override fun openUri(url: String) {
@@ -63,18 +63,18 @@ fun rememberSupportPixivNavigateUriHandler(): UriHandler {
                     if (url.contains("pixiv.net")) {
                         val uri = Url(url.trim())
                         when {
-                            uri.encodedPath.startsWith("/users/") -> nav.push(AuthorScreen(uri.encodedPath.split("/")[2].toInt()))
-                            uri.encodedPath.startsWith("/novel/show.php") -> nav.push(NovelDetailScreen(uri.encodedPath.split("=")[1].toLong()))
-                            uri.encodedPath.startsWith("/artworks/") -> nav.push(IllustDetailScreen.PreFetch(uri.encodedPath.split("/")[2].toLong()))
+                            uri.encodedPath.startsWith("/users/") -> stack += AuthorRoute(uri.encodedPath.split("/")[2].toInt())
+                            uri.encodedPath.startsWith("/novel/show.php") -> stack += NovelDetailRoute(uri.encodedPath.split("=")[1].toLong())
+                            uri.encodedPath.startsWith("/artworks/") -> stack += IllustDetailPreFetchRoute(uri.encodedPath.split("/")[2].toLong())
                         }
                         return@runCatching true
                     }
                     if (url.startsWith("pixiv://")) {
                         val uri = Url(url.trim())
                         when (uri.host) {
-                            "novels" -> nav.push(AuthorScreen(uri.encodedPath.substring(1).toInt()))
-                            "illusts" -> nav.push(IllustDetailScreen.PreFetch(uri.encodedPath.substring(1).toLong()))
-                            "users" -> nav.push(AuthorScreen(uri.encodedPath.substring(1).toInt()))
+                            "novels" -> stack += AuthorRoute(uri.encodedPath.substring(1).toInt())
+                            "illusts" -> stack += IllustDetailPreFetchRoute(uri.encodedPath.substring(1).toLong())
+                            "users" -> stack += AuthorRoute(uri.encodedPath.substring(1).toInt())
                         }
                         return@runCatching true
                     }

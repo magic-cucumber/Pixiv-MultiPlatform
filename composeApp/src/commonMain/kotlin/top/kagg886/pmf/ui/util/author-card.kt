@@ -11,15 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import coil3.compose.AsyncImage
 import top.kagg886.pixko.User
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.FavoriteButton
 import top.kagg886.pmf.ui.component.FavoriteState
-import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreen
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
 import top.kagg886.pmf.util.stringResource
 
 @Composable
@@ -27,12 +27,12 @@ fun AuthorCard(
     modifier: Modifier = Modifier,
     user: User,
     followNumber: Int? = null,
-    onCardClick: (nav: Navigator) -> Unit = { it.push(AuthorScreen(user.id)) },
+    onCardClick: (NavBackStack<NavKey>) -> Unit = { stack -> stack += AuthorRoute(user.id) },
     onFavoritePrivateClick: suspend () -> Unit = {},
     onFavoriteClick: suspend (Boolean) -> Unit = {},
 ) {
-    val nav = LocalNavigator.currentOrThrow
-    OutlinedCard(modifier = modifier, onClick = { onCardClick(nav) }) {
+    val stack = LocalNavBackStack.current
+    OutlinedCard(modifier = modifier, onClick = { onCardClick(stack) }) {
         ListItem(
             headlineContent = {
                 Text(user.name)

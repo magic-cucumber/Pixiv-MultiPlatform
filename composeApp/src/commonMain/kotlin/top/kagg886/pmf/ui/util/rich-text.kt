@@ -19,8 +19,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextIndent
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import coil3.toUri
 import com.fleeksoft.ksoup.Ksoup
@@ -33,11 +31,12 @@ import kotlin.time.Clock
 import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.IllustImagesType
 import top.kagg886.pixko.module.illust.get
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.Platform
 import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.ui.component.ImagePreviewer
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 
 sealed interface NovelNodeElement {
     data class Plain(val text: String) : NovelNodeElement
@@ -137,12 +136,12 @@ fun RichText(
                                 ),
                             ) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    val nav = LocalNavigator.currentOrThrow
+                                    val stack = LocalNavBackStack.current
                                     AsyncImage(
                                         model = i.illust.contentImages[IllustImagesType.LARGE, IllustImagesType.MEDIUM]?.get(0),
                                         modifier = Modifier.fillMaxWidth(0.8f)
                                             .aspectRatio(i.illust.width.toFloat() / i.illust.height)
-                                            .clickable { nav.push(IllustDetailScreen(i.illust)) },
+                                            .clickable { stack += IllustDetailRoute(i.illust) },
                                         contentDescription = null,
                                     )
                                 }

@@ -2,7 +2,7 @@ package top.kagg886.pmf
 
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.*
-import cafe.adriel.voyager.core.screen.Screen
+import androidx.navigation3.runtime.NavKey
 import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -13,9 +13,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.crash.CrashApp
-import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
+import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 
-fun launchApp(init: () -> Screen = { WelcomeScreen() }) {
+fun launch(start: () -> NavKey) {
     setupEnv()
     SingletonImageLoader.setSafe {
         ImageLoader.Builder(PlatformContext.INSTANCE).applyCustomConfig().build()
@@ -53,7 +53,7 @@ fun launchApp(init: () -> Screen = { WelcomeScreen() }) {
                         true
                     },
                 ) {
-                    App(init())
+                    App(start())
                 }
             }
         }
@@ -68,4 +68,4 @@ fun launchApp(init: () -> Screen = { WelcomeScreen() }) {
     exitProcess(0)
 }
 
-fun main() = launchApp()
+fun main() = launch { WelcomeRoute }

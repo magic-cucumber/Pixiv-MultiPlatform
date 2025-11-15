@@ -1,7 +1,6 @@
 package top.kagg886.pmf.ui.route.login.v2
 
 import androidx.lifecycle.ViewModel
-import cafe.adriel.voyager.core.model.ScreenModel
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,14 +31,9 @@ import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.sink
 
-class LoginScreenViewModel :
-    ContainerHost<LoginViewState, LoginSideEffect>,
-    ViewModel(),
-    ScreenModel,
-    KoinComponent {
+class LoginScreenViewModel : ContainerHost<LoginViewState, LoginSideEffect>, ViewModel(), KoinComponent {
     private val storage by inject<PixivTokenStorage>()
-    override val container: Container<LoginViewState, LoginSideEffect> =
-        container(LoginViewState.WaitChooseLogin)
+    override val container: Container<LoginViewState, LoginSideEffect> = container(LoginViewState.WaitChooseLogin)
 
     @OptIn(OrbitExperimental::class)
     fun selectLoginType(loginType: LoginType) = intent {

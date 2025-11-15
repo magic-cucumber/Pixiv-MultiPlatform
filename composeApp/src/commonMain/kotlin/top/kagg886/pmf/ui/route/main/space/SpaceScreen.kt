@@ -5,13 +5,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinNavigatorScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.NavigationItem
@@ -22,33 +21,23 @@ import top.kagg886.pmf.ui.util.IllustFetchScreen
 import top.kagg886.pmf.ui.util.IllustFetchSideEffect
 import top.kagg886.pmf.util.stringResource
 
-class SpaceScreen : Screen {
-    @Composable
-    override fun Content() = NavigationItem.SPACE.composeWithAppBar {
-        SpaceScreen()
-    }
-}
+@Serializable
+data object SpaceRoute : NavKey
 
 @Composable
-private fun Screen.SpaceScreen() {
-    val page = rememberScreenModel {
-        object : ScreenModel {
-            val page = mutableIntStateOf(0)
-        }
-    }
-    val index by page.page
+fun SpaceScreen() = NavigationItem.SPACE.composeWithAppBar {
+    var index by rememberSerializable { mutableIntStateOf(0) }
     val tab = listOf(Res.string.follow, Res.string.latest)
     TabContainer(
         modifier = Modifier.fillMaxSize(),
         tab = tab,
         tabTitle = { Text(stringResource(it)) },
         current = tab[index],
-        onCurrentChange = { page.page.value = tab.indexOf(it) },
+        onCurrentChange = { index = tab.indexOf(it) },
     ) {
         when (it) {
             Res.string.follow -> {
-                val nav = LocalNavigator.currentOrThrow
-                val model = nav.koinNavigatorScreenModel<SpaceIllustViewModel>()
+                val model = koinViewModel<SpaceIllustViewModel>()
                 val snackbarHostState = LocalSnackBarHost.current
                 model.collectSideEffect { effect ->
                     when (effect) {
@@ -61,8 +50,7 @@ private fun Screen.SpaceScreen() {
             }
 
             Res.string.latest -> {
-                val nav = LocalNavigator.currentOrThrow
-                val model = nav.koinNavigatorScreenModel<NewestIllustViewModel>()
+                val model = koinViewModel<NewestIllustViewModel>()
                 val snackbarHostState = LocalSnackBarHost.current
                 model.collectSideEffect { effect ->
                     when (effect) {

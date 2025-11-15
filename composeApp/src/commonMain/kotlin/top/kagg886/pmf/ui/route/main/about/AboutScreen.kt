@@ -34,138 +34,140 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavKey
 import com.mikepenz.aboutlibraries.Libs
-import com.mikepenz.aboutlibraries.ui.compose.rememberLibraries
+import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import top.kagg886.pmf.BuildConfig
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.collapsable.v3.CollapsableTopAppBarScaffold
 import top.kagg886.pmf.ui.component.icon.Github
 import top.kagg886.pmf.ui.component.icon.Telegram
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
-class AboutScreen : Screen {
-    @Composable
-    override fun Content() {
-        val libraries by rememberLibraries {
-            Res.readBytes("files/aboutlibraries.json").decodeToString()
-        }
+@Serializable
+data object AboutRoute : NavKey
 
-        val lib = remember(libraries) {
-            libraries ?: Libs(persistentListOf(), persistentSetOf())
-        }
+@Composable
+fun AboutScreen() {
+    val libraries by produceLibraries {
+        Res.readBytes("files/aboutlibraries.json").decodeToString()
+    }
 
-        CollapsableTopAppBarScaffold(
-            modifier = Modifier.fillMaxSize(),
-            background = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth(),
+    val lib = remember(libraries) {
+        libraries ?: Libs(persistentListOf(), persistentSetOf())
+    }
+
+    CollapsableTopAppBarScaffold(
+        modifier = Modifier.fillMaxSize(),
+        background = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                OutlinedCard(
+                    it.fillMaxWidth(0.9f)
+                        .padding(top = TopAppBarDefaults.MediumAppBarCollapsedHeight + 16.dp)
+                        .align(Alignment.CenterHorizontally),
                 ) {
-                    OutlinedCard(
-                        it.fillMaxWidth(0.9f)
-                            .padding(top = TopAppBarDefaults.MediumAppBarCollapsedHeight + 16.dp)
-                            .align(Alignment.CenterHorizontally),
-                    ) {
-                        Spacer(Modifier.height(16.dp))
-                        Image(
-                            painter = painterResource(Res.drawable.kotlin),
-                            contentDescription = null,
-                            modifier = Modifier.size(96.dp).align(Alignment.CenterHorizontally),
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = BuildConfig.APP_NAME,
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            "${BuildConfig.APP_VERSION_NAME} | ${BuildConfig.APP_VERSION_CODE} (Code by kagg886)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = ListItemDefaults.colors().supportingTextColor,
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                        )
-                        Spacer(Modifier.height(16.dp))
-                        Row(Modifier.align(Alignment.CenterHorizontally)) {
-                            val uri = LocalUriHandler.current
-                            IconButton(
-                                onClick = {
-                                    uri.openUri("https://github.com/magic-cucumber/Pixiv-MultiPlatform")
-                                },
-                            ) {
-                                Icon(imageVector = Github, contentDescription = null)
-                            }
-                            IconButton(
-                                onClick = {
-                                    uri.openUri("https://pmf.kagg886.top")
-                                },
-                            ) {
-                                Icon(imageVector = Icons.Default.Home, contentDescription = null)
-                            }
-                            IconButton(
-                                onClick = {
-                                    uri.openUri("https://t.me/+n_xsrc1Z590xNTY9")
-                                },
-                            ) {
-                                Icon(imageVector = Telegram, contentDescription = null)
-                            }
+                    Spacer(Modifier.height(16.dp))
+                    Image(
+                        painter = painterResource(Res.drawable.kotlin),
+                        contentDescription = null,
+                        modifier = Modifier.size(96.dp).align(Alignment.CenterHorizontally),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text = BuildConfig.APP_NAME,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "${BuildConfig.APP_VERSION_NAME} | ${BuildConfig.APP_VERSION_CODE} (Code by kagg886)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = ListItemDefaults.colors().supportingTextColor,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Row(Modifier.align(Alignment.CenterHorizontally)) {
+                        val uri = LocalUriHandler.current
+                        IconButton(
+                            onClick = {
+                                uri.openUri("https://github.com/magic-cucumber/Pixiv-MultiPlatform")
+                            },
+                        ) {
+                            Icon(imageVector = Github, contentDescription = null)
+                        }
+                        IconButton(
+                            onClick = {
+                                uri.openUri("https://pmf.kagg886.top")
+                            },
+                        ) {
+                            Icon(imageVector = Icons.Default.Home, contentDescription = null)
+                        }
+                        IconButton(
+                            onClick = {
+                                uri.openUri("https://t.me/+n_xsrc1Z590xNTY9")
+                            },
+                        ) {
+                            Icon(imageVector = Telegram, contentDescription = null)
                         }
                     }
                 }
-            },
-            title = {
-                Text(stringResource(Res.string.open_source))
-            },
-            navigationIcon = {
-                val nav = LocalNavigator.currentOrThrow
-                IconButton(
-                    onClick = { nav.pop() },
+            }
+        },
+        title = {
+            Text(stringResource(Res.string.open_source))
+        },
+        navigationIcon = {
+            val stack = LocalNavBackStack.current
+            IconButton(
+                onClick = { stack.removeLastOrNullWorkaround() },
+            ) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+            }
+        },
+    ) { modifier ->
+        val state = rememberLazyListState()
+        LazyColumn(modifier.fillMaxWidth().fixComposeListScrollToTopBug(state), state = state) {
+            items(lib.libraries) {
+                val uri = LocalUriHandler.current
+                OutlinedCard(
+                    Modifier.fillMaxWidth().padding(8.dp).clickable {
+                        it.website?.let { u -> uri.openUri(u) }
+                    },
                 ) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                }
-            },
-        ) {
-            val state = rememberLazyListState()
-            LazyColumn(it.fillMaxWidth().fixComposeListScrollToTopBug(state), state = state) {
-                items(lib.libraries) {
-                    val uri = LocalUriHandler.current
-                    OutlinedCard(
-                        Modifier.fillMaxWidth().padding(8.dp).clickable {
-                            it.website?.let { u -> uri.openUri(u) }
+                    ListItem(
+                        headlineContent = {
+                            Text(it.name)
                         },
+                        supportingContent = {
+                            Text(
+                                text = it.description?.ifBlank { "No Descriptions." } ?: "No Descriptions.",
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        trailingContent = {
+                            it.artifactVersion?.let { u -> Text(u) }
+                        },
+                    )
+                    FlowRow(
+                        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
                     ) {
-                        ListItem(
-                            headlineContent = {
-                                Text(it.name)
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = it.description?.ifBlank { "No Descriptions." } ?: "No Descriptions.",
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            },
-                            trailingContent = {
-                                it.artifactVersion?.let { u -> Text(u) }
-                            },
-                        )
-                        FlowRow(
-                            modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                        ) {
-                            for (i in it.licenses) {
-                                AssistChip(
-                                    onClick = {},
-                                    label = {
-                                        Text(i.name)
-                                    },
-                                )
-                            }
+                        for (i in it.licenses) {
+                            AssistChip(
+                                onClick = {},
+                                label = {
+                                    Text(i.name)
+                                },
+                            )
                         }
                     }
                 }

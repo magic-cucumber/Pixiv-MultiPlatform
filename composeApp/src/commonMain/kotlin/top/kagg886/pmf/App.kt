@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -45,12 +44,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalUriHandler
-import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import cafe.adriel.voyager.transitions.ScreenTransition
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import co.touchlab.kermit.Severity
 import coil3.ComponentRegistry
 import coil3.ImageLoader
@@ -71,9 +73,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import okio.Path
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.navigation3.koinEntryProvider
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -84,7 +90,9 @@ import org.koin.core.logger.Level.NONE
 import org.koin.core.logger.Level.WARNING
 import org.koin.core.logger.Logger
 import org.koin.core.logger.MESSAGE
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import org.koin.dsl.navigation3.navigation
 import org.koin.ext.getFullName
 import org.koin.mp.KoinPlatform
 import org.orbitmvi.orbit.compose.collectSideEffect
@@ -98,24 +106,78 @@ import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.pixiv.PixivTokenStorage
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.dialog.CheckUpdateDialog
+import top.kagg886.pmf.ui.route.login.v2.LoginRoute
+import top.kagg886.pmf.ui.route.login.v2.LoginScreen
+import top.kagg886.pmf.ui.route.login.v2.LoginScreenViewModel
+import top.kagg886.pmf.ui.route.main.about.AboutRoute
+import top.kagg886.pmf.ui.route.main.about.AboutScreen
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkIllustViewModel
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkNovelViewModel
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkScreen
+import top.kagg886.pmf.ui.route.main.bookmark.BookmarkViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreen
+import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreenModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorFollowViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorIllustBookmarkViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorIllustViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelBookmarkViewModel
+import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelViewModel
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustCommentViewModel
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewModel
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarScreen
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustSimilarViewModel
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelCommentViewModel
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailViewModel
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarRoute
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenSideEffect
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem
+import top.kagg886.pmf.ui.route.main.profile.ProfileRoute
 import top.kagg886.pmf.ui.route.main.profile.ProfileScreen
+import top.kagg886.pmf.ui.route.main.rank.IllustRankScreenModel
+import top.kagg886.pmf.ui.route.main.rank.RankRoute
 import top.kagg886.pmf.ui.route.main.rank.RankScreen
 import top.kagg886.pmf.ui.route.main.recommend.RecommendIllustViewModel
 import top.kagg886.pmf.ui.route.main.recommend.RecommendNovelViewModel
+import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
 import top.kagg886.pmf.ui.route.main.recommend.RecommendScreen
+import top.kagg886.pmf.ui.route.main.search.v2.EmptySearchRoute
 import top.kagg886.pmf.ui.route.main.search.v2.EmptySearchScreen
+import top.kagg886.pmf.ui.route.main.search.v2.EmptySearchViewModel
+import top.kagg886.pmf.ui.route.main.search.v2.SearchPanelRoute
+import top.kagg886.pmf.ui.route.main.search.v2.SearchPanelScreen
+import top.kagg886.pmf.ui.route.main.search.v2.SearchPanelViewModel
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultScreen
+import top.kagg886.pmf.ui.route.main.search.v2.SearchResultViewModel
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesFetchModel
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreen
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreenModel
 import top.kagg886.pmf.ui.route.main.space.NewestIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceIllustViewModel
+import top.kagg886.pmf.ui.route.main.space.SpaceRoute
 import top.kagg886.pmf.ui.route.main.space.SpaceScreen
 import top.kagg886.pmf.ui.route.welcome.WelcomeModel
+import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
+import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
 import top.kagg886.pmf.ui.util.rememberSupportPixivNavigateUriHandler
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.SerializedTheme
 import top.kagg886.pmf.util.UgoiraFetcher
@@ -124,6 +186,10 @@ import top.kagg886.pmf.util.initFileLogger
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toColorScheme
+
+val LocalNavBackStack = compositionLocalOf<NavBackStack<NavKey>> {
+    error("not provided")
+}
 
 val LocalSnackBarHost = compositionLocalOf<SnackbarHostState> {
     error("not provided")
@@ -141,10 +207,34 @@ val LocalKeyStateFlow = compositionLocalOf<SharedFlow<KeyEvent>> {
     error("not provided")
 }
 
-@OptIn(ExperimentalVoyagerApi::class)
+private val config = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(baseClass = NavKey::class) {
+            subclass(serializer = WelcomeRoute.serializer())
+            subclass(serializer = LoginRoute.serializer())
+            subclass(serializer = RecommendRoute.serializer())
+            subclass(serializer = SpaceRoute.serializer())
+            subclass(serializer = RankRoute.serializer())
+            subclass(serializer = ProfileRoute.serializer())
+            subclass(serializer = BookmarkRoute.serializer())
+            subclass(serializer = AboutRoute.serializer())
+            subclass(serializer = IllustDetailRoute.serializer())
+            subclass(serializer = IllustDetailPreFetchRoute.serializer())
+            subclass(serializer = IllustSimilarRoute.serializer())
+            subclass(serializer = NovelDetailRoute.serializer())
+            subclass(serializer = NovelSimilarRoute.serializer())
+            subclass(serializer = AuthorRoute.serializer())
+            subclass(serializer = NovelSeriesRoute.serializer())
+            subclass(serializer = EmptySearchRoute.serializer())
+            subclass(serializer = SearchResultRoute.serializer())
+            subclass(serializer = SearchPanelRoute.serializer())
+        }
+    }
+}
+
 @Composable
 @Preview
-fun App(initScreen: Screen = WelcomeScreen()) {
+fun App(start: NavKey = WelcomeRoute) {
     val darkModeValue = remember {
         mutableStateOf(AppConfig.darkMode)
     }
@@ -169,54 +259,57 @@ fun App(initScreen: Screen = WelcomeScreen()) {
             Surface(
                 color = MaterialTheme.colorScheme.background,
             ) {
-                Navigator(initScreen) {
-                    CompositionLocalProvider(
-                        LocalUriHandler provides rememberSupportPixivNavigateUriHandler(),
-                    ) {
-                        val s = LocalSnackBarHost.current
-                        CheckUpdateDialog()
-
-                        val model = KoinPlatform.getKoin()
-                            .get<DownloadScreenModel>(clazz = DownloadScreenModel::class)
-                        model.collectSideEffect { toast ->
-                            when (toast) {
-                                is DownloadScreenSideEffect.Toast -> {
-                                    if (toast.jump) {
-                                        val actionYes = getString(Res.string.yes)
-                                        val result = s.showSnackbar(
-                                            object : SnackbarVisuals {
-                                                override val actionLabel: String
-                                                    get() = actionYes
-                                                override val duration: SnackbarDuration
-                                                    get() = SnackbarDuration.Long
-                                                override val message: String
-                                                    get() = toast.msg
-                                                override val withDismissAction: Boolean
-                                                    get() = true
-                                            },
+                val stack = rememberNavBackStack(config, start)
+                CompositionLocalProvider(
+                    LocalNavBackStack provides stack,
+                    LocalUriHandler provides rememberSupportPixivNavigateUriHandler(stack),
+                ) {
+                    val s = LocalSnackBarHost.current
+                    CheckUpdateDialog()
+                    val model = koinViewModel<DownloadScreenModel>()
+                    model.collectSideEffect { toast ->
+                        when (toast) {
+                            is DownloadScreenSideEffect.Toast -> {
+                                if (toast.jump) {
+                                    val actionYes = getString(Res.string.yes)
+                                    val result = s.showSnackbar(
+                                        object : SnackbarVisuals {
+                                            override val actionLabel: String
+                                                get() = actionYes
+                                            override val duration: SnackbarDuration
+                                                get() = SnackbarDuration.Long
+                                            override val message: String
+                                                get() = toast.msg
+                                            override val withDismissAction: Boolean
+                                                get() = true
+                                        },
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        stack += ProfileRoute(
+                                            PixivConfig.pixiv_user!!,
+                                            ProfileItem.Download,
                                         )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            it.push(
-                                                ProfileScreen(
-                                                    PixivConfig.pixiv_user!!,
-                                                    ProfileItem.Download,
-                                                ),
-                                            )
-                                        }
-                                        return@collectSideEffect
                                     }
-                                    s.showSnackbar(toast.msg, withDismissAction = true)
+                                    return@collectSideEffect
                                 }
+                                s.showSnackbar(toast.msg, withDismissAction = true)
                             }
                         }
-                        AppScaffold { modifier ->
-                            ScreenTransition(
-                                navigator = it,
-                                contentAlignment = Alignment.Center,
-                                transition = { fadeIn() togetherWith fadeOut() },
-                                modifier = modifier.fillMaxSize(),
-                            )
-                        }
+                    }
+                    AppScaffold { modifier ->
+                        NavDisplay(
+                            backStack = stack,
+                            modifier = modifier.fillMaxSize(),
+                            onBack = { stack.removeLastOrNullWorkaround() },
+                            entryDecorators = listOf(
+                                rememberSaveableStateHolderNavEntryDecorator(),
+                                rememberViewModelStoreNavEntryDecorator(),
+                            ),
+                            transitionSpec = { fadeIn() togetherWith fadeOut() },
+                            popTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                            predictivePopTransitionSpec = { fadeIn() togetherWith fadeOut() },
+                            entryProvider = koinEntryProvider(),
+                        )
                     }
                 }
             }
@@ -226,7 +319,7 @@ fun App(initScreen: Screen = WelcomeScreen()) {
 
 @Composable
 fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
-    val nav = LocalNavigator.currentOrThrow
+    val stack = LocalNavBackStack.current
     val type = this
     if (useWideScreenMode) {
         Row(modifier = Modifier.fillMaxSize()) {
@@ -235,7 +328,7 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
                 for (entry in NavigationItem.entries) {
                     NavigationRailItem(
                         selected = entry == type,
-                        onClick = { if (entry != type) nav.push(entry()) },
+                        onClick = { stack += entry.content },
                         icon = { Icon(imageVector = entry.icon, null) },
                         label = { Text(stringResource(entry.title)) },
                     )
@@ -260,7 +353,7 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
                     for (entry in NavigationItem.entries) {
                         NavigationBarItem(
                             selected = entry == type,
-                            onClick = { if (entry != type) nav.push(entry()) },
+                            onClick = { stack += entry.content },
                             icon = { Icon(imageVector = entry.icon, null) },
                             label = { Text(stringResource(entry.title)) },
                         )
@@ -277,23 +370,21 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
 
 @Composable
 fun AppScaffold(content: @Composable (Modifier) -> Unit) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize().systemBarsPadding(),
-        snackbarHost = { SnackbarHost(hostState = LocalSnackBarHost.current) },
-        content = { content(Modifier.fillMaxSize().padding(it)) },
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        content(Modifier)
+
+        SnackbarHost(
+            hostState = LocalSnackBarHost.current,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+        )
+    }
 }
 
 @Composable
 fun ProfileAvatar() {
-    val nav = LocalNavigator.currentOrThrow
     val profile = PixivConfig.pixiv_user!!
-
-    IconButton(
-        onClick = {
-            nav.push(ProfileScreen(profile))
-        },
-    ) {
+    val stack = LocalNavBackStack.current
+    IconButton(onClick = { stack += ProfileRoute(profile) }) {
         AsyncImage(
             model = profile.profileImageUrls.content,
             contentDescription = null,
@@ -303,12 +394,8 @@ fun ProfileAvatar() {
 
 @Composable
 fun SearchButton() {
-    val nav = LocalNavigator.currentOrThrow
-    IconButton(
-        onClick = {
-            nav.push(EmptySearchScreen())
-        },
-    ) {
+    val stack = LocalNavBackStack.current
+    IconButton(onClick = { stack += EmptySearchRoute }) {
         Icon(imageVector = Icons.Default.Search, contentDescription = null)
     }
 }
@@ -389,31 +476,72 @@ fun setupEnv() {
         modules(
             // vm
             module {
-                single {
-                    WelcomeModel()
-                }
-                single {
-                    RecommendIllustViewModel()
-                }
-                single {
-                    RecommendNovelViewModel()
-                }
+                single { WelcomeModel() }
+                navigation<WelcomeRoute> { WelcomeScreen() }
 
-                single {
-                    SpaceIllustViewModel()
-                }
+                viewModelOf(::LoginScreenViewModel)
+                navigation<LoginRoute> { LoginScreen() }
 
-                single {
-                    HistoryIllustViewModel()
-                }
+                single { RecommendIllustViewModel() }
+                single { RecommendNovelViewModel() }
+                navigation<RecommendRoute> { RecommendScreen() }
 
-                single {
-                    HistoryNovelViewModel()
-                }
+                single { SpaceIllustViewModel() }
+                navigation<SpaceRoute> { SpaceScreen() }
 
-                single {
-                    NewestIllustViewModel()
-                }
+                viewModelOf(::IllustRankScreenModel)
+                navigation<RankRoute> { RankScreen() }
+
+                navigation<ProfileRoute> { key -> ProfileScreen(key) }
+
+                viewModelOf(::BookmarkViewModel)
+                viewModelOf(::TagsFetchViewModel)
+                viewModelOf(::BookmarkIllustViewModel)
+                viewModelOf(::BookmarkNovelViewModel)
+                navigation<BookmarkRoute> { BookmarkScreen() }
+
+                navigation<AboutRoute> { AboutScreen() }
+
+                viewModelOf(::IllustDetailViewModel)
+                viewModelOf(::IllustCommentViewModel)
+                navigation<IllustDetailRoute> { key -> IllustDetailScreen(key) }
+                navigation<IllustDetailPreFetchRoute> { key -> IllustDetailPreFetchScreen(key) }
+
+                viewModelOf(::IllustSimilarViewModel)
+                navigation<IllustSimilarRoute> { key -> IllustSimilarScreen(key) }
+
+                viewModelOf(::NovelDetailViewModel)
+                viewModelOf(::NovelCommentViewModel)
+                navigation<NovelDetailRoute> { key -> NovelDetailScreen(key) }
+
+                viewModelOf(::NovelSimilarViewModel)
+                navigation<NovelSimilarRoute> { key -> NovelSimilarScreen(key) }
+
+                viewModelOf(::AuthorNovelBookmarkViewModel)
+                viewModelOf(::AuthorIllustBookmarkViewModel)
+                viewModelOf(::AuthorNovelViewModel)
+                viewModelOf(::AuthorIllustViewModel)
+                viewModelOf(::AuthorFollowViewModel)
+                viewModelOf(::AuthorScreenModel)
+                navigation<AuthorRoute> { key -> AuthorScreen(key) }
+
+                viewModelOf(::NovelSeriesScreenModel)
+                viewModelOf(::NovelSeriesFetchModel)
+                navigation<NovelSeriesRoute> { key -> NovelSeriesScreen(key) }
+
+                viewModelOf(::EmptySearchViewModel)
+                navigation<EmptySearchRoute> { EmptySearchScreen() }
+
+                viewModelOf(::SearchResultViewModel)
+                navigation<SearchResultRoute> { key -> SearchResultScreen(key) }
+
+                viewModelOf(::SearchPanelViewModel)
+                navigation<SearchPanelRoute> { key -> SearchPanelScreen(key) }
+
+                single { HistoryIllustViewModel() }
+                single { HistoryNovelViewModel() }
+
+                single { NewestIllustViewModel() }
             },
             // pixiv
             module(createdAtStart = true) {
@@ -447,12 +575,8 @@ fun setupEnv() {
                         setQueryCoroutineContext(Dispatchers.IO)
                     }.build()
                 }
-                single {
-                    DownloadScreenModel()
-                }
-                single {
-                    UpdateCheckViewModel()
-                }
+                single { DownloadScreenModel() }
+                single { UpdateCheckViewModel() }
             },
         )
     }
@@ -492,14 +616,11 @@ expect suspend fun copyImageToClipboard(bitmap: ByteArray)
 enum class NavigationItem(
     val title: StringResource,
     val icon: ImageVector,
-    val content: () -> Screen,
+    val content: NavKey,
 ) {
-    RECOMMEND(Res.string.recommend, Icons.Default.Home, { RecommendScreen() }),
-    RANK(Res.string.rank, Icons.Default.DateRange, { RankScreen() }),
-    SPACE(Res.string.space, Icons.Default.Star, { SpaceScreen() }),
-    ;
-
-    operator fun invoke(): Screen = content()
+    RECOMMEND(Res.string.recommend, Icons.Default.Home, RecommendRoute),
+    RANK(Res.string.rank, Icons.Default.DateRange, RankRoute),
+    SPACE(Res.string.space, Icons.Default.Star, SpaceRoute),
 }
 
 expect fun ComponentRegistry.Builder.installGifDecoder(): ComponentRegistry.Builder

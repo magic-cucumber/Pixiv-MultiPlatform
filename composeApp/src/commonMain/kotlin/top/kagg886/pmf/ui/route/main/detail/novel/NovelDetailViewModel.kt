@@ -2,14 +2,12 @@ package top.kagg886.pmf.ui.route.main.detail.novel
 
 import androidx.compose.ui.geometry.Size
 import androidx.lifecycle.ViewModel
-import cafe.adriel.voyager.core.model.ScreenModel
+import arrow.core.Option
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.size.Size as CoilSize
-import io.ktor.client.HttpClient
-import io.ktor.client.request.get
 import kotlin.collections.set
 import kotlin.time.Clock
 import kotlinx.atomicfu.atomic
@@ -60,17 +58,9 @@ import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
 
-class NovelDetailViewModel(
-    val id: Long,
-    val seriesInfo: SeriesInfo? = null,
-) : ViewModel(),
-    ScreenModel,
-    ContainerHost<NovelDetailViewState, NovelDetailSideEffect>,
-    KoinComponent {
-    override val container: Container<NovelDetailViewState, NovelDetailSideEffect> =
-        container(NovelDetailViewState.Loading(MutableStateFlow("Loading...")))
+class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) : ViewModel(), ContainerHost<NovelDetailViewState, NovelDetailSideEffect>, KoinComponent {
+    override val container: Container<NovelDetailViewState, NovelDetailSideEffect> = container(NovelDetailViewState.Loading(MutableStateFlow("Loading...")))
     private val client = PixivConfig.newAccountFromConfig()
-    private val img by inject<HttpClient>()
     private val database by inject<AppDatabase>()
 
     private fun CombinedText.toPlainString() = this.joinToString("") { it.text }
@@ -239,7 +229,7 @@ class NovelDetailViewModel(
             if (!AppConfig.enableFetchSeries) {
                 null
             } else {
-                seriesInfo ?: detail.series.id?.let {
+                seriesInfo.getOrNull() ?: detail.series.id?.let {
                     if (it == -1) return@let null // 默认值为-1
                     val seriesInfo = client.getNovelSeries(it)
                     val mutex = Mutex()

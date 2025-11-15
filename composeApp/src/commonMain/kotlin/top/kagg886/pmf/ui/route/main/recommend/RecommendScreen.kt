@@ -5,13 +5,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.rememberScreenModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinNavigatorScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
+import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.NavigationItem
@@ -24,34 +23,24 @@ import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.ui.util.NovelFetchSideEffect
 import top.kagg886.pmf.util.stringResource
 
-class RecommendScreen : Screen {
-    @Composable
-    override fun Content() = NavigationItem.RECOMMEND.composeWithAppBar {
-        RecommendScreen()
-    }
-}
+@Serializable
+data object RecommendRoute : NavKey
 
 @Composable
-fun Screen.RecommendScreen() {
+fun RecommendScreen() = NavigationItem.RECOMMEND.composeWithAppBar {
     val snackbarHostState = LocalSnackBarHost.current
-    val page = rememberScreenModel {
-        object : ScreenModel {
-            val page = mutableIntStateOf(0)
-        }
-    }
-    val index by page.page
+    var index by rememberSerializable { mutableIntStateOf(0) }
     val tab = listOf(Res.string.illust, Res.string.novel)
     TabContainer(
         modifier = Modifier.fillMaxSize(),
         tab = tab,
         tabTitle = { Text(stringResource(it)) },
         current = tab[index],
-        onCurrentChange = { page.page.value = tab.indexOf(it) },
+        onCurrentChange = { index = tab.indexOf(it) },
     ) {
         when (it) {
             Res.string.illust -> {
-                val nav = LocalNavigator.currentOrThrow
-                val model = nav.koinNavigatorScreenModel<RecommendIllustViewModel>()
+                val model = koinViewModel<RecommendIllustViewModel>()
                 model.collectSideEffect { effect ->
                     when (effect) {
                         is IllustFetchSideEffect.Toast -> {
@@ -63,8 +52,7 @@ fun Screen.RecommendScreen() {
             }
 
             Res.string.novel -> {
-                val nav = LocalNavigator.currentOrThrow
-                val model = nav.koinNavigatorScreenModel<RecommendNovelViewModel>()
+                val model = koinViewModel<RecommendNovelViewModel>()
                 model.collectSideEffect { effect ->
                     when (effect) {
                         is NovelFetchSideEffect.Toast -> {

@@ -2,7 +2,6 @@ package top.kagg886.pmf.ui.route.main.search.v2
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cafe.adriel.voyager.core.model.ScreenModel
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -25,7 +24,7 @@ class SearchResultViewModel(
     private val keyword: List<String>,
     private val sort: SearchSort,
     private val target: SearchTarget,
-) : ViewModel(), ScreenModel, KoinComponent, ContainerHost<SearchResultState, SearchResultSideEffect> {
+) : ViewModel(), KoinComponent, ContainerHost<SearchResultState, SearchResultSideEffect> {
 
     private val database by inject<AppDatabase>()
 

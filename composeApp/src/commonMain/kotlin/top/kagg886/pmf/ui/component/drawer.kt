@@ -25,7 +25,7 @@ fun SupportRTLModalNavigationDrawer(
     CompositionLocalProvider(LocalLayoutDirection provides layout) {
         ModalNavigationDrawer(
             drawerContent = {
-                ModalDrawerSheet {
+                ModalDrawerSheet(drawerState = drawerState) {
                     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                         drawerContent()
                     }

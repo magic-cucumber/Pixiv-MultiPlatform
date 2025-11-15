@@ -16,11 +16,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.orbitmvi.orbit.compose.collectAsState
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.Res
 import top.kagg886.pmf.res.bookmark_extra_options
 import top.kagg886.pmf.res.no_more_data
@@ -34,7 +33,7 @@ import top.kagg886.pmf.ui.component.icon.R18G
 import top.kagg886.pmf.ui.component.icon.Robot
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
-import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailScreen
+import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.util.stringResource
 
 @Composable
@@ -45,7 +44,7 @@ fun NovelFetchScreen(model: NovelFetchViewModel) {
 
 @Composable
 private fun NovelFetchContent0(state: NovelFetchViewState, model: NovelFetchViewModel) {
-    val nav = LocalNavigator.currentOrThrow
+    val stack = LocalNavBackStack.current
     val scope = rememberCoroutineScope()
     val data = model.data.collectAsLazyPagingItems()
     when {
@@ -166,7 +165,7 @@ private fun NovelFetchContent0(state: NovelFetchViewState, model: NovelFetchView
                                     )
                                 },
                                 modifier = Modifier.padding(5.dp).clip(CardDefaults.shape).clickable {
-                                    nav.push(NovelDetailScreen(item.id.toLong()))
+                                    stack += NovelDetailRoute(item.id.toLong())
                                 },
                             )
                         }

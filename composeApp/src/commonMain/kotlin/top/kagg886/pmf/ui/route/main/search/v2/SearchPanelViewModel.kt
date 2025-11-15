@@ -1,7 +1,6 @@
 package top.kagg886.pmf.ui.route.main.search.v2
 
 import androidx.lifecycle.ViewModel
-import cafe.adriel.voyager.core.model.ScreenModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.koin.core.component.KoinComponent
@@ -32,7 +31,7 @@ class SearchPanelViewModel(
     initialTarget: SearchTarget,
     initialKeyword: List<String>,
     initialText: String,
-) : ViewModel(), ScreenModel, KoinComponent, ContainerHost<SearchPanelViewState, SearchPanelSideEffect> {
+) : ViewModel(), KoinComponent, ContainerHost<SearchPanelViewState, SearchPanelSideEffect> {
 
     private val database by inject<AppDatabase>()
     private val client = top.kagg886.pmf.backend.pixiv.PixivConfig.newAccountFromConfig()

@@ -1,11 +1,9 @@
 package top.kagg886.pmf.ui.route.main.bookmark
 
 import androidx.lifecycle.ViewModel
-import cafe.adriel.voyager.core.model.ScreenModel
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.annotation.OrbitExperimental
-import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.user.*
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.ui.util.IllustFetchViewModel
@@ -14,7 +12,7 @@ import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.ui.util.flowOf
 import top.kagg886.pmf.ui.util.next
 
-class BookmarkViewModel : ContainerHost<BookmarkViewState, BookmarkSideEffect>, ViewModel(), ScreenModel {
+class BookmarkViewModel : ContainerHost<BookmarkViewState, BookmarkSideEffect>, ViewModel() {
     override val container: Container<BookmarkViewState, BookmarkSideEffect> = container(BookmarkViewState.LoadSuccess())
 
     @OptIn(OrbitExperimental::class)
