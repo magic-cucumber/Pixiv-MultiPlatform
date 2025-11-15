@@ -30,6 +30,7 @@ import top.kagg886.pmf.ui.component.TabContainer
 import top.kagg886.pmf.ui.util.AuthorFetchScreen
 import top.kagg886.pmf.ui.util.IllustFetchScreen
 import top.kagg886.pmf.ui.util.NovelFetchScreen
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -68,7 +69,7 @@ fun SearchResultScreen(route: SearchResultRoute) {
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                    IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                         Icon(Icons.AutoMirrored.Default.ArrowBack, null)
                     }
                 },

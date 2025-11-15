@@ -58,6 +58,7 @@ import top.kagg886.pmf.ui.route.main.profile.ProfileItem.History
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.Setting
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.ViewProfile
 import top.kagg886.pmf.ui.route.main.setting.SettingScreen
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.stringResource
 
@@ -96,7 +97,7 @@ fun ProfileScreen(route: ProfileRoute) {
                         },
                         leadingContent = {
                             IconButton(
-                                onClick = { stack.removeLastOrNull() },
+                                onClick = { stack.removeLastOrNullWorkaround() },
                             ) {
                                 Icon(Icons.AutoMirrored.Default.ArrowBack, "")
                             }

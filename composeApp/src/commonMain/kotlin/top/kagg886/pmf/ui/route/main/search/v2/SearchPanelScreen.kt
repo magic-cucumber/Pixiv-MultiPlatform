@@ -57,6 +57,7 @@ import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.ui.route.main.search.v2.components.SearchPropertiesPanel
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
 import top.kagg886.pmf.ui.util.AuthorCard
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.stringResource
 
@@ -119,7 +120,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
                             Chip(it)
                         },
                         leadingIcon = {
-                            IconButton(onClick = { stack.removeLastOrNull() }) {
+                            IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                                 Icon(Icons.AutoMirrored.Default.ArrowBack, null)
                             }
                         },
@@ -151,7 +152,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
                         modifier = Modifier.fillMaxWidth(),
                         onValueChange = { model.updateText(it) },
                         leadingIcon = {
-                            IconButton(onClick = { stack.removeLastOrNull() }) {
+                            IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                                 Icon(Icons.AutoMirrored.Default.ArrowBack, null)
                             }
                         },

@@ -45,6 +45,7 @@ import top.kagg886.pmf.ui.util.IllustFetchScreen
 import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.ui.util.TagsFetchDrawerSheetContainer
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -56,7 +57,7 @@ fun BookmarkScreen() {
     val stack = LocalNavBackStack.current
     val state by model.collectAsState()
     BookmarkContent(model, state) {
-        stack.removeLastOrNull()
+        stack.removeLastOrNullWorkaround()
     }
 }
 

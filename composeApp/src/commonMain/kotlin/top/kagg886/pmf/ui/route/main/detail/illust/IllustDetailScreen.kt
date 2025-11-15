@@ -166,7 +166,7 @@ private fun IllustTopAppBar(
     TopAppBar(
         title = { Text(text = stringResource(Res.string.image_details)) },
         navigationIcon = {
-            IconButton(onClick = { stack.removeLastOrNull() }) {
+            IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
             }
         },
@@ -759,7 +759,7 @@ fun IllustDetailPreFetchScreen(route: IllustDetailPreFetchRoute) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Loading()
         IconButton(
-            onClick = { stack.removeLastOrNull() },
+            onClick = { stack.removeLastOrNullWorkaround() },
             modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
         ) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, null)

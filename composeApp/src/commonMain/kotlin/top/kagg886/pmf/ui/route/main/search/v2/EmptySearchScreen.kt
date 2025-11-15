@@ -31,6 +31,7 @@ import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.route.main.search.v2.components.HistoryItem
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -58,7 +59,7 @@ fun EmptySearchScreen() {
                     Text(stringResource(Res.string.search))
                 },
                 navigationIcon = {
-                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                    IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                         Icon(Icons.AutoMirrored.Default.ArrowBack, null)
                     }
                 },

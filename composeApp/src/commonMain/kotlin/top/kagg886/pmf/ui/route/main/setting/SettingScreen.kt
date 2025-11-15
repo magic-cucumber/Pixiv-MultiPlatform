@@ -70,6 +70,7 @@ import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.main.about.AboutRoute
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.ComposeI18N
 import top.kagg886.pmf.util.SerializedTheme
@@ -938,7 +939,7 @@ fun SettingScreen() {
                 val stack = LocalNavBackStack.current
                 AlertDialog(
                     onDismissRequest = {
-                        stack.removeLastOrNull()
+                        stack.removeLastOrNullWorkaround()
                     },
                     title = {
                         Text(stringResource(Res.string.confirm_logout))

@@ -47,6 +47,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.collapsable.v3.CollapsableTopAppBarScaffold
 import top.kagg886.pmf.ui.component.icon.Github
 import top.kagg886.pmf.ui.component.icon.Telegram
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -127,7 +128,7 @@ fun AboutScreen() {
         navigationIcon = {
             val stack = LocalNavBackStack.current
             IconButton(
-                onClick = { stack.removeLastOrNull() },
+                onClick = { stack.removeLastOrNullWorkaround() },
             ) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             }

@@ -53,6 +53,7 @@ import top.kagg886.pmf.ui.component.SupportRTLModalNavigationDrawer
 import top.kagg886.pmf.ui.util.AuthorCard
 import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.ui.util.NovelFetchViewModel
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.stringResource
 
@@ -185,7 +186,7 @@ private fun NovelSeriesScreenDrawerContent(id: Int, info: SeriesDetail) {
                 },
                 navigationIcon = {
                     val stack = LocalNavBackStack.current
-                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                    IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             null,

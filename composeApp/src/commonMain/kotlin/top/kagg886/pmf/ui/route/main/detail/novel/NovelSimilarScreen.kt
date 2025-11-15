@@ -18,6 +18,7 @@ import org.koin.core.parameter.parametersOf
 import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.NovelFetchScreen
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -35,7 +36,7 @@ fun NovelSimilarScreen(route: NovelSimilarRoute) {
             TopAppBar(
                 title = { Text(stringResource(Res.string.find_similar_novel)) },
                 navigationIcon = {
-                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                    IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,

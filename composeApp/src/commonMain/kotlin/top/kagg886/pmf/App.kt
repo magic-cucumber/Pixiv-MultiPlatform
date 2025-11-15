@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
@@ -178,6 +177,7 @@ import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
 import top.kagg886.pmf.ui.util.rememberSupportPixivNavigateUriHandler
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.SerializedTheme
 import top.kagg886.pmf.util.UgoiraFetcher
@@ -300,7 +300,7 @@ fun App(start: NavKey = WelcomeRoute) {
                         NavDisplay(
                             backStack = stack,
                             modifier = modifier.fillMaxSize(),
-                            onBack = { stack.removeLastOrNull() },
+                            onBack = { stack.removeLastOrNullWorkaround() },
                             entryDecorators = listOf(
                                 rememberSaveableStateHolderNavEntryDecorator(),
                                 rememberViewModelStoreNavEntryDecorator(),
@@ -372,7 +372,6 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
 fun AppScaffold(content: @Composable (Modifier) -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         content(Modifier)
-
 
         SnackbarHost(
             hostState = LocalSnackBarHost.current,

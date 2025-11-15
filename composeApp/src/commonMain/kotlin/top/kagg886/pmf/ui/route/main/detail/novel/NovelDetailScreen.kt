@@ -100,6 +100,7 @@ import top.kagg886.pmf.ui.util.HTMLRichText
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
 import top.kagg886.pmf.ui.util.RichText
 import top.kagg886.pmf.ui.util.keyboardScrollerController
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.withClickable
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.setText
@@ -469,7 +470,7 @@ private fun NovelDetailTopAppBar(
             Text(stringResource(Res.string.novel_detail))
         },
         navigationIcon = {
-            IconButton(onClick = { stack.removeLastOrNull() }) {
+            IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
             }
         },

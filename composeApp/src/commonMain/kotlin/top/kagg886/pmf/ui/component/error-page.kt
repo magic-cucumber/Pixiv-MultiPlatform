@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import top.kagg886.pmf.LocalNavBackStack
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 
 @Composable
 fun ErrorPage(
@@ -39,7 +40,7 @@ fun ErrorPage(
         if (showBackButton) {
             val stack = LocalNavBackStack.current
             IconButton(
-                onClick = { stack.removeLastOrNull() },
+                onClick = { stack.removeLastOrNullWorkaround() },
                 modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
             ) {
                 Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)

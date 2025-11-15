@@ -66,6 +66,7 @@ import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelBookmark
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorProfile
 import top.kagg886.pmf.ui.util.AuthorCard
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -193,7 +194,7 @@ private fun AuthorContent(id: Int, state: AuthorScreenState) {
                 },
                 navigationIcon = {
                     val stack = LocalNavBackStack.current
-                    IconButton(onClick = { stack.removeLastOrNull() }) {
+                    IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
