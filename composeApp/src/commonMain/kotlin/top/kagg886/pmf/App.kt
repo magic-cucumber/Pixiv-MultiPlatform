@@ -40,11 +40,13 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -162,6 +164,7 @@ import top.kagg886.pmf.ui.route.main.search.v2.SearchPanelViewModel
 import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
 import top.kagg886.pmf.ui.route.main.search.v2.SearchResultScreen
 import top.kagg886.pmf.ui.route.main.search.v2.SearchResultViewModel
+import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesFetchModel
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreen
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreenModel
@@ -367,11 +370,15 @@ fun NavigationItem.composeWithAppBar(content: @Composable () -> Unit) {
 
 @Composable
 fun AppScaffold(content: @Composable (Modifier) -> Unit) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize().systemBarsPadding(),
-        snackbarHost = { SnackbarHost(hostState = LocalSnackBarHost.current) },
-        content = { content(Modifier.fillMaxSize().padding(it)) },
-    )
+    Box(modifier = Modifier.fillMaxSize()) {
+        content(Modifier)
+
+
+        SnackbarHost(
+            hostState = LocalSnackBarHost.current,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+        )
+    }
 }
 
 @Composable
@@ -520,6 +527,7 @@ fun setupEnv() {
                 navigation<AuthorRoute> { key -> AuthorScreen(key) }
 
                 viewModelOf(::NovelSeriesScreenModel)
+                viewModelOf(::NovelSeriesFetchModel)
                 navigation<NovelSeriesRoute> { key -> NovelSeriesScreen(key) }
 
                 viewModelOf(::EmptySearchViewModel)
