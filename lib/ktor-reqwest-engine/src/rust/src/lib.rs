@@ -228,10 +228,13 @@ impl Service<Uri> for KeqwestConnector {
 #[cfg(test)]
 mod tests {
     use crate::{DnsResolver, KeqwestConnector, TokioExecutor, system};
-    use hyper::{Body, Client, Request};
+    use hyper::{Body, Client, Request, Uri};
     use std::collections::HashMap;
     use std::sync::Arc;
     use std::time::Duration;
+    use hyper::client::HttpConnector;
+    use hyper_proxy::{Proxy, ProxyConnector};
+    use hyper_tls::HttpsConnector;
     use tokio::time::timeout;
 
     #[tokio::test]
@@ -244,12 +247,11 @@ mod tests {
         // 创建自定义DNS解析器，包含fallback IP逻辑
         let dns_resolver: DnsResolver = Arc::new({
             let fallback_ips = fallback_ips.clone();
-            let system_resolver = system();
 
             move |hostname: &str| {
                 let hostname = hostname.to_string();
                 let fallback_ips = fallback_ips.clone();
-                let system_resolver = system_resolver.clone();
+                let system_resolver = system();
                 Box::pin(async move {
                     // 先尝试系统DNS解析
                     match system_resolver(&hostname).await {
@@ -273,14 +275,27 @@ mod tests {
             }
         });
 
-        // 创建自定义 Connector，使用自定义DNS解析器（包含fallback IP），忽略SSL错误
-        let connector = KeqwestConnector::new(
-            Some(dns_resolver), // 使用自定义DNS解析器（包含fallback IP）
-            true,               // 忽略SSL错误
-        )
-        .expect("Failed to create CustomConnector");
+        // // 创建自定义 Connector，使用自定义DNS解析器（包含fallback IP），忽略SSL错误
+        // let connector = KeqwestConnector::new(
+        //     Some(dns_resolver), // 使用自定义DNS解析器（包含fallback IP）
+        //     true,               // 忽略SSL错误
+        // )
+        // .expect("Failed to create CustomConnector");
+        let connector = HttpsConnector::new();
 
-        let client = Client::builder().executor(TokioExecutor).build::<_, Body>(connector);
+        // 构建代理配置 (HTTP)
+        let proxy = Proxy::new(
+            hyper_proxy::Intercept::Http,
+            Uri::from_static("http://localhost:7897"),
+        );
+
+        // 传入 connector 的值（而不是 &connector）
+        let proxy_connector = ProxyConnector::from_proxy(connector, proxy).unwrap();
+
+        // 传入 proxy_connector 的值（而不是 &proxy）
+        let client = Client::builder()
+            .executor(TokioExecutor)
+            .build::<_, Body>(proxy_connector);
 
         {
             // 构建第一个请求

@@ -14,8 +14,8 @@ jni = { version = "0.21", optional = true }
 jni_fn = { version = "0.1", optional = true }
 tokio = { version = "1", features = ["full"] }
 hyper = { version = "0.14", features = ["client", "http1"] }
-# hyper-util 0.1 是为 hyper 1.0 设计的，与 hyper 0.14 不兼容
-# 我们使用 hyper 0.14 原生的连接池功能
+hyper-proxy = "0.9.1"
+hyper-tls = "0.5.0"
 openssl = { version = "0.10", features = ["vendored"] } # 或者去掉 vendored 根据你平台选择
 tokio-openssl = "0.6.5"
 futures = "0.3"
