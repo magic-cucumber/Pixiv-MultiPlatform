@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
@@ -291,6 +294,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                 WatchLaterItem(
                     type = WatchLaterType.NOVEL,
                     payload = state.novel.id.toLong(),
+                    metadata = Json.encodeToJsonElement(state.novel).jsonObject
                 ),
             )
 

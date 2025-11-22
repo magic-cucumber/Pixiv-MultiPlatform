@@ -9,6 +9,8 @@ import androidx.room.Query
 import androidx.room.TypeConverters
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
+import top.kagg886.pmf.backend.database.converters.JsonObjectConverter
 import top.kagg886.pmf.backend.database.converters.WatchLaterTypeConverter
 
 /**
@@ -41,13 +43,14 @@ interface WatchLaterDao {
 }
 
 @Entity
-@TypeConverters(WatchLaterTypeConverter::class)
+@TypeConverters(WatchLaterTypeConverter::class, JsonObjectConverter::class)
 data class WatchLaterItem(
     @PrimaryKey(autoGenerate = false)
     val id: Long? = null,
     val type: WatchLaterType,
 
     val payload: Long, // 随type的改变而改变
+    val metadata: JsonObject,
 
     val createTime: Long = Clock.System.now().toEpochMilliseconds(),
 )

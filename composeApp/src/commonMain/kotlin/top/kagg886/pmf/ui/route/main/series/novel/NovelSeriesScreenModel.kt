@@ -1,6 +1,9 @@
 package top.kagg886.pmf.ui.route.main.series.novel
 
 import androidx.lifecycle.ViewModel
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
@@ -119,6 +122,7 @@ class NovelSeriesScreenModel(private val seriesId: Int) :
                 WatchLaterItem(
                     type = WatchLaterType.SERIES,
                     payload = seriesId.toLong(),
+                    metadata = Json.encodeToJsonElement(state.info).jsonObject
                 ),
             )
 

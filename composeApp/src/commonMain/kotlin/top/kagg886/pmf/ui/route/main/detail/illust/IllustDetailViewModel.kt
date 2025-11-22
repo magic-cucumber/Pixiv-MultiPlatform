@@ -7,6 +7,8 @@ import io.ktor.util.encodeBase64
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
@@ -175,6 +177,7 @@ class IllustDetailViewModel(private val illust: Illust) :
                 WatchLaterItem(
                     type = WatchLaterType.ILLUST,
                     payload = illust.id.toLong(),
+                    metadata = Json.encodeToJsonElement(state.illust).jsonObject
                 ),
             )
 
