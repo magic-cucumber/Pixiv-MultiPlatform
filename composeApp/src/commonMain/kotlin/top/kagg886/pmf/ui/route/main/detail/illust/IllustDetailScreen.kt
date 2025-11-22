@@ -91,6 +91,7 @@ class TodoSerializer : KSerializer<List<Illust>> {
         cache["$uuid"] = json
         encoder.encodeSerializableValue(Uuid.serializer(), uuid)
     }
+
     override fun deserialize(decoder: Decoder): List<Illust> {
         val uuid = decoder.decodeSerializableValue(Uuid.serializer())
         val json: String = cache["$uuid"]!!
@@ -159,8 +160,10 @@ private fun IllustDetailScreenContent(
 @Composable
 private fun IllustTopAppBar(
     illust: Illust,
+    inViewLater: Boolean,
     onCommentPanelBtnClick: () -> Unit = {},
     onOriginImageRequest: () -> Unit = {},
+    onViewLaterBtnClick: (Boolean) -> Unit = {},
 ) {
     val stack = LocalNavBackStack.current
     TopAppBar(
@@ -189,6 +192,24 @@ private fun IllustTopAppBar(
                         enabled = false
                     },
                 )
+
+                if (inViewLater) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.remove_watch_later)) },
+                        onClick = {
+                            onViewLaterBtnClick(false)
+                            enabled = false
+                        },
+                    )
+                } else {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(Res.string.add_watch_later)) },
+                        onClick = {
+                            onViewLaterBtnClick(true)
+                            enabled = false
+                        },
+                    )
+                }
 
                 val clip = LocalClipboard.current
                 val scope = rememberCoroutineScope()
@@ -226,9 +247,13 @@ private fun WideScreenIllustDetail(
         topBar = {
             IllustTopAppBar(
                 illust = state.illust,
+                inViewLater = state.itemInViewLater,
                 onCommentPanelBtnClick = {},
                 onOriginImageRequest = {
                     model.toggleOrigin()
+                },
+                onViewLaterBtnClick = {
+                    if (it) model.addViewLater() else model.removeViewLater()
                 },
             )
         },
@@ -269,6 +294,7 @@ private fun IllustDetail(
             topBar = {
                 IllustTopAppBar(
                     illust = state.illust,
+                    inViewLater = state.itemInViewLater,
                     onCommentPanelBtnClick = {
                         scope.launch {
                             if (drawerState.isOpen) {
@@ -280,6 +306,9 @@ private fun IllustDetail(
                     },
                     onOriginImageRequest = {
                         model.toggleOrigin()
+                    },
+                    onViewLaterBtnClick = {
+                        if (it) model.addViewLater() else model.removeViewLater()
                     },
                 )
             },

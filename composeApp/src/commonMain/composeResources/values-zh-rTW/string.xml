@@ -375,4 +375,7 @@
     <string name="please_input_keyword">請輸入關鍵字</string>
     <string name="search_metadata">搜尋中繼資料</string>
     <string name="search_type">搜尋類型</string>
+
+    <string name="add_watch_later">加入稍後再看</string>
+    <string name="remove_watch_later">從稍後再看中移除</string>
 </resources>

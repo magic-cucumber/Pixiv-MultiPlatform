@@ -27,6 +27,8 @@ import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.IllustHistory
+import top.kagg886.pmf.backend.database.dao.WatchLaterItem
+import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.container
@@ -35,8 +37,12 @@ import top.kagg886.pmf.ui.util.notifyLike
 import top.kagg886.pmf.util.UGOIRA_SCHEME
 import top.kagg886.pmf.util.getString
 
-class IllustDetailViewModel(private val illust: Illust) : ContainerHost<IllustDetailViewState, IllustDetailSideEffect>, ViewModel(), KoinComponent {
-    override val container: Container<IllustDetailViewState, IllustDetailSideEffect> = container(IllustDetailViewState.Loading()) { load() }
+class IllustDetailViewModel(private val illust: Illust) :
+    ContainerHost<IllustDetailViewState, IllustDetailSideEffect>,
+    ViewModel(),
+    KoinComponent {
+    override val container: Container<IllustDetailViewState, IllustDetailSideEffect> =
+        container(IllustDetailViewState.Loading()) { load() }
 
     private val client = PixivConfig.newAccountFromConfig()
 
@@ -61,6 +67,8 @@ class IllustDetailViewModel(private val illust: Illust) : ContainerHost<IllustDe
     }
 
     fun load(showLoading: Boolean = true) = intent {
+        val inWatchLater = database.watchLaterDAO().exists(WatchLaterType.ILLUST, illust.id.toLong())
+
         val loadingState = IllustDetailViewState.Loading()
         if (showLoading) {
             reduce {
@@ -73,7 +81,7 @@ class IllustDetailViewModel(private val illust: Illust) : ContainerHost<IllustDe
             val meta = client.getUgoiraMetadata(illust)
             val data = Json.encodeToString(meta).encodeBase64()
             val url = "$UGOIRA_SCHEME://$data".toUri()
-            reduce { IllustDetailViewState.Success(illust, url) }
+            reduce { IllustDetailViewState.Success(illust, inWatchLater, url) }
             saveDataBase(illust)
             return@intent
         }
@@ -88,7 +96,7 @@ class IllustDetailViewModel(private val illust: Illust) : ContainerHost<IllustDe
 
         val img = illust.contentImages.get(*options.toTypedArray())!!.map(String::toUri)
         reduce {
-            IllustDetailViewState.Success(illust, img)
+            IllustDetailViewState.Success(illust, inWatchLater, img)
         }
 
         // 部分API返回信息不全，需要重新拉取
@@ -116,7 +124,7 @@ class IllustDetailViewModel(private val illust: Illust) : ContainerHost<IllustDe
 
             val img = i.contentImages.get(*options.toTypedArray())!!.map(String::toUri)
             reduce {
-                IllustDetailViewState.Success(i, img)
+                IllustDetailViewState.Success(i, inWatchLater, img)
             }
         }
     }
@@ -158,6 +166,40 @@ class IllustDetailViewModel(private val illust: Illust) : ContainerHost<IllustDe
                 createTime = Clock.System.now().toEpochMilliseconds(),
             ),
         )
+    }
+
+    @OptIn(OrbitExperimental::class)
+    fun addViewLater() = intent {
+        runOn<IllustDetailViewState.Success> {
+            database.watchLaterDAO().insert(
+                WatchLaterItem(
+                    type = WatchLaterType.ILLUST,
+                    payload = illust.id.toLong(),
+                ),
+            )
+
+            reduce {
+                state.copy(
+                    itemInViewLater = true,
+                )
+            }
+        }
+    }
+
+    @OptIn(OrbitExperimental::class)
+    fun removeViewLater() = intent {
+        runOn<IllustDetailViewState.Success> {
+            database.watchLaterDAO().delete(
+                type = WatchLaterType.ILLUST,
+                payload = illust.id.toLong(),
+            )
+
+            reduce {
+                state.copy(
+                    itemInViewLater = false,
+                )
+            }
+        }
     }
 
     @OptIn(OrbitExperimental::class)
@@ -247,8 +289,9 @@ sealed class IllustDetailViewState {
         IllustDetailViewState()
 
     data object Error : IllustDetailViewState()
-    data class Success(val illust: Illust, val data: List<Uri>) : IllustDetailViewState() {
-        constructor(illust: Illust, data: Uri) : this(illust, listOf(data))
+    data class Success(val illust: Illust, val itemInViewLater: Boolean, val data: List<Uri>) :
+        IllustDetailViewState() {
+        constructor(illust: Illust, itemInViewLater: Boolean, data: Uri) : this(illust, itemInViewLater, listOf(data))
     }
 }
 

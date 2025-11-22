@@ -8,9 +8,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.TypeConverters
 import kotlin.time.Clock
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
-import top.kagg886.pmf.backend.database.converters.IllustConverter
 import top.kagg886.pmf.backend.database.converters.WatchLaterTypeConverter
 
 /**
@@ -28,27 +26,28 @@ interface WatchLaterDao {
     @Query("SELECT * FROM WatchLaterItem ORDER BY createTime DESC")
     fun source(): PagingSource<Int, WatchLaterItem>
 
-    @Query("""
+    @Query(
+        """
     SELECT EXISTS(
         SELECT 1 FROM WatchLaterItem 
         WHERE type = :type AND payload = :payload
     )
-    """)
+    """,
+    )
     suspend fun exists(type: WatchLaterType, payload: Long): Boolean
 
-
-    @Query("DELETE FROM WatchLaterItem WHERE id = :id")
-    suspend fun delete(id: Long)
+    @Query("DELETE FROM WatchLaterItem WHERE payload = :payload AND type = :type")
+    suspend fun delete(type: WatchLaterType, payload: Long)
 }
 
 @Entity
 @TypeConverters(WatchLaterTypeConverter::class)
 data class WatchLaterItem(
     @PrimaryKey(autoGenerate = false)
-    val id: Long,
+    val id: Long? = null,
     val type: WatchLaterType,
 
-    val payload: Long, //随type的改变而改变
+    val payload: Long, // 随type的改变而改变
 
     val createTime: Long = Clock.System.now().toEpochMilliseconds(),
 )

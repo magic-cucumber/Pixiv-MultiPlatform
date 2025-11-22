@@ -11,11 +11,11 @@ import top.kagg886.pmf.backend.database.dao.*
 import top.kagg886.pmf.util.absolutePath
 
 @Database(
-    entities = [IllustHistory::class, NovelHistory::class, DownloadItem::class, SearchHistory::class,WatchLaterItem::class],
+    entities = [IllustHistory::class, NovelHistory::class, DownloadItem::class, SearchHistory::class, WatchLaterItem::class],
     version = BuildConfig.DATABASE_VERSION,
     autoMigrations = [
-        AutoMigration(7, 8)
-    ]
+        AutoMigration(7, 8),
+    ],
 )
 @ConstructedBy(AppDatabaseConstructor::class)
 abstract class AppDatabase : RoomDatabase() {
