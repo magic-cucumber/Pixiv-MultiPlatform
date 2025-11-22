@@ -63,7 +63,7 @@ data class NovelSeriesRoute(val id: Int) : NavKey
 @Composable
 fun NovelSeriesScreen(route: NovelSeriesRoute) {
     val id = route.id
-    val model = koinViewModel<NovelSeriesScreenModel>(key = "$id") {
+    val model = koinViewModel<NovelSeriesScreenModel>(key = "novel_series_$id") {
         parametersOf(id)
     }
     val snack = LocalSnackBarHost.current
@@ -87,24 +87,70 @@ private fun NovelSeriesScreenContent(id: Int, state: NovelSeriesScreenState, mod
         }
 
         is NovelSeriesScreenState.LoadingSuccess -> {
-            val novelModel = koinViewModel<NovelSeriesFetchModel>(key = "$id") {
+            val novelModel = koinViewModel<NovelSeriesFetchModel>(key = "novel_$id") {
                 parametersOf(id)
             }
 
             if (useWideScreenMode) {
-                WideNovelSeriesScreenContent(id, state.info, novelModel)
+                WideNovelSeriesScreenContent(
+                    id,
+                    state.info,
+                    state.itemInViewLater,
+                    novelModel,
+                    onFavoriteButtonClick = {
+                        val job = if (it) model.followUser(false) else model.unFollowUser()
+                        job.join()
+                    },
+                    onFavoritePrivateButtonClick = {
+                        val job = model.followUser(true)
+                        job.join()
+                    },
+                ) {
+                    if (it) model.addViewLater() else model.removeViewLater()
+                }
                 return
             }
-            NovelSeriesScreenContent(id, state.info, novelModel)
+            NovelSeriesScreenContent(
+                id,
+                state.info,
+                state.itemInViewLater,
+                novelModel,
+                onFavoriteButtonClick = {
+                    val job = if (it) model.followUser(false) else model.unFollowUser()
+                    job.join()
+                },
+                onFavoritePrivateButtonClick = {
+                    val job = model.followUser(true)
+                    job.join()
+                },
+            ) {
+                if (it) model.addViewLater() else model.removeViewLater()
+            }
         }
     }
 }
 
 @Composable
-private fun WideNovelSeriesScreenContent(id: Int, info: SeriesDetail, model: NovelFetchViewModel) {
+private fun WideNovelSeriesScreenContent(
+    id: Int,
+    info: SeriesDetail,
+    itemInViewLater: Boolean,
+    model: NovelFetchViewModel,
+    onFavoriteButtonClick: suspend (Boolean) -> Unit,
+    onFavoritePrivateButtonClick: suspend () -> Unit,
+    onViewLaterBtnClick: (Boolean) -> Unit,
+) {
     PermanentNavigationDrawer(
         drawerContent = {
-            NovelSeriesScreenDrawerContent(id, info)
+            NovelSeriesScreenDrawerContent(
+                id,
+                true,
+                info,
+                itemInViewLater,
+                onFavoriteButtonClick,
+                onFavoritePrivateButtonClick,
+                onViewLaterBtnClick,
+            )
         },
     ) {
         NovelFetchScreen(model)
@@ -112,11 +158,27 @@ private fun WideNovelSeriesScreenContent(id: Int, info: SeriesDetail, model: Nov
 }
 
 @Composable
-private fun NovelSeriesScreenContent(id: Int, info: SeriesDetail, model: NovelFetchViewModel) {
+private fun NovelSeriesScreenContent(
+    id: Int,
+    info: SeriesDetail,
+    inViewLater: Boolean,
+    model: NovelFetchViewModel,
+    onFavoriteButtonClick: suspend (Boolean) -> Unit,
+    onFavoritePrivateButtonClick: suspend () -> Unit,
+    onViewLaterBtnClick: (Boolean) -> Unit,
+) {
     val state = rememberDrawerState(DrawerValue.Open)
     SupportRTLModalNavigationDrawer(
         drawerContent = {
-            NovelSeriesScreenDrawerContent(id, info)
+            NovelSeriesScreenDrawerContent(
+                id,
+                false,
+                info,
+                inViewLater,
+                onFavoriteButtonClick,
+                onFavoritePrivateButtonClick,
+                onViewLaterBtnClick,
+            )
         },
         drawerState = state,
     ) {
@@ -142,26 +204,12 @@ private fun NovelSeriesScreenContent(id: Int, info: SeriesDetail, model: NovelFe
                         }
                     },
                     actions = {
-                        var expanded by remember { mutableStateOf(false) }
-                        IconButton(
-                            onClick = {
-                                expanded = true
-                            },
-                        ) {
-                            Icon(Icons.Default.Menu, null)
-                        }
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Res.string.open_in_browser)) },
-                                onClick = {
-                                    openBrowser("https://www.pixiv.net/novel/series/$id")
-                                    expanded = false
-                                },
-                            )
-                        }
+                        NovelSeriesScreenActions(
+                            id,
+                            true,
+                            inViewLater,
+                            onViewLaterBtnClick,
+                        )
                     },
                 )
             },
@@ -174,7 +222,65 @@ private fun NovelSeriesScreenContent(id: Int, info: SeriesDetail, model: NovelFe
 }
 
 @Composable
-private fun NovelSeriesScreenDrawerContent(id: Int, info: SeriesDetail) {
+private fun NovelSeriesScreenActions(
+    id: Int,
+    showActionButton: Boolean,
+    inViewLater: Boolean,
+    onViewLaterBtnClick: (Boolean) -> Unit,
+) {
+    if (!showActionButton) {
+        return
+    }
+    var expanded by remember { mutableStateOf(false) }
+    IconButton(
+        onClick = {
+            expanded = true
+        },
+    ) {
+        Icon(Icons.Default.Menu, null)
+    }
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false },
+    ) {
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.open_in_browser)) },
+            onClick = {
+                openBrowser("https://www.pixiv.net/novel/series/$id")
+                expanded = false
+            },
+        )
+
+        if (inViewLater) {
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.remove_watch_later)) },
+                onClick = {
+                    onViewLaterBtnClick(false)
+                    expanded = false
+                },
+            )
+        } else {
+            DropdownMenuItem(
+                text = { Text(stringResource(Res.string.add_watch_later)) },
+                onClick = {
+                    onViewLaterBtnClick(true)
+                    expanded = false
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun NovelSeriesScreenDrawerContent(
+    id: Int,
+    showActionButton: Boolean,
+    info: SeriesDetail,
+    inViewLater: Boolean,
+    onFavoriteButtonClick: suspend (Boolean) -> Unit,
+    onFavoritePrivateButtonClick: suspend () -> Unit,
+    onViewLaterBtnClick: (Boolean) -> Unit,
+) {
     PermanentDrawerSheet {
         Column(Modifier.width(DrawerDefaults.MaximumDrawerWidth)) {
             TopAppBar(
@@ -193,6 +299,14 @@ private fun NovelSeriesScreenDrawerContent(id: Int, info: SeriesDetail) {
                         )
                     }
                 },
+                actions = {
+                    NovelSeriesScreenActions(
+                        id,
+                        showActionButton,
+                        inViewLater,
+                        onViewLaterBtnClick,
+                    )
+                },
             )
 
             LazyColumn {
@@ -208,22 +322,12 @@ private fun NovelSeriesScreenDrawerContent(id: Int, info: SeriesDetail) {
 
                 item {
                     Spacer(Modifier.height(16.dp))
-                    // TODO 添加关注
-                    val model = koinViewModel<NovelSeriesScreenModel>(key = "$id") {
-                        parametersOf(id)
-                    }
                     AuthorCard(
                         modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth()
                             .padding(horizontal = 8.dp),
                         info.user,
-                        onFavoriteClick = {
-                            val job = if (it) model.followUser(false) else model.unFollowUser()
-                            job.join()
-                        },
-                        onFavoritePrivateClick = {
-                            val job = model.followUser(true)
-                            job.join()
-                        },
+                        onFavoriteClick = onFavoriteButtonClick,
+                        onFavoritePrivateClick = onFavoritePrivateButtonClick,
                     )
                 }
 

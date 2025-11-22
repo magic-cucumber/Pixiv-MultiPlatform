@@ -209,7 +209,6 @@ private fun AuthorContent(id: Int, state: AuthorScreenState, onViewLaterBtnClick
                         expanded = show,
                         onDismissRequest = { show = false },
                     ) {
-
                         DropdownMenuItem(
                             text = {
                                 Text(stringResource(Res.string.open_in_browser))

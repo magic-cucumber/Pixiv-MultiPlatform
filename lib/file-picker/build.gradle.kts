@@ -101,9 +101,20 @@ val jvmPlatformLibraryName by lazy {
     }
 }
 
+val buildOnce = prop("MODULE_FILE_PICKER_BUILD_ONCE").toBoolean()
+if (buildOnce) {
+    println("FILE_PICKER Rust Module's BUILD_ONCE was opened. if you want to develop the rust module, please make MODULE_FILE_PICKER_BUILD_ONCE false in gradle.properties")
+}
 val jvmCargoBuildRelease = tasks.register<Exec>("jvmCargoBuildRelease") {
     val cmd = "cargo build --release --features jvm"
     workingDir = project.file("src/rust")
+
+    val outputFile = project.file("src/rust/target/release/libfilepicker.dylib")
+    // 如果文件已存在则整个任务跳过
+    onlyIf {
+        buildOnce || !outputFile.exists()
+    }
+
     when (currentJvmPlatform) {
         JvmDesktopPlatform.WINDOWS -> commandLine("cmd", "/c", cmd)
         JvmDesktopPlatform.LINUX -> commandLine("bash", "-c", cmd)

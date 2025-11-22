@@ -548,7 +548,7 @@ private fun NovelDetailContent(
     when (state) {
         is NovelDetailViewState.Error -> {
             Column(modifier) {
-                NovelDetailTopAppBar(id, null,false, onDrawerOpen = onDrawerOpen)
+                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen)
                 ErrorPage(Modifier.weight(1f), text = state.cause) {
                     model.reload(ctx)
                 }
@@ -559,7 +559,7 @@ private fun NovelDetailContent(
             val text by state.text.collectAsState()
 
             Column(modifier) {
-                NovelDetailTopAppBar(id, null,false, onDrawerOpen = onDrawerOpen)
+                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen)
                 Loading(Modifier.weight(1f), text)
             }
         }

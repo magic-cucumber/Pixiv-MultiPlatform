@@ -55,14 +55,15 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewState
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
 
-class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) : ViewModel(),
-    ContainerHost<NovelDetailViewState, NovelDetailSideEffect>, KoinComponent {
+class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
+    ViewModel(),
+    ContainerHost<NovelDetailViewState, NovelDetailSideEffect>,
+    KoinComponent {
     override val container: Container<NovelDetailViewState, NovelDetailSideEffect> =
         container(NovelDetailViewState.Loading(MutableStateFlow("Loading...")))
     private val client = PixivConfig.newAccountFromConfig()
@@ -484,7 +485,7 @@ sealed class NovelDetailViewState {
         val nodeMap: List<NovelNodeElement>,
         val seriesInfo: SeriesInfo? = null,
 
-        val itemInViewLater: Boolean
+        val itemInViewLater: Boolean,
     ) : NovelDetailViewState()
 }
 
