@@ -294,7 +294,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                 WatchLaterItem(
                     type = WatchLaterType.NOVEL,
                     payload = state.novel.id.toLong(),
-                    metadata = Json.encodeToJsonElement(state.novel).jsonObject
+                    metadata = Json.encodeToJsonElement(state.novel).jsonObject,
                 ),
             )
 

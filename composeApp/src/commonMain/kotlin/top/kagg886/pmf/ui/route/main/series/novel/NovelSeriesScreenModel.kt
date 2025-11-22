@@ -122,7 +122,7 @@ class NovelSeriesScreenModel(private val seriesId: Int) :
                 WatchLaterItem(
                     type = WatchLaterType.SERIES,
                     payload = seriesId.toLong(),
-                    metadata = Json.encodeToJsonElement(state.info).jsonObject
+                    metadata = Json.encodeToJsonElement(state.info).jsonObject,
                 ),
             )
 

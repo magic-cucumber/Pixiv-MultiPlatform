@@ -380,6 +380,7 @@
     <string name="search_metadata">搜索元数据</string>
     <string name="search_type">搜索类型</string>
 
+    <string name="watch_later">稍后再看</string>
     <string name="add_watch_later">添加到稍后再看</string>
     <string name="remove_watch_later">从稍后再看中移除</string>
 </resources>

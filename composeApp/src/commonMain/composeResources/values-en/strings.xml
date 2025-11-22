@@ -379,6 +379,7 @@
     <string name="search_metadata">Search metadata</string>
     <string name="search_type">Search type</string>
 
+    <string name="watch_later">Watch Later</string>
     <string name="add_watch_later">Add to Watch Later</string>
     <string name="remove_watch_later">Remove from Watch Later</string>
 </resources>

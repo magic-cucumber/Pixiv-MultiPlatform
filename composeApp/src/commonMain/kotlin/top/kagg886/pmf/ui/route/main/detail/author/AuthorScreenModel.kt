@@ -122,7 +122,7 @@ class AuthorScreenModel(val id: Int) :
                 WatchLaterItem(
                     type = WatchLaterType.AUTHOR,
                     payload = state.user.user.id.toLong(),
-                    metadata = Json.encodeToJsonElement(state.user).jsonObject
+                    metadata = Json.encodeToJsonElement(state.user).jsonObject,
                 ),
             )
 

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -53,9 +54,11 @@ import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreenWithoutCollapse
 import top.kagg886.pmf.ui.route.main.download.DownloadScreen
 import top.kagg886.pmf.ui.route.main.history.HistoryScreen
+import top.kagg886.pmf.ui.route.main.later.ViewLaterScreen
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.Download
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.History
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.Setting
+import top.kagg886.pmf.ui.route.main.profile.ProfileItem.ViewLater
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.ViewProfile
 import top.kagg886.pmf.ui.route.main.setting.SettingScreen
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
@@ -65,6 +68,7 @@ import top.kagg886.pmf.util.stringResource
 enum class ProfileItem {
     ViewProfile,
     History,
+    ViewLater,
     Download,
     Setting,
 }
@@ -164,6 +168,22 @@ fun ProfileScreen(route: ProfileRoute) {
 
                 NavigationDrawerItem(
                     label = {
+                        Text(stringResource(Res.string.watch_later))
+                    },
+                    icon = {
+                        Icon(Icons.Default.ShoppingCart, "")
+                    },
+                    selected = page == ViewLater,
+                    onClick = {
+                        page = ViewLater
+                        scope.launch {
+                            drawer.close()
+                        }
+                    },
+                )
+
+                NavigationDrawerItem(
+                    label = {
                         Text(stringResource(Res.string.history))
                     },
                     icon = {
@@ -207,6 +227,7 @@ fun ProfileScreen(route: ProfileRoute) {
                     when (it) {
                         ViewProfile -> AuthorScreenWithoutCollapse(PixivConfig.pixiv_user!!.userId)
                         History -> HistoryScreen()
+                        ViewLater -> ViewLaterScreen()
                         Download -> DownloadScreen()
                         Setting -> SettingScreen()
                     }
@@ -227,6 +248,7 @@ fun ProfileScreen(route: ProfileRoute) {
                                     History -> stringResource(Res.string.history)
                                     Download -> stringResource(Res.string.download_manager)
                                     Setting -> stringResource(Res.string.settings)
+                                    ViewLater -> stringResource(Res.string.watch_later)
                                 },
                             )
                         },

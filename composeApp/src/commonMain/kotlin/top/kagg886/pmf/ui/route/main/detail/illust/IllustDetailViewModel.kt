@@ -177,7 +177,7 @@ class IllustDetailViewModel(private val illust: Illust) :
                 WatchLaterItem(
                     type = WatchLaterType.ILLUST,
                     payload = illust.id.toLong(),
-                    metadata = Json.encodeToJsonElement(state.illust).jsonObject
+                    metadata = Json.encodeToJsonElement(state.illust).jsonObject,
                 ),
             )
 
