@@ -144,6 +144,7 @@ import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenSideEffect
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
+import top.kagg886.pmf.ui.route.main.later.ViewLaterModel
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem
 import top.kagg886.pmf.ui.route.main.profile.ProfileRoute
 import top.kagg886.pmf.ui.route.main.profile.ProfileScreen
@@ -542,6 +543,8 @@ fun setupEnv() {
                 single { HistoryNovelViewModel() }
 
                 single { NewestIllustViewModel() }
+
+                viewModelOf(::ViewLaterModel)
             },
             // pixiv
             module(createdAtStart = true) {

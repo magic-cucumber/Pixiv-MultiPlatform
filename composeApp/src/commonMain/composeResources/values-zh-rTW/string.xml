@@ -379,4 +379,5 @@
     <string name="watch_later">稍後再看</string>
     <string name="add_watch_later">加入稍後再看</string>
     <string name="remove_watch_later">從稍後再看中移除</string>
+    <string name="remove_watch_later_success">從稍後再看中移除成功</string>
 </resources>
