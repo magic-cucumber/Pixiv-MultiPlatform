@@ -570,8 +570,7 @@ fun setupEnv() {
                 single {
                     databaseBuilder().apply {
                         fallbackToDestructiveMigrationOnDowngrade(true)
-                        fallbackToDestructiveMigration(true)
-                        fallbackToDestructiveMigrationFrom(true, 1)
+                        fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5, 6)
                         setQueryCoroutineContext(Dispatchers.IO)
                     }.build()
                 }
