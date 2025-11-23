@@ -5,7 +5,6 @@ package top.kagg886.pmf.util
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.ui.text.intl.Locale
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.compose.resources.DefaultResourceReader

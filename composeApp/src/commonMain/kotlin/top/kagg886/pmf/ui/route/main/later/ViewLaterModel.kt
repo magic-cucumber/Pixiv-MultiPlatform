@@ -35,7 +35,6 @@ class ViewLaterModel : ContainerHost<ViewLaterState, ViewLaterSideEffect>, ViewM
                 .cleanBefore(Clock.System.now().minus(AppConfig.watchLaterRemoveDaysBefore.days).toEpochMilliseconds())
         }
 
-
         val pager = Pager(
             config = PagingConfig(
                 pageSize = 30,
@@ -53,7 +52,7 @@ class ViewLaterModel : ContainerHost<ViewLaterState, ViewLaterSideEffect>, ViewM
         }
     }
 
-    fun deleteItem(item: WatchLaterItem,slient: Boolean = false) = intent {
+    fun deleteItem(item: WatchLaterItem, slient: Boolean = false) = intent {
         database.watchLaterDAO().delete(item.type, item.payload)
         if (!slient) {
             postSideEffect(

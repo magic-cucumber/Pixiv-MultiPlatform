@@ -555,7 +555,7 @@ fun SettingScreen() {
                     Text(stringResource(Res.string.auto_typography))
                 },
                 subtitle = {
-                    key(textSize) {Text(stringResource(Res.string.auto_typography_description, textSize * 2))}
+                    key(textSize) { Text(stringResource(Res.string.auto_typography_description, textSize * 2)) }
                 },
                 onCheckedChange = {
                     autoTypo = it
@@ -627,7 +627,7 @@ fun SettingScreen() {
                 subtitle = {
                     Column {
                         Text(stringResource(Res.string.tag_max_length_description))
-                        key(filterLongTagLength){ Text(stringResource(Res.string.current_value, filterLongTagLength)) }
+                        key(filterLongTagLength) { Text(stringResource(Res.string.current_value, filterLongTagLength)) }
                     }
                 },
                 value = filterLongTagLength.toFloat(),
@@ -669,7 +669,7 @@ fun SettingScreen() {
                 subtitle = {
                     Column {
                         Text(stringResource(Res.string.novel_filter_length_description))
-                        key(filterShortNovelLength){ Text(stringResource(Res.string.current_value, filterShortNovelLength)) }
+                        key(filterShortNovelLength) { Text(stringResource(Res.string.current_value, filterShortNovelLength)) }
                     }
                 },
                 value = filterShortNovelLength.toFloat(),

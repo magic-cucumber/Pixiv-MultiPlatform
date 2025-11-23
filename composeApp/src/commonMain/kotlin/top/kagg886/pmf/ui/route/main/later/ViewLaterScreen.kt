@@ -295,9 +295,10 @@ private fun NovelWatchLaterItem(
     OutlinedCard(
         modifier = modifier,
         onClick = {
-            stack += NovelDetailRoute(item.novel.id.toLong()); if (AppConfig.watchLaterRemoveWhenClick) {
-            model.deleteItem(item, true)
-        }
+            stack += NovelDetailRoute(item.novel.id.toLong())
+            if (AppConfig.watchLaterRemoveWhenClick) {
+                model.deleteItem(item, true)
+            }
         },
     ) {
         Row(
@@ -344,7 +345,7 @@ private fun AuthorWatchLaterItem(
     OutlinedCard(
         modifier = modifier,
         onClick = {
-            stack += AuthorRoute(item.author.user.id);
+            stack += AuthorRoute(item.author.user.id)
             if (AppConfig.watchLaterRemoveWhenClick) {
                 model.deleteItem(item, true)
             }
@@ -397,9 +398,10 @@ private fun SeriesWatchLaterItem(
     OutlinedCard(
         modifier = modifier,
         onClick = {
-            stack += NovelSeriesRoute(item.payload.toInt()); if (AppConfig.watchLaterRemoveWhenClick) {
-            model.deleteItem(item, true)
-        }
+            stack += NovelSeriesRoute(item.payload.toInt())
+            if (AppConfig.watchLaterRemoveWhenClick) {
+                model.deleteItem(item, true)
+            }
         },
     ) {
         Row(
