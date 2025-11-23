@@ -357,7 +357,6 @@
     <string name="option_filter_aspect_ratio_phone">Width > Height (Phone wallpapers)</string>
     <string name="option_filter_aspect_ratio_pc">Height > Width (Computer wallpapers)</string>
 
-
     <string name="settings_download">Download Setting</string>
     <string name="settings_download_path">Select Download Root Path</string>
     <string name="settings_download_path_desc">the pictures and metadata will be placed in here.</string>
@@ -383,4 +382,11 @@
     <string name="add_watch_later">Add to Watch Later</string>
     <string name="remove_watch_later">Remove from Watch Later</string>
     <string name="remove_watch_later_success">Successfully removed from Watch Later</string>
+
+    <string name="watch_later_setting_auto_remove_days">Watch Later Retention Days</string>
+    <string name="watch_later_setting_auto_remove_days_desc">Expired Watch Later items will be removed automatically. Set to 0 to disable.</string>
+
+    <string name="watch_later_setting_auto_remove_click">Auto-remove on Click</string>
+    <string name="watch_later_setting_auto_remove_click_desc">Automatically remove the item when clicked from the Watch Later page.</string>
+
 </resources>

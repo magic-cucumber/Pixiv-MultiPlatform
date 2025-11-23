@@ -384,4 +384,10 @@
     <string name="add_watch_later">添加到稍后再看</string>
     <string name="remove_watch_later">从稍后再看中移除</string>
     <string name="remove_watch_later_success">已从稍后再看中删除</string>
+
+    <string name="watch_later_setting_auto_remove_days">稍后再看保留天数</string>
+    <string name="watch_later_setting_auto_remove_days_desc">过期的稍后再看会自动移除，为0表示禁用此功能</string>
+
+    <string name="watch_later_setting_auto_remove_click">从稍后再看页点击时自动删除</string>
+    <string name="watch_later_setting_auto_remove_click_desc">点击时自动删除该条目</string>
 </resources>

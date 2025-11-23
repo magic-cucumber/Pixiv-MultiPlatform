@@ -380,4 +380,11 @@
     <string name="add_watch_later">加入稍後再看</string>
     <string name="remove_watch_later">從稍後再看中移除</string>
     <string name="remove_watch_later_success">從稍後再看中移除成功</string>
+
+    <string name="watch_later_setting_auto_remove_days">稍後再看保留天數</string>
+    <string name="watch_later_setting_auto_remove_days_desc">過期的稍後再看項目會自動移除，設為 0 表示停用此功能。</string>
+
+    <string name="watch_later_setting_auto_remove_click">點擊時自動刪除</string>
+    <string name="watch_later_setting_auto_remove_click_desc">從稍後再看頁面點擊時會自動刪除該項目。</string>
+
 </resources>
