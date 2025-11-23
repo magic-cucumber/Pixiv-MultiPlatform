@@ -48,6 +48,9 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
 
     var downloadUri by string("download_root_uri", "")
 
+    var watchLaterRemoveDaysBefore by int("water_later_remove_days_before", 0)
+    var watchLaterRemoveWhenClick by boolean("water_later_remove_when_click", false)
+
     var recordIllustHistory by boolean("record_illust", true)
     var recordNovelHistory by boolean("record_novel", true)
     var recordSearchHistory by boolean("record_search", true)

@@ -712,6 +712,56 @@ fun SettingScreen() {
             )
         }
 
+        SettingsGroup(title = { Text(stringResource(Res.string.watch_later)) }) {
+            var recordWatchLater by remember {
+                mutableStateOf(AppConfig.watchLaterRemoveDaysBefore)
+            }
+            LaunchedEffect(recordWatchLater) {
+                AppConfig.watchLaterRemoveDaysBefore = recordWatchLater
+            }
+
+            SettingsSlider(
+                title = {
+                    Text(stringResource(Res.string.watch_later_setting_auto_remove_days))
+                },
+                subtitle = {
+                    Column {
+                        Text(stringResource(Res.string.watch_later_setting_auto_remove_days_desc))
+                        key(recordWatchLater) {
+                            Text(stringResource(Res.string.current_value, if (recordWatchLater == 0) stringResource(Res.string.closed) else recordWatchLater))
+                        }
+                    }
+                },
+                value = recordWatchLater.toFloat(),
+                valueRange = 0f..30f,
+                steps = 29,
+                onValueChange = {
+                    recordWatchLater = it.roundToInt()
+                },
+            )
+
+            var watchLaterRemoveWhenClick by remember {
+                mutableStateOf(AppConfig.watchLaterRemoveWhenClick)
+            }
+
+            LaunchedEffect(watchLaterRemoveWhenClick) {
+                AppConfig.watchLaterRemoveWhenClick = watchLaterRemoveWhenClick
+            }
+
+            SettingsSwitch(
+                state = watchLaterRemoveWhenClick,
+                title = {
+                    Text(stringResource(Res.string.watch_later_setting_auto_remove_click))
+                },
+                subtitle = {
+                    Text(stringResource(Res.string.watch_later_setting_auto_remove_click_desc))
+                },
+                onCheckedChange = {
+                    watchLaterRemoveWhenClick = it
+                },
+            )
+        }
+
         SettingsGroup(title = { Text(stringResource(Res.string.history_records)) }) {
             var recordIllustHistory by remember {
                 mutableStateOf(AppConfig.recordIllustHistory)

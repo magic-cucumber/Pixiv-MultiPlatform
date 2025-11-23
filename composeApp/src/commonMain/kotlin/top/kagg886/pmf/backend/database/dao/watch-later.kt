@@ -28,6 +28,9 @@ interface WatchLaterDao {
     @Query("SELECT * FROM WatchLaterItem ORDER BY createTime DESC")
     fun source(): PagingSource<Int, WatchLaterItem>
 
+    @Query("DELETE FROM WatchLaterItem WHERE createTime < :deadline")
+    suspend fun cleanBefore(deadline: Long)
+
     @Query(
         """
     SELECT EXISTS(

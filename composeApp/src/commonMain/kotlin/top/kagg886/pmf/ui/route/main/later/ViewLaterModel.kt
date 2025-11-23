@@ -4,11 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import korlibs.time.days
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
+import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.res.Res
@@ -27,6 +30,12 @@ class ViewLaterModel : ContainerHost<ViewLaterState, ViewLaterSideEffect>, ViewM
     val database by inject<AppDatabase>()
 
     override val container: Container<ViewLaterState, ViewLaterSideEffect> = container(ViewLaterState.Loading) {
+        if (AppConfig.watchLaterRemoveDaysBefore != 0) {
+            database.watchLaterDAO()
+                .cleanBefore(Clock.System.now().minus(AppConfig.watchLaterRemoveDaysBefore.days).toEpochMilliseconds())
+        }
+
+
         val pager = Pager(
             config = PagingConfig(
                 pageSize = 30,
@@ -44,11 +53,13 @@ class ViewLaterModel : ContainerHost<ViewLaterState, ViewLaterSideEffect>, ViewM
         }
     }
 
-    fun deleteItem(item: WatchLaterItem) = intent {
+    fun deleteItem(item: WatchLaterItem,slient: Boolean = false) = intent {
         database.watchLaterDAO().delete(item.type, item.payload)
-        postSideEffect(
-            ViewLaterSideEffect.Toast(getString(Res.string.remove_watch_later_success)),
-        )
+        if (!slient) {
+            postSideEffect(
+                ViewLaterSideEffect.Toast(getString(Res.string.remove_watch_later_success)),
+            )
+        }
     }
 }
 

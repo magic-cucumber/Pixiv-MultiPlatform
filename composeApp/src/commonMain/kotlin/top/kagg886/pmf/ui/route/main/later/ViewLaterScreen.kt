@@ -34,6 +34,7 @@ import top.kagg886.pixko.module.novel.SeriesDetail
 import top.kagg886.pixko.module.user.UserInfo
 import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
+import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.res.Res
@@ -243,7 +244,12 @@ private fun IllustWatchLaterItem(
     val stack = LocalNavBackStack.current
     OutlinedCard(
         modifier = modifier,
-        onClick = { stack += IllustDetailRoute(item.illust) },
+        onClick = {
+            stack += IllustDetailRoute(item.illust)
+            if (AppConfig.watchLaterRemoveWhenClick) {
+                model.deleteItem(item, true)
+            }
+        },
     ) {
         Row(
             modifier = Modifier.padding(5.dp).fillMaxWidth(),
@@ -288,7 +294,11 @@ private fun NovelWatchLaterItem(
     val stack = LocalNavBackStack.current
     OutlinedCard(
         modifier = modifier,
-        onClick = { stack += NovelDetailRoute(item.novel.id.toLong()) },
+        onClick = {
+            stack += NovelDetailRoute(item.novel.id.toLong()); if (AppConfig.watchLaterRemoveWhenClick) {
+            model.deleteItem(item, true)
+        }
+        },
     ) {
         Row(
             modifier = Modifier.padding(5.dp).fillMaxWidth(),
@@ -333,7 +343,12 @@ private fun AuthorWatchLaterItem(
     val stack = LocalNavBackStack.current
     OutlinedCard(
         modifier = modifier,
-        onClick = { stack += AuthorRoute(item.author.user.id) },
+        onClick = {
+            stack += AuthorRoute(item.author.user.id);
+            if (AppConfig.watchLaterRemoveWhenClick) {
+                model.deleteItem(item, true)
+            }
+        },
     ) {
         Row(
             modifier = Modifier.padding(5.dp).fillMaxWidth(),
@@ -381,7 +396,11 @@ private fun SeriesWatchLaterItem(
     val stack = LocalNavBackStack.current
     OutlinedCard(
         modifier = modifier,
-        onClick = { stack += NovelSeriesRoute(item.payload.toInt()) },
+        onClick = {
+            stack += NovelSeriesRoute(item.payload.toInt()); if (AppConfig.watchLaterRemoveWhenClick) {
+            model.deleteItem(item, true)
+        }
+        },
     ) {
         Row(
             modifier = Modifier.padding(5.dp).fillMaxWidth(),
