@@ -1,9 +1,11 @@
 package top.kagg886.pmf.ui.route.main.later
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import korlibs.time.days
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +48,7 @@ class ViewLaterModel : ContainerHost<ViewLaterState, ViewLaterSideEffect>, ViewM
 
         reduce {
             ViewLaterState.Success(
-                pager.flow,
+                pager.flow.cachedIn(viewModelScope),
                 0,
             )
         }
