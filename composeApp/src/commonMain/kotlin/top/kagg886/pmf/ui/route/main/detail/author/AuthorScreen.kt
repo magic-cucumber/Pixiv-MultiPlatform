@@ -87,12 +87,12 @@ fun AuthorScreen(route: AuthorRoute) {
         }
     }
     Box(Modifier.fillMaxSize()) {
-        AuthorContent(id, state)
+        AuthorContent(id, state) { if (it) model.addViewLater() else model.removeViewLater() }
     }
 }
 
 @Composable
-private fun AuthorContent(id: Int, state: AuthorScreenState) {
+private fun AuthorContent(id: Int, state: AuthorScreenState, onViewLaterBtnClick: (Boolean) -> Unit) {
     val model = koinViewModel<AuthorScreenModel>(key = "$id") {
         parametersOf(id)
     }
@@ -220,6 +220,24 @@ private fun AuthorContent(id: Int, state: AuthorScreenState) {
                                 show = false
                             },
                         )
+
+                        if (state.itemInViewLater) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.remove_watch_later)) },
+                                onClick = {
+                                    onViewLaterBtnClick(false)
+                                    show = false
+                                },
+                            )
+                        } else {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.add_watch_later)) },
+                                onClick = {
+                                    onViewLaterBtnClick(true)
+                                    show = false
+                                },
+                            )
+                        }
                     }
                     IconButton(
                         onClick = {

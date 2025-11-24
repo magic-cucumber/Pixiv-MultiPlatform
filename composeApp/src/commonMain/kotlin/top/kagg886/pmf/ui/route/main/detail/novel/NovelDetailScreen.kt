@@ -460,8 +460,10 @@ private fun NovelComment(id: Long, novel: Novel) {
 private fun NovelDetailTopAppBar(
     id: Long,
     novel: Novel?,
+    inViewLater: Boolean,
     modifier: Modifier = Modifier,
     onDrawerOpen: () -> Unit = {},
+    onViewLaterBtnClick: (Boolean) -> Unit = {},
 ) {
     val stack = LocalNavBackStack.current
     TopAppBar(
@@ -489,15 +491,33 @@ private fun NovelDetailTopAppBar(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
                     ) {
+                        if (inViewLater && novel != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.remove_watch_later)) },
+                                onClick = {
+                                    onViewLaterBtnClick(false)
+                                    expanded = false
+                                },
+                            )
+                        } else if (novel != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.add_watch_later)) },
+                                onClick = {
+                                    onViewLaterBtnClick(true)
+                                    expanded = false
+                                },
+                            )
+                        }
                         val download = koinViewModel<DownloadScreenModel>()
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.export_to_epub)) },
-                            onClick = {
-                                if (novel == null) return@DropdownMenuItem
-                                download.startNovelDownload(novel)
-                                expanded = false
-                            },
-                        )
+                        if (novel != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(Res.string.export_to_epub)) },
+                                onClick = {
+                                    download.startNovelDownload(novel)
+                                    expanded = false
+                                },
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.open_in_browser)) },
                             onClick = {
@@ -528,7 +548,7 @@ private fun NovelDetailContent(
     when (state) {
         is NovelDetailViewState.Error -> {
             Column(modifier) {
-                NovelDetailTopAppBar(id, null, onDrawerOpen = onDrawerOpen)
+                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen)
                 ErrorPage(Modifier.weight(1f), text = state.cause) {
                     model.reload(ctx)
                 }
@@ -539,7 +559,7 @@ private fun NovelDetailContent(
             val text by state.text.collectAsState()
 
             Column(modifier) {
-                NovelDetailTopAppBar(id, null, onDrawerOpen = onDrawerOpen)
+                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen)
                 Loading(Modifier.weight(1f), text)
             }
         }
@@ -555,8 +575,12 @@ private fun NovelDetailContent(
                 NovelDetailTopAppBar(
                     id = id,
                     novel = state.novel,
+                    inViewLater = state.itemInViewLater,
                     modifier = Modifier.connectedScroll(connect),
                     onDrawerOpen = onDrawerOpen,
+                    onViewLaterBtnClick = {
+                        if (it) model.addViewLater() else model.removeViewLater()
+                    },
                 )
 
                 // 内容区域，应用 nestedScroll 来处理滚动事件

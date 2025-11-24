@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -287,12 +288,14 @@ fun SettingScreen() {
                                 Text(stringResource(Res.string.single_column_width))
                             },
                             subtitle = {
-                                Text(
-                                    stringResource(
-                                        Res.string.single_column_width_description,
-                                        defaultGalleryWidth,
-                                    ),
-                                )
+                                key(defaultGalleryWidth) {
+                                    Text(
+                                        stringResource(
+                                            Res.string.single_column_width_description,
+                                            defaultGalleryWidth,
+                                        ),
+                                    )
+                                }
                             },
                             value = defaultGalleryWidth.toFloat(),
                             valueRange = 50f..1000f,
@@ -318,7 +321,7 @@ fun SettingScreen() {
                 subTitle = {
                     Column {
                         Text(stringResource(Res.string.gallery_cache_size_description))
-                        Text(stringResource(Res.string.current_value, cacheSize.b))
+                        key(cacheSize) { Text(stringResource(Res.string.current_value, cacheSize.b)) }
                         Text(stringResource(Res.string.click_to_modify))
                     }
                 },
@@ -552,7 +555,7 @@ fun SettingScreen() {
                     Text(stringResource(Res.string.auto_typography))
                 },
                 subtitle = {
-                    Text(stringResource(Res.string.auto_typography_description, textSize * 2))
+                    key(textSize) { Text(stringResource(Res.string.auto_typography_description, textSize * 2)) }
                 },
                 onCheckedChange = {
                     autoTypo = it
@@ -624,7 +627,7 @@ fun SettingScreen() {
                 subtitle = {
                     Column {
                         Text(stringResource(Res.string.tag_max_length_description))
-                        Text(stringResource(Res.string.current_value, filterLongTagLength))
+                        key(filterLongTagLength) { Text(stringResource(Res.string.current_value, filterLongTagLength)) }
                     }
                 },
                 value = filterLongTagLength.toFloat(),
@@ -666,7 +669,7 @@ fun SettingScreen() {
                 subtitle = {
                     Column {
                         Text(stringResource(Res.string.novel_filter_length_description))
-                        Text(stringResource(Res.string.current_value, filterShortNovelLength))
+                        key(filterShortNovelLength) { Text(stringResource(Res.string.current_value, filterShortNovelLength)) }
                     }
                 },
                 value = filterShortNovelLength.toFloat(),
@@ -705,6 +708,56 @@ fun SettingScreen() {
                             uri = it
                         }
                     }
+                },
+            )
+        }
+
+        SettingsGroup(title = { Text(stringResource(Res.string.watch_later)) }) {
+            var recordWatchLater by remember {
+                mutableStateOf(AppConfig.watchLaterRemoveDaysBefore)
+            }
+            LaunchedEffect(recordWatchLater) {
+                AppConfig.watchLaterRemoveDaysBefore = recordWatchLater
+            }
+
+            SettingsSlider(
+                title = {
+                    Text(stringResource(Res.string.watch_later_setting_auto_remove_days))
+                },
+                subtitle = {
+                    Column {
+                        Text(stringResource(Res.string.watch_later_setting_auto_remove_days_desc))
+                        key(recordWatchLater) {
+                            Text(stringResource(Res.string.current_value, if (recordWatchLater == 0) stringResource(Res.string.closed) else recordWatchLater))
+                        }
+                    }
+                },
+                value = recordWatchLater.toFloat(),
+                valueRange = 0f..30f,
+                steps = 29,
+                onValueChange = {
+                    recordWatchLater = it.roundToInt()
+                },
+            )
+
+            var watchLaterRemoveWhenClick by remember {
+                mutableStateOf(AppConfig.watchLaterRemoveWhenClick)
+            }
+
+            LaunchedEffect(watchLaterRemoveWhenClick) {
+                AppConfig.watchLaterRemoveWhenClick = watchLaterRemoveWhenClick
+            }
+
+            SettingsSwitch(
+                state = watchLaterRemoveWhenClick,
+                title = {
+                    Text(stringResource(Res.string.watch_later_setting_auto_remove_click))
+                },
+                subtitle = {
+                    Text(stringResource(Res.string.watch_later_setting_auto_remove_click_desc))
+                },
+                onCheckedChange = {
+                    watchLaterRemoveWhenClick = it
                 },
             )
         }

@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
@@ -51,6 +54,8 @@ import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.NovelHistory
+import top.kagg886.pmf.backend.database.dao.WatchLaterItem
+import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.NovelNodeElement
@@ -58,8 +63,12 @@ import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
 
-class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) : ViewModel(), ContainerHost<NovelDetailViewState, NovelDetailSideEffect>, KoinComponent {
-    override val container: Container<NovelDetailViewState, NovelDetailSideEffect> = container(NovelDetailViewState.Loading(MutableStateFlow("Loading...")))
+class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
+    ViewModel(),
+    ContainerHost<NovelDetailViewState, NovelDetailSideEffect>,
+    KoinComponent {
+    override val container: Container<NovelDetailViewState, NovelDetailSideEffect> =
+        container(NovelDetailViewState.Loading(MutableStateFlow("Loading...")))
     private val client = PixivConfig.newAccountFromConfig()
     private val database by inject<AppDatabase>()
 
@@ -258,17 +267,58 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) : V
                 }
             }
 
+        val itemInViewLater = database.watchLaterDAO().exists(
+            WatchLaterType.NOVEL,
+            detail.id.toLong(),
+        )
+
         reduce {
             NovelDetailViewState.Success(
                 detail,
                 content,
                 nodeMap.toList().sortedBy { it.first }.map { it.second },
                 seriesInfo = seriesInfo,
+                itemInViewLater = itemInViewLater,
             )
         }
         if (AppConfig.recordNovelHistory) {
             database.novelHistoryDAO()
                 .insert(NovelHistory(id, detail, Clock.System.now().toEpochMilliseconds()))
+        }
+    }
+
+    @OptIn(OrbitExperimental::class)
+    fun addViewLater() = intent {
+        runOn<NovelDetailViewState.Success> {
+            database.watchLaterDAO().insert(
+                WatchLaterItem(
+                    type = WatchLaterType.NOVEL,
+                    payload = state.novel.id.toLong(),
+                    metadata = Json.encodeToJsonElement(state.novel).jsonObject,
+                ),
+            )
+
+            reduce {
+                state.copy(
+                    itemInViewLater = true,
+                )
+            }
+        }
+    }
+
+    @OptIn(OrbitExperimental::class)
+    fun removeViewLater() = intent {
+        runOn<NovelDetailViewState.Success> {
+            database.watchLaterDAO().delete(
+                type = WatchLaterType.NOVEL,
+                payload = state.novel.id.toLong(),
+            )
+
+            reduce {
+                state.copy(
+                    itemInViewLater = false,
+                )
+            }
         }
     }
 
@@ -438,6 +488,8 @@ sealed class NovelDetailViewState {
         val core: NovelData,
         val nodeMap: List<NovelNodeElement>,
         val seriesInfo: SeriesInfo? = null,
+
+        val itemInViewLater: Boolean,
     ) : NovelDetailViewState()
 }
 

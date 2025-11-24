@@ -5,11 +5,14 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
@@ -17,6 +20,7 @@ import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -53,9 +57,11 @@ import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreenWithoutCollapse
 import top.kagg886.pmf.ui.route.main.download.DownloadScreen
 import top.kagg886.pmf.ui.route.main.history.HistoryScreen
+import top.kagg886.pmf.ui.route.main.later.ViewLaterScreen
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.Download
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.History
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.Setting
+import top.kagg886.pmf.ui.route.main.profile.ProfileItem.ViewLater
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.ViewProfile
 import top.kagg886.pmf.ui.route.main.setting.SettingScreen
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
@@ -65,6 +71,7 @@ import top.kagg886.pmf.util.stringResource
 enum class ProfileItem {
     ViewProfile,
     History,
+    ViewLater,
     Download,
     Setting,
 }
@@ -83,7 +90,7 @@ fun ProfileScreen(route: ProfileRoute) {
     ProfileScreenContainDrawerScaffold(
         state = drawer,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
                 val stack = LocalNavBackStack.current
                 OutlinedCard(
                     modifier = Modifier.padding(vertical = 16.dp, horizontal = 8.dp),
@@ -115,6 +122,7 @@ fun ProfileScreen(route: ProfileRoute) {
                 Spacer(Modifier.height(8.dp))
                 val scope = rememberCoroutineScope()
                 NavigationDrawerItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     label = {
                         Text(stringResource(Res.string.personal_profile))
                     },
@@ -130,7 +138,9 @@ fun ProfileScreen(route: ProfileRoute) {
                     },
                 )
 
+                Spacer(Modifier.height(8.dp))
                 NavigationDrawerItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     label = {
                         Text(stringResource(Res.string.my_bookmark))
                     },
@@ -146,7 +156,9 @@ fun ProfileScreen(route: ProfileRoute) {
                     },
                 )
 
+                Spacer(Modifier.height(8.dp))
                 NavigationDrawerItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     label = {
                         Text(stringResource(Res.string.download_manager))
                     },
@@ -162,7 +174,27 @@ fun ProfileScreen(route: ProfileRoute) {
                     },
                 )
 
+                Spacer(Modifier.height(8.dp))
                 NavigationDrawerItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    label = {
+                        Text(stringResource(Res.string.watch_later))
+                    },
+                    icon = {
+                        Icon(Icons.Default.ShoppingCart, "")
+                    },
+                    selected = page == ViewLater,
+                    onClick = {
+                        page = ViewLater
+                        scope.launch {
+                            drawer.close()
+                        }
+                    },
+                )
+
+                Spacer(Modifier.height(8.dp))
+                NavigationDrawerItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     label = {
                         Text(stringResource(Res.string.history))
                     },
@@ -178,7 +210,9 @@ fun ProfileScreen(route: ProfileRoute) {
                     },
                 )
 
+                Spacer(Modifier.height(8.dp))
                 NavigationDrawerItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
                     label = {
                         Text(stringResource(Res.string.settings))
                     },
@@ -207,6 +241,7 @@ fun ProfileScreen(route: ProfileRoute) {
                     when (it) {
                         ViewProfile -> AuthorScreenWithoutCollapse(PixivConfig.pixiv_user!!.userId)
                         History -> HistoryScreen()
+                        ViewLater -> ViewLaterScreen()
                         Download -> DownloadScreen()
                         Setting -> SettingScreen()
                     }
@@ -227,6 +262,7 @@ fun ProfileScreen(route: ProfileRoute) {
                                     History -> stringResource(Res.string.history)
                                     Download -> stringResource(Res.string.download_manager)
                                     Setting -> stringResource(Res.string.settings)
+                                    ViewLater -> stringResource(Res.string.watch_later)
                                 },
                             )
                         },
