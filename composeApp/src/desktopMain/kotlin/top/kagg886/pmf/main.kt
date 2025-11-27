@@ -25,7 +25,6 @@ import top.kagg886.pmf.ui.route.crash.CrashApp
 import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.util.getString
 
-
 fun launch(start: () -> NavKey) {
     setupEnv()
     SingletonImageLoader.setSafe {
@@ -86,18 +85,20 @@ fun main() {
     try {
         val lockSocket = ServerSocket(SOCKET_LOCK)
         lockSocket.setReuseAddress(false)
-        Runtime.getRuntime().addShutdownHook(Thread {
-            lockSocket.close()
-        })
+        Runtime.getRuntime().addShutdownHook(
+            Thread {
+                lockSocket.close()
+            },
+        )
     } catch (e: IOException) {
         println(e)
         runBlocking(Dispatchers.Main) {
             JOptionPane.showMessageDialog(
                 null,
-                getString(Res.string.multiapp_not_allowed,"$SOCKET_LOCK"),
+                getString(Res.string.multiapp_not_allowed, "$SOCKET_LOCK"),
                 getString(Res.string.warning),
-                JOptionPane.WARNING_MESSAGE
-            );
+                JOptionPane.WARNING_MESSAGE,
+            )
             exitProcess(0)
         }
     }
