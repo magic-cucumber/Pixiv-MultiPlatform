@@ -10,7 +10,9 @@
     <string name="ai_blocked">AI，不行！</string>
     <string name="all">全部</string>
     <string name="app_crash">崩潰報告！</string>
-    <string name="app_crash_message">很遺憾地通知您：Pixiv-MultiPlatform 在執行時發生了無法恢復的錯誤，因此應用程式即將關閉。\n為了協助我們修復此錯誤以避免再次發生，請關閉對話方塊並點擊右上角的按鈕，以提交本次錯誤報告。</string>
+    <string name="app_crash_message">很遺憾地通知您：Pixiv-MultiPlatform
+        在執行時發生了無法恢復的錯誤，因此應用程式即將關閉。\n為了協助我們修復此錯誤以避免再次發生，請關閉對話方塊並點擊右上角的按鈕，以提交本次錯誤報告。
+    </string>
     <string name="app_crash_title">應用程式崩潰了！</string>
     <string name="app_language">應用語言</string>
     <string name="app_language_feature_pr">若您要新增對應語言的支援，請前往 GitHub 提交 issue</string>
@@ -27,11 +29,17 @@
     <string name="browser_init_failed">無法初始化內嵌瀏覽器</string>
     <string name="browser_init_failed_msg_backend">的內容以手動安裝內嵌瀏覽器。\n\n</string>
     <string name="browser_init_failed_msg_clickable">點擊此處查看詳細資訊</string>
-    <string name="browser_init_failed_msg_fronted">由於某些未知原因，無法初始化內嵌瀏覽器。\n請關閉應用後嘗試使用 Token 登入。\n或參閱</string>
+    <string name="browser_init_failed_msg_fronted">由於某些未知原因，無法初始化內嵌瀏覽器。\n請關閉應用後嘗試使用 Token
+        登入。\n或參閱
+    </string>
     <string name="browser_init_failed_msg_this_link">此連結</string>
-    <string name="bypass_intro">        在某些地區可能無法正常存取 Pixiv。\n        我們提供了 SNI 繞過和代理兩種連線方案。\n        SNI 繞過：透過特殊方式直接連線 Pixiv 伺服器。\n        代理：透過代理伺服器轉發請求。</string>
+    <string name="bypass_intro">在某些地區可能無法正常存取 Pixiv。\n 我們提供了 SNI 繞過和代理兩種連線方案。\n SNI
+        繞過：透過特殊方式直接連線 Pixiv 伺服器。\n 代理：透過代理伺服器轉發請求。
+    </string>
     <string name="bypass_none">無</string>
-    <string name="bypass_note">如果您使用內嵌瀏覽器搭配 VPN (梯子) 登入 Pixiv，請不要開啟 SNI 繞過功能，否則程式將無法正常登入。\n啟用/停用此功能後，您需要重新啟動客戶端才能生效。</string>
+    <string name="bypass_note">如果您使用內嵌瀏覽器搭配 VPN (梯子) 登入 Pixiv，請不要開啟 SNI
+        繞過功能，否則程式將無法正常登入。\n啟用/停用此功能後，您需要重新啟動客戶端才能生效。
+    </string>
     <string name="bypass_proxy">代理</string>
     <string name="bypass_sni">SNI 替換</string>
     <string name="bypass_solution">直連方案</string>
@@ -84,7 +92,8 @@
     <string name="display_mode">顯示模式</string>
     <string name="doh_address">DoH 位址</string>
     <string name="doh_address_description">透過 DoH 來解析 Pixiv 真實 IP。</string>
-    <string name="doh_address_hint">若預設 DoH 無法使用，請嘗試更換此值為合法且能解析 pixivvision.net 的 DoH 伺服器。</string>
+    <string name="doh_address_hint">若預設 DoH 無法使用，請嘗試更換此值為合法且能解析 pixivvision.net 的 DoH 伺服器。
+    </string>
     <string name="doh_timeout">DoH 逾時時間</string>
     <string name="doh_timeout_description">設定 DoH 的逾時時間，單位為秒</string>
     <string name="doh_timeout_hint">若 DoH 解析失敗，請嘗試調高 DoH 解析時間以獲得更多逾時時間來解析 DoH</string>
@@ -160,7 +169,9 @@
     <string name="homepage">主頁</string>
     <string name="hot_tags">熱門 tag</string>
     <string name="ignore_ssl_errors">忽略 SSL 錯誤</string>
-    <string name="ignore_ssl_errors_description">關閉後將不會忽略非嚴格 SSL 錯誤 (可能造成 DoH 解析失敗)，一般不需調整此設定。</string>
+    <string name="ignore_ssl_errors_description">關閉後將不會忽略非嚴格 SSL 錯誤 (可能造成 DoH
+        解析失敗)，一般不需調整此設定。
+    </string>
     <string name="illust">插畫</string>
     <string name="illust_details_show_all">預設顯示所有作品牆圖片</string>
     <string name="illustration_bookmarks">插畫收藏</string>
@@ -185,9 +196,15 @@
     <string name="light_mode">日間模式</string>
     <string name="load_failed">載入失敗</string>
     <string name="loading">載入中</string>
-    <string name="login_guide">現在，我們要進行登入操作。\nPixiv-MultiPlatform 支援使用內嵌瀏覽器登入和 Token 登入。\n1. 內嵌瀏覽器登入適用於第一次使用 Pixiv-MultiPlatform 的情況。在瀏覽器中輸入帳號密碼後，程式就會自動解析 Token 並進行登入操作。\n注意：在電腦端使用內嵌瀏覽器登入需要下載大約 300MB 的 Chromium 核心。若您介意，請在手機登入後使用 Token 登入。\n2. Token 登入適用於已在手機上使用 Pixiv-MultiPlatform，但不想在電腦上重複輸入帳號密碼的情況。</string>
+    <string name="login_guide">現在，我們要進行登入操作。\nPixiv-MultiPlatform 支援使用內嵌瀏覽器登入和 Token 登入。\n1.
+        內嵌瀏覽器登入適用於第一次使用 Pixiv-MultiPlatform 的情況。在瀏覽器中輸入帳號密碼後，程式就會自動解析 Token
+        並進行登入操作。\n注意：在電腦端使用內嵌瀏覽器登入需要下載大約 300MB 的 Chromium 核心。若您介意，請在手機登入後使用
+        Token 登入。\n2. Token 登入適用於已在手機上使用 Pixiv-MultiPlatform，但不想在電腦上重複輸入帳號密碼的情況。
+    </string>
     <string name="login_session">登入階段</string>
-    <string name="login_session_copied">登入階段資訊已複製到剪貼簿。注意：請勿將此資訊傳送至公開場合，這可能會導致您的帳戶遭到惡意修改。</string>
+    <string name="login_session_copied">
+        登入階段資訊已複製到剪貼簿。注意：請勿將此資訊傳送至公開場合，這可能會導致您的帳戶遭到惡意修改。
+    </string>
     <string name="login_sessions">登入階段</string>
     <string name="login_wizard">登入精靈</string>
     <string name="logout">登出</string>
@@ -279,15 +296,23 @@
     <string name="search_result_for">「%1$s」的搜尋結果</string>
     <string name="search_result_none">沒有搜尋結果</string>
     <string name="series_belong">所屬系列</string>
-    <string name="session_copied">登入階段資訊已複製到剪貼簿。注意：請勿將此資訊傳送至公開場合，這可能會導致您的帳戶遭到惡意修改。</string>
+    <string name="session_copied">
+        登入階段資訊已複製到剪貼簿。注意：請勿將此資訊傳送至公開場合，這可能會導致您的帳戶遭到惡意修改。
+    </string>
     <string name="set_theme">設定主題</string>
     <string name="settings">程式設定</string>
     <string name="setup_complete">大功告成！</string>
-    <string name="setup_finish_note">        您已完成所有設定。現在，我們將跳轉到登入頁面。這些設定可在登入後前往設定頁面進行修改。\n        在初次登入前，我們會下載內嵌瀏覽器以提供完整的登入體驗，這會佔用您大約 300MB 的磁碟空間。</string>
-    <string name="setup_finish_note_simple">        您已完成所有設定。現在，我們將跳轉到登入頁面。這些設定可在登入後前往設定頁面進行修改。</string>
+    <string name="setup_finish_note">您已完成所有設定。現在，我們將跳轉到登入頁面。這些設定可在登入後前往設定頁面進行修改。\n
+        在初次登入前，我們會下載內嵌瀏覽器以提供完整的登入體驗，這會佔用您大約 300MB 的磁碟空間。
+    </string>
+    <string name="setup_finish_note_simple">
+        您已完成所有設定。現在，我們將跳轉到登入頁面。這些設定可在登入後前往設定頁面進行修改。
+    </string>
     <string name="share">分享</string>
     <string name="shield_config">封鎖設定</string>
-    <string name="shield_intro">        透過這三個問題，讓我們協助您選擇最適合的封鎖設定。更進階的小說封鎖功能，請在登入後前往設定頁面。</string>
+    <string name="shield_intro">
+        透過這三個問題，讓我們協助您選擇最適合的封鎖設定。更進階的小說封鎖功能，請在登入後前往設定頁面。
+    </string>
     <string name="show_toast_on_fail">檢查失敗時顯示提示訊息</string>
     <string name="show_toast_on_latest">已是最新版本時顯示提示訊息</string>
     <string name="show_toast_when_failed">檢查失敗時顯示提示訊息</string>
@@ -313,7 +338,7 @@
     <string name="theme_info">日間模式可以自訂主題色彩，主題檔案可以在</string>
     <string name="theme_info_after_url">處生成。(僅支援 JSON 格式的主題)</string>
     <string name="theme_info_url">https://material-foundation.github.io/material-theme-builder/</string>
-    <string name="theme_intro">        來為 APP 選擇一個主題吧！</string>
+    <string name="theme_intro">來為 APP 選擇一個主題吧！</string>
     <string name="theme_json_hint">匯出的格式只有 JSON 才能正確解析！</string>
     <string name="theme_setting">主題設定</string>
     <string name="throw_coroutine_exception">協程內拋出異常</string>
@@ -345,8 +370,11 @@
     <string name="visibility">可見性</string>
     <string name="warning">警告</string>
     <string name="welcome">歡迎！</string>
-    <string name="welcome_text">        %1$s 是一個基於 Compose Multiplatform 的跨平台第三方 Pixiv 用戶端，由</string>
-    <string name="welcome_text_after_pixko">強力驅動。\n\n        在登入之前，讓我們先完成一些設定。這些設定可能會因您所在的地區、網路環境而異。如果您決定結束設定，請點擊下方的「略過設定」按鈕，否則請點擊下一步以前往後續設定。\n\n        準備好了嗎？點擊下一步以開始設定。\n\n        遇到問題了嗎？請前往 TG 交流群組描述您遇到的問題。</string>
+    <string name="welcome_text">%1$s 是一個基於 Compose Multiplatform 的跨平台第三方 Pixiv 用戶端，由</string>
+    <string name="welcome_text_after_pixko">強力驅動。\n\n
+        在登入之前，讓我們先完成一些設定。這些設定可能會因您所在的地區、網路環境而異。如果您決定結束設定，請點擊下方的「略過設定」按鈕，否則請點擊下一步以前往後續設定。\n\n
+        準備好了嗎？點擊下一步以開始設定。\n\n 遇到問題了嗎？請前往 TG 交流群組描述您遇到的問題。
+    </string>
     <string name="welcome_user">歡迎您！ %1$s</string>
     <string name="word_count">總字數</string>
     <string name="xattr_setting">正在設定 xattr...</string>
@@ -387,4 +415,12 @@
     <string name="watch_later_setting_auto_remove_click">點擊時自動刪除</string>
     <string name="watch_later_setting_auto_remove_click_desc">從稍後再看頁面點擊時會自動刪除該項目。</string>
 
+    <string name="multiapp_not_allowed">
+        <![CDATA[
+            <html>
+                Pixiv-MultiPlatform 只允許一個實例運行，請先關閉已存在的實例。<br>
+                如果您確信已關閉所有實例，請關閉占用 <b>%1$s</b> 埠的應用程式。
+            </html>
+        ]]>
+    </string>
 </resources>

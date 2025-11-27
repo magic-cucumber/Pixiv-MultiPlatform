@@ -390,4 +390,13 @@
 
     <string name="watch_later_setting_auto_remove_click">从稍后再看页点击时自动删除</string>
     <string name="watch_later_setting_auto_remove_click_desc">点击时自动删除该条目</string>
+
+    <string name="multiapp_not_allowed">
+        <![CDATA[
+            <html>
+                Pixiv-MultiPlatform只允许一个实例运行，请关闭已有的实例。<br>
+                如果您确信关闭了所有的示例，请关闭占用 <b>%1$s</b> 端口上的应用。
+            </html>
+        ]]>
+    </string>
 </resources>

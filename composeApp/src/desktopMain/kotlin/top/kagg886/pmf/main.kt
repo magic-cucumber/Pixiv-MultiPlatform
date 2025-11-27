@@ -7,13 +7,24 @@ import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import java.io.IOException
+import java.net.ServerSocket
+import javax.swing.JOptionPane
 import kotlin.system.exitProcess
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.painterResource
-import top.kagg886.pmf.res.*
+import top.kagg886.pmf.res.Res
+import top.kagg886.pmf.res.kotlin
+import top.kagg886.pmf.res.multiapp_not_allowed
+import top.kagg886.pmf.res.warning
 import top.kagg886.pmf.ui.route.crash.CrashApp
 import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
+import top.kagg886.pmf.util.getString
+
 
 fun launch(start: () -> NavKey) {
     setupEnv()
@@ -68,4 +79,27 @@ fun launch(start: () -> NavKey) {
     exitProcess(0)
 }
 
-fun main() = launch { WelcomeRoute }
+private const val SOCKET_LOCK = 32043
+
+@OptIn(DelicateCoroutinesApi::class)
+fun main() {
+    try {
+        val lockSocket = ServerSocket(SOCKET_LOCK)
+        lockSocket.setReuseAddress(false)
+        Runtime.getRuntime().addShutdownHook(Thread {
+            lockSocket.close()
+        })
+    } catch (e: IOException) {
+        println(e)
+        runBlocking(Dispatchers.Main) {
+            JOptionPane.showMessageDialog(
+                null,
+                getString(Res.string.multiapp_not_allowed,"$SOCKET_LOCK"),
+                getString(Res.string.warning),
+                JOptionPane.WARNING_MESSAGE
+            );
+            exitProcess(0)
+        }
+    }
+    launch { WelcomeRoute }
+}
