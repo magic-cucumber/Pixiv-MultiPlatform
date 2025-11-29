@@ -7,9 +7,6 @@ import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import java.io.IOException
-import java.io.RandomAccessFile
-import java.net.ServerSocket
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.file.StandardOpenOption
@@ -20,7 +17,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import okio.FileSystem
 import org.jetbrains.compose.resources.painterResource
 import top.kagg886.pmf.backend.dataPath
 import top.kagg886.pmf.res.Res
@@ -91,7 +87,6 @@ fun launch(start: () -> NavKey) {
     exitProcess(0)
 }
 
-
 @OptIn(DelicateCoroutinesApi::class)
 fun main() {
     val file = dataPath.resolve("pmf.lock")
@@ -117,9 +112,11 @@ fun main() {
         }
     }
 
-    Runtime.getRuntime().addShutdownHook(Thread {
-        lock.release()
-    })
+    Runtime.getRuntime().addShutdownHook(
+        Thread {
+            lock.release()
+        },
+    )
 
     launch { WelcomeRoute }
 }
