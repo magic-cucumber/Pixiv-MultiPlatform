@@ -389,12 +389,6 @@
     <string name="watch_later_setting_auto_remove_click">Auto-remove on Click</string>
     <string name="watch_later_setting_auto_remove_click_desc">Automatically remove the item when clicked from the Watch Later page.</string>
 
-    <string name="multiapp_not_allowed">
-        <![CDATA[
-            <html>
-                Pixiv-MultiPlatform allows only one instance to run. Please close the existing instance.<br>
-                If you are certain that all instances have been closed, please terminate the application occupying port <b>%1$s</b>.
-            </html>
-        ]]>
-    </string>
+    <string name="multiapp_hint">This file is required to ensure Pixiv-MultiPlatform running correctly. Please do not delete this file!</string>
+    <string name="multiapp_not_allowed">Pixiv-MultiPlatform allows only one instance to run. Please close the existing instance</string>
 </resources>

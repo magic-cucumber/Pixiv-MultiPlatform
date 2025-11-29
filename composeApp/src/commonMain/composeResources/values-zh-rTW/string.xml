@@ -415,12 +415,6 @@
     <string name="watch_later_setting_auto_remove_click">點擊時自動刪除</string>
     <string name="watch_later_setting_auto_remove_click_desc">從稍後再看頁面點擊時會自動刪除該項目。</string>
 
-    <string name="multiapp_not_allowed">
-        <![CDATA[
-            <html>
-                Pixiv-MultiPlatform 只允許一個實例運行，請先關閉已存在的實例。<br>
-                如果您確信已關閉所有實例，請關閉占用 <b>%1$s</b> 埠的應用程式。
-            </html>
-        ]]>
-    </string>
+    <string name="multiapp_hint">此檔案用於確保 Pixiv-MultiPlatform 正常運行，請勿刪除此檔案！</string>
+    <string name="multiapp_not_allowed">Pixiv-MultiPlatform 只允許一個實例運行，請先關閉已存在的實例</string>
 </resources>
