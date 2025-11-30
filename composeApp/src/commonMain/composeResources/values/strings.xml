@@ -390,4 +390,7 @@
 
     <string name="watch_later_setting_auto_remove_click">从稍后再看页点击时自动删除</string>
     <string name="watch_later_setting_auto_remove_click_desc">点击时自动删除该条目</string>
+
+    <string name="multiapp_hint">该文件用于确保Pixiv-MultiPlatform正常运行，请不要删除此文件！</string>
+    <string name="multiapp_not_allowed">Pixiv-MultiPlatform只允许一个实例运行，请关闭已有的实例。</string>
 </resources>
