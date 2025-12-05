@@ -11,6 +11,8 @@ import javax.imageio.ImageIO
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.Path
+import top.kagg886.pmf.backend.Platform
+import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.util.AnimatedSkiaImageDecoder
 
 actual fun openBrowser(link: String) {
@@ -22,10 +24,17 @@ actual fun shareFile(file: Path, name: String, mime: String) {
 }
 
 actual suspend fun copyImageToClipboard(bitmap: ByteArray) {
+    if (currentPlatform is Platform.Desktop.MacOS) {
+        // 在mac上调命令行解决吧，不想写额外的动态库了
+        copyImageAsImageToClipboardOnMacOS(bitmap)
+        return
+    }
+
+    // fallback
     withContext(Dispatchers.IO) {
         Toolkit.getDefaultToolkit().systemClipboard.setContents(
             TransferableImage(bitmap),
-            DesktopClipBoardOwner,
+            null,
         )
     }
 }
@@ -46,7 +55,7 @@ private suspend fun copyImageAsImageToClipboardOnMacOS(imageBytes: ByteArray) {
             // 清理并抛出或记录错误
             pngFile.delete()
             tiffFile.delete()
-            throw RuntimeException("sips 转换失败，exit=$sipsExit")
+            throw RuntimeException("sips transferred failed，exit=$sipsExit")
         }
 
         val appleScriptCmd = listOf(
@@ -61,7 +70,7 @@ private suspend fun copyImageAsImageToClipboardOnMacOS(imageBytes: ByteArray) {
         if (osExit != 0) {
             pngFile.delete()
             tiffFile.delete()
-            throw RuntimeException("osascript 设置剪贴板失败，exit=$osExit")
+            throw RuntimeException("osascript execute failed，exit=$osExit")
         }
         pngFile.delete()
         tiffFile.delete()
