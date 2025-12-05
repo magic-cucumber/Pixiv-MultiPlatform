@@ -11,8 +11,6 @@ import javax.imageio.ImageIO
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.Path
-import top.kagg886.pmf.backend.Platform
-import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.util.AnimatedSkiaImageDecoder
 
 actual fun openBrowser(link: String) {
@@ -52,8 +50,9 @@ private suspend fun copyImageAsImageToClipboardOnMacOS(imageBytes: ByteArray) {
         }
 
         val appleScriptCmd = listOf(
-            "osascript", "-e",
-            "set the clipboard to (read (POSIX file \"${tiffFile.absolutePath}\") as TIFF picture)"
+            "osascript",
+            "-e",
+            "set the clipboard to (read (POSIX file \"${tiffFile.absolutePath}\") as TIFF picture)",
         )
         val osascript = ProcessBuilder(appleScriptCmd)
             .redirectErrorStream(true)
@@ -68,7 +67,6 @@ private suspend fun copyImageAsImageToClipboardOnMacOS(imageBytes: ByteArray) {
         tiffFile.delete()
     }
 }
-
 
 private object DesktopClipBoardOwner : ClipboardOwner {
     override fun lostOwnership(clipboard: Clipboard?, contents: Transferable?) = Unit

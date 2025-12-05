@@ -1,12 +1,8 @@
 package top.kagg886.pmf
 
 import coil3.ComponentRegistry
-import korlibs.ffi.usePointer
-import korlibs.memory.bit
 import korlibs.memory.startAddressOf
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.refTo
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +11,6 @@ import okio.Path
 import platform.Foundation.NSData
 import platform.Foundation.NSURL
 import platform.Foundation.dataWithBytes
-import platform.Foundation.dataWithBytesNoCopy
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
 import platform.UIKit.UIImage
@@ -57,7 +52,8 @@ actual suspend fun copyImageToClipboard(bitmap: ByteArray) {
         UIImage.imageWithData(
             data = NSData.dataWithBytes(
                 bytes = it.startAddressOf,
-                length = bitmap.size.toULong())
+                length = bitmap.size.toULong(),
+            ),
         )
     }
 
