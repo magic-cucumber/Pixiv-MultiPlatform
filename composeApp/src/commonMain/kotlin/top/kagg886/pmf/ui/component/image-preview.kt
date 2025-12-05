@@ -96,7 +96,7 @@ fun ImagePreviewer(
                 ) {
                     val scope = rememberCoroutineScope()
                     val snack = LocalSnackBarHost.current
-                    if (currentPlatform is Platform.Desktop) {
+                    if (currentPlatform is Platform.Desktop || currentPlatform is Platform.Apple) {
                         SettingsMenuLink(
                             title = {
                                 Text(stringResource(Res.string.copy_to_clipboard))
