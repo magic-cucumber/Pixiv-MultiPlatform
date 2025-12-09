@@ -393,4 +393,7 @@
 
     <string name="multiapp_hint">该文件用于确保Pixiv-MultiPlatform正常运行，请不要删除此文件！</string>
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform只允许一个实例运行，请关闭已有的实例。</string>
+
+    <string name="settings_filter">浏览设置</string>
+    <string name="settings_filter_clicked">点击以配置浏览项</string>
 </resources>

@@ -70,6 +70,7 @@ import top.kagg886.pmf.ui.component.settings.SettingsTextField
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.main.about.AboutRoute
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
+import top.kagg886.pmf.ui.route.main.setting.filter.SettingFilterRoute
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
@@ -228,6 +229,17 @@ fun SettingScreen() {
                 enabled = colorScheme != null,
             )
         }
+        SettingsGroup(title = { Text(stringResource(Res.string.settings_filter)) }) {
+            val nav = LocalNavBackStack.current
+            SettingsMenuLink(
+                title = {
+                    Text(stringResource(Res.string.settings_filter_clicked))
+                },
+                onClick = {
+                    nav += SettingFilterRoute
+                },
+            )
+        }
         SettingsGroup(title = { Text(stringResource(Res.string.gallery_settings)) }) {
             var data by remember { mutableStateOf(AppConfig.galleryOptions) }
             LaunchedEffect(data) {
@@ -338,69 +350,6 @@ fun SettingScreen() {
                 },
             )
 
-            var filterAi by remember {
-                mutableStateOf(AppConfig.filterAi)
-            }
-            LaunchedEffect(filterAi) {
-                AppConfig.filterAi = filterAi
-            }
-            SettingsSwitch(
-                state = filterAi,
-                title = {
-                    Text(stringResource(Res.string.filter_ai_illustrations))
-                },
-                subtitle = {
-                    Text(stringResource(Res.string.filter_ai_server_hint))
-                },
-                onCheckedChange = {
-                    filterAi = it
-                },
-            )
-
-            var filterR18 by remember {
-                mutableStateOf(AppConfig.filterR18)
-            }
-            var filterR18G by remember {
-                mutableStateOf(AppConfig.filterR18G)
-            }
-            LaunchedEffect(filterR18) {
-                AppConfig.filterR18 = filterR18
-            }
-            SettingsSwitch(
-                state = filterR18,
-                title = {
-                    Text(stringResource(Res.string.filter_r18_illustrations))
-                },
-                subtitle = {
-                    Column {
-                        Text(stringResource(Res.string.filter_r18_description))
-                        Text(stringResource(Res.string.filter_r18_benefit))
-                    }
-                },
-                onCheckedChange = {
-                    filterR18 = it
-                },
-            )
-            LaunchedEffect(filterR18G) {
-                AppConfig.filterR18G = filterR18G
-            }
-            SettingsSwitch(
-                state = filterR18G,
-                enabled = !filterR18, // 不过滤r18时启用
-                title = {
-                    Text(stringResource(Res.string.filter_r18g_illustrations))
-                },
-                subtitle = {
-                    Column {
-                        Text(stringResource(Res.string.filter_r18g_description))
-                        Text(stringResource(Res.string.filter_r18g_enabled_condition))
-                    }
-                },
-                onCheckedChange = {
-                    filterR18G = it
-                },
-            )
-
             var filterAspectRatioType by remember {
                 mutableStateOf(AppConfig.filterAspectRatioType)
             }
@@ -475,68 +424,6 @@ fun SettingScreen() {
             )
         }
         SettingsGroup(title = { Text(stringResource(Res.string.novel_settings)) }) {
-            var filterAiNovel by remember {
-                mutableStateOf(AppConfig.filterAiNovel)
-            }
-            LaunchedEffect(filterAiNovel) {
-                AppConfig.filterAiNovel = filterAiNovel
-            }
-            SettingsSwitch(
-                state = filterAiNovel,
-                title = {
-                    Text(stringResource(Res.string.filter_ai_novel))
-                },
-                subtitle = {
-                    Text(stringResource(Res.string.filter_ai_server_hint))
-                },
-                onCheckedChange = {
-                    filterAiNovel = it
-                },
-            )
-
-            var filterR18Novel by remember {
-                mutableStateOf(AppConfig.filterR18Novel)
-            }
-            var filterR18GNovel by remember {
-                mutableStateOf(AppConfig.filterR18GNovel)
-            }
-            LaunchedEffect(filterR18Novel) {
-                AppConfig.filterR18Novel = filterR18Novel
-            }
-            SettingsSwitch(
-                state = filterR18Novel,
-                title = {
-                    Text(stringResource(Res.string.filter_r18_novel))
-                },
-                subtitle = {
-                    Column {
-                        Text(stringResource(Res.string.filter_r18_description))
-                        Text(stringResource(Res.string.filter_r18_benefit))
-                    }
-                },
-                onCheckedChange = {
-                    filterR18Novel = it
-                },
-            )
-            LaunchedEffect(filterR18GNovel) {
-                AppConfig.filterR18GNovel = filterR18GNovel
-            }
-            SettingsSwitch(
-                state = filterR18GNovel,
-                enabled = !filterR18Novel, // 不过滤r18时启用
-                title = {
-                    Text(stringResource(Res.string.filter_r18g_novel))
-                },
-                subtitle = {
-                    Column {
-                        Text(stringResource(Res.string.filter_r18g_description))
-                        Text(stringResource(Res.string.filter_r18g_enabled_condition))
-                    }
-                },
-                onCheckedChange = {
-                    filterR18GNovel = it
-                },
-            )
             var autoTypo by remember {
                 mutableStateOf(AppConfig.autoTypo)
             }
@@ -669,7 +556,14 @@ fun SettingScreen() {
                 subtitle = {
                     Column {
                         Text(stringResource(Res.string.novel_filter_length_description))
-                        key(filterShortNovelLength) { Text(stringResource(Res.string.current_value, filterShortNovelLength)) }
+                        key(filterShortNovelLength) {
+                            Text(
+                                stringResource(
+                                    Res.string.current_value,
+                                    filterShortNovelLength,
+                                ),
+                            )
+                        }
                     }
                 },
                 value = filterShortNovelLength.toFloat(),
@@ -680,7 +574,6 @@ fun SettingScreen() {
                 },
             )
         }
-
         SettingsGroup(title = { Text(stringResource(Res.string.settings_download)) }) {
             val platform = currentPlatform
             var uri by remember {
@@ -711,7 +604,6 @@ fun SettingScreen() {
                 },
             )
         }
-
         SettingsGroup(title = { Text(stringResource(Res.string.watch_later)) }) {
             var recordWatchLater by remember {
                 mutableStateOf(AppConfig.watchLaterRemoveDaysBefore)
@@ -728,7 +620,12 @@ fun SettingScreen() {
                     Column {
                         Text(stringResource(Res.string.watch_later_setting_auto_remove_days_desc))
                         key(recordWatchLater) {
-                            Text(stringResource(Res.string.current_value, if (recordWatchLater == 0) stringResource(Res.string.closed) else recordWatchLater))
+                            Text(
+                                stringResource(
+                                    Res.string.current_value,
+                                    if (recordWatchLater == 0) stringResource(Res.string.closed) else recordWatchLater,
+                                ),
+                            )
                         }
                     }
                 },
@@ -761,7 +658,6 @@ fun SettingScreen() {
                 },
             )
         }
-
         SettingsGroup(title = { Text(stringResource(Res.string.history_records)) }) {
             var recordIllustHistory by remember {
                 mutableStateOf(AppConfig.recordIllustHistory)

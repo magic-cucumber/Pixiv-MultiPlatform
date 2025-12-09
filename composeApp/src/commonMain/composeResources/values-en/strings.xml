@@ -391,4 +391,7 @@
 
     <string name="multiapp_hint">This file is required to ensure Pixiv-MultiPlatform running correctly. Please do not delete this file!</string>
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform allows only one instance to run. Please close the existing instance</string>
+
+    <string name="settings_filter">Browse Settings</string>
+    <string name="settings_filter_clicked">Click to configure browse items</string>
 </resources>
