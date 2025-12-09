@@ -37,7 +37,8 @@ inline fun <reified T : Any> Module.dialog(
     noinline definition: @Composable Scope.(T) -> Unit,
 ): KoinDefinition<EntryProviderInstaller> {
     val def = _singleInstanceFactory<EntryProviderInstaller>(named<T>(), {
-        val scope = this {
+        val scope = this
+        return@_singleInstanceFactory {
             entry<T>(
                 metadata = DialogSceneStrategy.dialog(metadata),
                 content = { t -> definition(scope, t) },
