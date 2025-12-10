@@ -54,6 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
+import kotlin.random.Random
+import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -71,6 +73,7 @@ import top.kagg886.pmf.ui.component.icon.Download
 import top.kagg886.pmf.ui.component.icon.Save
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
+import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 
 @Composable
@@ -104,7 +107,11 @@ private fun DownloadContent(model: DownloadScreenModel, state: DownloadScreenSta
                                 return@container
                             }
                             LazyColumn(modifier = Modifier.fillMaxSize().padding(5.dp), state = lazyColumnState) {
-                                items(data.itemCount, key = { data.peek(it)!!.id }) { i ->
+                                items(data.itemCount, key = {
+                                    data.peek(it)?.id ?: Random(Clock.System.now().toEpochMilliseconds()).nextInt().apply {
+                                        logger.w("download item is null. this can't happened. data.itemCount = ${data.itemCount}, data.length()${data.itemSnapshotList.size}")
+                                    }
+                                }) { i ->
                                     val item = data[i]!!
                                     when (item.meta) {
                                         DownloadItemType.ILLUST -> {
