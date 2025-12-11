@@ -452,7 +452,6 @@ fun SettingScreen() {
                     enableFetchSeries = it
                 },
             )
-
         }
         SettingsGroup(title = { Text(stringResource(Res.string.settings_download)) }) {
             val platform = currentPlatform

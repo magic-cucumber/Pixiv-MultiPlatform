@@ -278,7 +278,6 @@ private fun SettingFilterScreenNovel() {
         },
     )
 
-
     var filterLongTag by remember {
         mutableStateOf(AppConfig.filterLongTag)
     }
