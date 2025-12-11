@@ -350,35 +350,6 @@ fun SettingScreen() {
                 },
             )
 
-            var filterAspectRatioType by remember {
-                mutableStateOf(AppConfig.filterAspectRatioType)
-            }
-
-            LaunchedEffect(filterAspectRatioType) {
-                AppConfig.filterAspectRatioType = filterAspectRatioType
-            }
-
-            SettingsDropdownMenu(
-                title = {
-                    Text(stringResource(Res.string.options_filter_aspect_ratio))
-                },
-                subTitle = {
-                    Text(stringResource(Res.string.option_filter_aspect_ratio_usage))
-                },
-                optionsFormat = {
-                    when (it) {
-                        AppConfig.AspectRatioFilterType.NONE -> stringResource(Res.string.option_filter_aspect_ratio_none)
-                        AppConfig.AspectRatioFilterType.PHONE -> stringResource(Res.string.option_filter_aspect_ratio_phone)
-                        AppConfig.AspectRatioFilterType.PC -> stringResource(Res.string.option_filter_aspect_ratio_pc)
-                    }
-                },
-                current = filterAspectRatioType,
-                data = AppConfig.AspectRatioFilterType.entries,
-                onSelected = {
-                    filterAspectRatioType = it
-                },
-            )
-
             var illustDetailsShowAll by remember { mutableStateOf(AppConfig.illustDetailsShowAll) }
             LaunchedEffect(illustDetailsShowAll) {
                 AppConfig.illustDetailsShowAll = illustDetailsShowAll
@@ -482,97 +453,6 @@ fun SettingScreen() {
                 },
             )
 
-            var filterLongTag by remember {
-                mutableStateOf(AppConfig.filterLongTag)
-            }
-            var filterLongTagLength by remember {
-                mutableStateOf(AppConfig.filterLongTagMinLength)
-            }
-            LaunchedEffect(filterLongTag) {
-                AppConfig.filterLongTag = filterLongTag
-                if (!filterLongTag) {
-                    filterLongTagLength = 15
-                }
-            }
-            SettingsSwitch(
-                state = filterLongTag,
-                title = {
-                    Text(stringResource(Res.string.filter_long_tag))
-                },
-                subtitle = {
-                    Text(stringResource(Res.string.filter_long_tag_description))
-                },
-                onCheckedChange = {
-                    filterLongTag = it
-                },
-            )
-            SettingsSlider(
-                enabled = filterLongTag,
-                title = {
-                    Text(stringResource(Res.string.tag_max_length))
-                },
-                subtitle = {
-                    Column {
-                        Text(stringResource(Res.string.tag_max_length_description))
-                        key(filterLongTagLength) { Text(stringResource(Res.string.current_value, filterLongTagLength)) }
-                    }
-                },
-                value = filterLongTagLength.toFloat(),
-                valueRange = 5f..25f,
-                onValueChange = {
-                    filterLongTagLength = it.roundToInt()
-                },
-            )
-
-            var filterShortNovel by remember {
-                mutableStateOf(AppConfig.filterShortNovel)
-            }
-            var filterShortNovelLength by remember {
-                mutableStateOf(AppConfig.filterShortNovelMaxLength)
-            }
-            LaunchedEffect(filterShortNovel) {
-                AppConfig.filterShortNovel = filterShortNovel
-                if (!filterShortNovel) {
-                    filterShortNovelLength = 100
-                }
-            }
-            SettingsSwitch(
-                state = filterShortNovel,
-                title = {
-                    Text(stringResource(Res.string.filter_short_novel))
-                },
-                subtitle = {
-                    Text(stringResource(Res.string.filter_short_novel_description))
-                },
-                onCheckedChange = {
-                    filterShortNovel = it
-                },
-            )
-            SettingsSlider(
-                enabled = filterShortNovel,
-                title = {
-                    Text(stringResource(Res.string.novel_filter_length))
-                },
-                subtitle = {
-                    Column {
-                        Text(stringResource(Res.string.novel_filter_length_description))
-                        key(filterShortNovelLength) {
-                            Text(
-                                stringResource(
-                                    Res.string.current_value,
-                                    filterShortNovelLength,
-                                ),
-                            )
-                        }
-                    }
-                },
-                value = filterShortNovelLength.toFloat(),
-                valueRange = 30f..1000f,
-                steps = 968,
-                onValueChange = {
-                    filterShortNovelLength = it.roundToInt()
-                },
-            )
         }
         SettingsGroup(title = { Text(stringResource(Res.string.settings_download)) }) {
             val platform = currentPlatform

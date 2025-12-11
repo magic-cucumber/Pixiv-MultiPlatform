@@ -11,20 +11,26 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavKey
+import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
+import kotlin.math.roundToInt
 import kotlinx.serialization.Serializable
 import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.res.Res
 import top.kagg886.pmf.res.confirm
+import top.kagg886.pmf.res.current_value
 import top.kagg886.pmf.res.filter_ai_illustrations
 import top.kagg886.pmf.res.filter_ai_novel
 import top.kagg886.pmf.res.filter_ai_server_hint
+import top.kagg886.pmf.res.filter_long_tag
+import top.kagg886.pmf.res.filter_long_tag_description
 import top.kagg886.pmf.res.filter_r18_benefit
 import top.kagg886.pmf.res.filter_r18_description
 import top.kagg886.pmf.res.filter_r18_illustrations
@@ -33,11 +39,23 @@ import top.kagg886.pmf.res.filter_r18g_description
 import top.kagg886.pmf.res.filter_r18g_enabled_condition
 import top.kagg886.pmf.res.filter_r18g_illustrations
 import top.kagg886.pmf.res.filter_r18g_novel
+import top.kagg886.pmf.res.filter_short_novel
+import top.kagg886.pmf.res.filter_short_novel_description
 import top.kagg886.pmf.res.illust
 import top.kagg886.pmf.res.novel
+import top.kagg886.pmf.res.novel_filter_length
+import top.kagg886.pmf.res.novel_filter_length_description
+import top.kagg886.pmf.res.option_filter_aspect_ratio_none
+import top.kagg886.pmf.res.option_filter_aspect_ratio_pc
+import top.kagg886.pmf.res.option_filter_aspect_ratio_phone
+import top.kagg886.pmf.res.option_filter_aspect_ratio_usage
+import top.kagg886.pmf.res.options_filter_aspect_ratio
 import top.kagg886.pmf.res.settings_filter
+import top.kagg886.pmf.res.tag_max_length
+import top.kagg886.pmf.res.tag_max_length_description
 import top.kagg886.pmf.ui.component.TabContainer
 import top.kagg886.pmf.ui.component.dialog.DialogPageScaffold
+import top.kagg886.pmf.ui.component.settings.SettingsDropdownMenu
 import top.kagg886.pmf.ui.route.main.setting.filter.SettingFilterNavigationKey.*
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
@@ -164,6 +182,35 @@ private fun SettingFilterScreenIllust() {
             filterR18G = it
         },
     )
+
+    var filterAspectRatioType by remember {
+        mutableStateOf(AppConfig.filterAspectRatioType)
+    }
+
+    LaunchedEffect(filterAspectRatioType) {
+        AppConfig.filterAspectRatioType = filterAspectRatioType
+    }
+
+    SettingsDropdownMenu(
+        title = {
+            Text(stringResource(Res.string.options_filter_aspect_ratio))
+        },
+        subTitle = {
+            Text(stringResource(Res.string.option_filter_aspect_ratio_usage))
+        },
+        optionsFormat = {
+            when (it) {
+                AppConfig.AspectRatioFilterType.NONE -> stringResource(Res.string.option_filter_aspect_ratio_none)
+                AppConfig.AspectRatioFilterType.PHONE -> stringResource(Res.string.option_filter_aspect_ratio_phone)
+                AppConfig.AspectRatioFilterType.PC -> stringResource(Res.string.option_filter_aspect_ratio_pc)
+            }
+        },
+        current = filterAspectRatioType,
+        data = AppConfig.AspectRatioFilterType.entries,
+        onSelected = {
+            filterAspectRatioType = it
+        },
+    )
 }
 
 @Composable
@@ -228,6 +275,99 @@ private fun SettingFilterScreenNovel() {
         },
         onCheckedChange = {
             filterR18GNovel = it
+        },
+    )
+
+
+    var filterLongTag by remember {
+        mutableStateOf(AppConfig.filterLongTag)
+    }
+    var filterLongTagLength by remember {
+        mutableStateOf(AppConfig.filterLongTagMinLength)
+    }
+    LaunchedEffect(filterLongTag) {
+        AppConfig.filterLongTag = filterLongTag
+        if (!filterLongTag) {
+            filterLongTagLength = 15
+        }
+    }
+    SettingsSwitch(
+        state = filterLongTag,
+        title = {
+            Text(stringResource(Res.string.filter_long_tag))
+        },
+        subtitle = {
+            Text(stringResource(Res.string.filter_long_tag_description))
+        },
+        onCheckedChange = {
+            filterLongTag = it
+        },
+    )
+    SettingsSlider(
+        enabled = filterLongTag,
+        title = {
+            Text(stringResource(Res.string.tag_max_length))
+        },
+        subtitle = {
+            Column {
+                Text(stringResource(Res.string.tag_max_length_description))
+                key(filterLongTagLength) { Text(stringResource(Res.string.current_value, filterLongTagLength)) }
+            }
+        },
+        value = filterLongTagLength.toFloat(),
+        valueRange = 5f..25f,
+        onValueChange = {
+            filterLongTagLength = it.roundToInt()
+        },
+    )
+
+    var filterShortNovel by remember {
+        mutableStateOf(AppConfig.filterShortNovel)
+    }
+    var filterShortNovelLength by remember {
+        mutableStateOf(AppConfig.filterShortNovelMaxLength)
+    }
+    LaunchedEffect(filterShortNovel) {
+        AppConfig.filterShortNovel = filterShortNovel
+        if (!filterShortNovel) {
+            filterShortNovelLength = 100
+        }
+    }
+    SettingsSwitch(
+        state = filterShortNovel,
+        title = {
+            Text(stringResource(Res.string.filter_short_novel))
+        },
+        subtitle = {
+            Text(stringResource(Res.string.filter_short_novel_description))
+        },
+        onCheckedChange = {
+            filterShortNovel = it
+        },
+    )
+    SettingsSlider(
+        enabled = filterShortNovel,
+        title = {
+            Text(stringResource(Res.string.novel_filter_length))
+        },
+        subtitle = {
+            Column {
+                Text(stringResource(Res.string.novel_filter_length_description))
+                key(filterShortNovelLength) {
+                    Text(
+                        stringResource(
+                            Res.string.current_value,
+                            filterShortNovelLength,
+                        ),
+                    )
+                }
+            }
+        },
+        value = filterShortNovelLength.toFloat(),
+        valueRange = 30f..1000f,
+        steps = 968,
+        onValueChange = {
+            filterShortNovelLength = it.roundToInt()
         },
     )
 }
