@@ -8,12 +8,14 @@ import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.size.Size as CoilSize
+import korlibs.time.seconds
 import kotlin.collections.set
 import kotlin.time.Clock
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -53,11 +55,14 @@ import top.kagg886.pixko.module.user.followUser
 import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
+import top.kagg886.pmf.backend.database.dao.BlackListItem
 import top.kagg886.pmf.backend.database.dao.NovelHistory
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailSideEffect
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewState
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
@@ -478,6 +483,17 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             )
         }
     }
+
+    private val black = database.blacklistDAO()
+    @OptIn(OrbitExperimental::class)
+    fun black() = intent {
+        runOn<NovelDetailViewState.Success> {
+            black.insert(BlackListItem(state.novel.id.toLong()))
+            postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.filter_add_user_tips)))
+            delay(3.seconds)
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+        }
+    }
 }
 
 sealed class NovelDetailViewState {
@@ -497,4 +513,5 @@ sealed class NovelDetailSideEffect {
     data class Toast(val msg: String) : NovelDetailSideEffect()
     data class NavigateToOtherNovel(val id: Long, val seriesInfo: SeriesInfo?) :
         NovelDetailSideEffect()
+    data object NavigateBack : NovelDetailSideEffect()
 }

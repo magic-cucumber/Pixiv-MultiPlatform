@@ -396,4 +396,8 @@
 
     <string name="settings_filter">浏览设置</string>
     <string name="settings_filter_clicked">点击以配置浏览项</string>
+
+    <string name="filter_add">添加此%1$s到屏蔽列表</string>
+    <string name="filter_add_user_tips">添加成功！您将无法在任何页面看到此作者的插画/小说，同时您也不能前往该作者的主页。\n您可以前往设置——浏览设置以解除屏蔽</string>
+    <string name="filter_add_tags_tips">添加成功！您将无法在任何页面看到含有此标签的插画/小说，同时您也无法在搜索页面搜索此标签。\n您可以前往设置——浏览设置以解除屏蔽</string>
 </resources>

@@ -119,9 +119,11 @@ fun IllustDetailScreen(route: IllustDetailRoute) = BoxWithConstraints(Modifier.f
         }
         val state by model.collectAsState()
         val host = LocalSnackBarHost.current
+        val nav = LocalNavBackStack.current
         model.collectSideEffect {
             when (it) {
                 is IllustDetailSideEffect.Toast -> host.showSnackbar(it.msg)
+                is IllustDetailSideEffect.NavigateBack -> nav.removeLastOrNullWorkaround()
             }
         }
         Box(Modifier.width(maxWidth).height(maxHeight)) {
@@ -164,6 +166,7 @@ private fun IllustTopAppBar(
     onCommentPanelBtnClick: () -> Unit = {},
     onOriginImageRequest: () -> Unit = {},
     onViewLaterBtnClick: (Boolean) -> Unit = {},
+    onBlackRequest: () -> Unit = {},
 ) {
     val stack = LocalNavBackStack.current
     TopAppBar(
@@ -211,6 +214,14 @@ private fun IllustTopAppBar(
                     )
                 }
 
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.filter_add,stringResource(Res.string.user))) },
+                    onClick = {
+                        onBlackRequest()
+                        enabled = false
+                    }
+                )
+
                 val clip = LocalClipboard.current
                 val scope = rememberCoroutineScope()
                 DropdownMenuItem(
@@ -255,6 +266,9 @@ private fun WideScreenIllustDetail(
                 onViewLaterBtnClick = {
                     if (it) model.addViewLater() else model.removeViewLater()
                 },
+                onBlackRequest = {
+                    model.black()
+                }
             )
         },
     ) {
@@ -310,6 +324,9 @@ private fun IllustDetail(
                     onViewLaterBtnClick = {
                         if (it) model.addViewLater() else model.removeViewLater()
                     },
+                    onBlackRequest = {
+                        model.black()
+                    }
                 )
             },
         ) {

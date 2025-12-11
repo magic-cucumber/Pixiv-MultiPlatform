@@ -139,6 +139,8 @@ fun NovelDetailScreen(route: NovelDetailRoute) {
             is NovelDetailSideEffect.NavigateToOtherNovel -> {
                 stack += NovelDetailRoute(it.id, it.seriesInfo)
             }
+
+            NovelDetailSideEffect.NavigateBack -> stack.removeLastOrNullWorkaround()
         }
     }
 
@@ -154,11 +156,20 @@ fun NovelDetailScreen(route: NovelDetailRoute) {
         rtlLayout = true,
         drawerState = drawer,
     ) {
-        NovelDetailContent(id = id, model = model, state = state, modifier = Modifier.fillMaxSize()) {
-            scope.launch {
-                drawer.open()
+        NovelDetailContent(
+            id = id,
+            model = model,
+            state = state,
+            modifier = Modifier.fillMaxSize(),
+            onDrawerOpen = {
+                scope.launch {
+                    drawer.open()
+                }
+            },
+            onBlackRequest = {
+                model.black()
             }
-        }
+        )
     }
 }
 
@@ -464,6 +475,7 @@ private fun NovelDetailTopAppBar(
     modifier: Modifier = Modifier,
     onDrawerOpen: () -> Unit = {},
     onViewLaterBtnClick: (Boolean) -> Unit = {},
+    onBlackRequest: () -> Unit = {},
 ) {
     val stack = LocalNavBackStack.current
     TopAppBar(
@@ -508,6 +520,16 @@ private fun NovelDetailTopAppBar(
                                 },
                             )
                         }
+
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.filter_add, stringResource(Res.string.user))) },
+                            onClick = {
+                                onBlackRequest()
+                                expanded = false
+                            }
+                        )
+
+
                         val download = koinViewModel<DownloadScreenModel>()
                         if (novel != null) {
                             DropdownMenuItem(
@@ -543,12 +565,13 @@ private fun NovelDetailContent(
     state: NovelDetailViewState,
     modifier: Modifier = Modifier,
     onDrawerOpen: () -> Unit = {},
+    onBlackRequest: () -> Unit = {},
 ) {
     val ctx = LocalPlatformContext.current
     when (state) {
         is NovelDetailViewState.Error -> {
             Column(modifier) {
-                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen)
+                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen, onBlackRequest = onBlackRequest)
                 ErrorPage(Modifier.weight(1f), text = state.cause) {
                     model.reload(ctx)
                 }
@@ -559,7 +582,7 @@ private fun NovelDetailContent(
             val text by state.text.collectAsState()
 
             Column(modifier) {
-                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen)
+                NovelDetailTopAppBar(id, null, false, onDrawerOpen = onDrawerOpen, onBlackRequest = onBlackRequest)
                 Loading(Modifier.weight(1f), text)
             }
         }
@@ -581,6 +604,7 @@ private fun NovelDetailContent(
                     onViewLaterBtnClick = {
                         if (it) model.addViewLater() else model.removeViewLater()
                     },
+                    onBlackRequest = onBlackRequest
                 )
 
                 // 内容区域，应用 nestedScroll 来处理滚动事件

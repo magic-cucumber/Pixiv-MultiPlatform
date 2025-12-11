@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import coil3.Uri
 import coil3.toUri
 import io.ktor.util.encodeBase64
+import korlibs.time.seconds
 import kotlin.time.Clock
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
@@ -28,6 +30,7 @@ import top.kagg886.pixko.module.user.followUser
 import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
+import top.kagg886.pmf.backend.database.dao.BlackListItem
 import top.kagg886.pmf.backend.database.dao.IllustHistory
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
@@ -285,6 +288,17 @@ class IllustDetailViewModel(private val illust: Illust) :
             }
         }
     }
+
+    private val black = database.blacklistDAO()
+    @OptIn(OrbitExperimental::class)
+    fun black() = intent {
+        runOn<IllustDetailViewState.Success> {
+            black.insert(BlackListItem(state.illust.id.toLong()))
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.filter_add_user_tips)))
+            delay(3.seconds)
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+        }
+    }
 }
 
 sealed class IllustDetailViewState {
@@ -300,4 +314,5 @@ sealed class IllustDetailViewState {
 
 sealed class IllustDetailSideEffect {
     data class Toast(val msg: String) : IllustDetailSideEffect()
+    data object NavigateBack : IllustDetailSideEffect()
 }
