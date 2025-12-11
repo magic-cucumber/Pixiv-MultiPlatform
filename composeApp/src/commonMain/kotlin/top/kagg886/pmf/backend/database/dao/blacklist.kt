@@ -71,5 +71,5 @@ fun BlackListItem(payload: String) = BlackListItem(
 @Serializable
 enum class BlackListType {
     TAG_NAME,
-    AUTHOR_ID
+    AUTHOR_ID,
 }

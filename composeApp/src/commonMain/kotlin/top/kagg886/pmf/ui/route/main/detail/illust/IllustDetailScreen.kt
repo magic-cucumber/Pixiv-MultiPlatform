@@ -215,11 +215,11 @@ private fun IllustTopAppBar(
                 }
 
                 DropdownMenuItem(
-                    text = { Text(stringResource(Res.string.filter_add,stringResource(Res.string.user))) },
+                    text = { Text(stringResource(Res.string.filter_add, stringResource(Res.string.user))) },
                     onClick = {
                         onBlackRequest()
                         enabled = false
-                    }
+                    },
                 )
 
                 val clip = LocalClipboard.current
@@ -268,7 +268,7 @@ private fun WideScreenIllustDetail(
                 },
                 onBlackRequest = {
                     model.black()
-                }
+                },
             )
         },
     ) {
@@ -326,7 +326,7 @@ private fun IllustDetail(
                     },
                     onBlackRequest = {
                         model.black()
-                    }
+                    },
                 )
             },
         ) {

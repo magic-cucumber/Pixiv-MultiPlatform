@@ -168,7 +168,7 @@ fun NovelDetailScreen(route: NovelDetailRoute) {
             },
             onBlackRequest = {
                 model.black()
-            }
+            },
         )
     }
 }
@@ -526,9 +526,8 @@ private fun NovelDetailTopAppBar(
                             onClick = {
                                 onBlackRequest()
                                 expanded = false
-                            }
+                            },
                         )
-
 
                         val download = koinViewModel<DownloadScreenModel>()
                         if (novel != null) {
@@ -604,7 +603,7 @@ private fun NovelDetailContent(
                     onViewLaterBtnClick = {
                         if (it) model.addViewLater() else model.removeViewLater()
                     },
-                    onBlackRequest = onBlackRequest
+                    onBlackRequest = onBlackRequest,
                 )
 
                 // 内容区域，应用 nestedScroll 来处理滚动事件

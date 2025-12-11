@@ -290,6 +290,7 @@ class IllustDetailViewModel(private val illust: Illust) :
     }
 
     private val black = database.blacklistDAO()
+
     @OptIn(OrbitExperimental::class)
     fun black() = intent {
         runOn<IllustDetailViewState.Success> {
