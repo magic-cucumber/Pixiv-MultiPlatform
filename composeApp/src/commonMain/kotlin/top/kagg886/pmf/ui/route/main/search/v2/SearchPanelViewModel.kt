@@ -1,7 +1,9 @@
 package top.kagg886.pmf.ui.route.main.search.v2
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -23,10 +25,12 @@ import top.kagg886.pixko.module.user.UserInfo
 import top.kagg886.pixko.module.user.getUserInfo
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.BlackListItem
+import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.main.search.v2.components.TagPropertiesState
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
+import top.kagg886.pmf.util.logger
 
 class SearchPanelViewModel(
     initialSort: SearchSort,
@@ -81,7 +85,13 @@ class SearchPanelViewModel(
         }
 
         try {
-            val tags = client.getRecommendTags()
+            val tags = client.getRecommendTags().map {
+                viewModelScope.async {
+                    if (blackingListDao.matchRules(BlackListType.TAG_NAME, it.tag.name)) it.apply {
+                        logger.d("successfully filter tag $this, because it is blacklisted")
+                    } else null
+                }
+            }.awaitAll().filterNotNull()
             reduce {
                 state.copy(hotTag = TagPropertiesState.Loaded(tags))
             }
