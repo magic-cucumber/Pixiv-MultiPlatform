@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,6 +37,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -103,6 +105,7 @@ import top.kagg886.pmf.ui.util.keyboardScrollerController
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.withClickable
 import top.kagg886.pmf.util.getString
+import top.kagg886.pmf.util.onSubClick
 import top.kagg886.pmf.util.setText
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toReadableString
@@ -378,6 +381,42 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                             ) {
                                                 for (tag in state.novel.tags) {
+                                                    var showBlockDialog by remember {
+                                                        mutableStateOf(false)
+                                                    }
+
+                                                    if (showBlockDialog) {
+                                                        AlertDialog(
+                                                            onDismissRequest = {
+                                                                showBlockDialog = false
+                                                            },
+                                                            title = {
+                                                                Text(
+                                                                    stringResource(
+                                                                        Res.string.filter_add,
+                                                                        stringResource(Res.string.tags)
+                                                                    )
+                                                                )
+                                                            },
+                                                            text = {
+                                                                Text(stringResource(Res.string.filter_add_tags_confirm))
+                                                            },
+                                                            confirmButton = {
+                                                                TextButton(onClick = {
+                                                                    showBlockDialog = false
+                                                                    model.blackTag(tag)
+                                                                }) {
+                                                                    Text(stringResource(Res.string.confirm))
+                                                                }
+                                                            },
+                                                            dismissButton = {
+                                                                TextButton(onClick = { showBlockDialog = false }) {
+                                                                    Text(stringResource(Res.string.cancel))
+                                                                }
+                                                            },
+                                                        )
+                                                    }
+
                                                     AssistChip(
                                                         label = {
                                                             Text(text = tag.name)
@@ -389,6 +428,7 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                                 target = SearchTarget.PARTIAL_MATCH_FOR_TAGS,
                                                             )
                                                         },
+                                                        modifier = Modifier.onSubClick { showBlockDialog = true },
                                                     )
                                                 }
                                             }

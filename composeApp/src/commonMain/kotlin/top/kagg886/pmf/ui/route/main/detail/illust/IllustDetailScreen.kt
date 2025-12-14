@@ -702,8 +702,45 @@ private fun IllustPreview(
                             FlowRow {
                                 val stack = LocalNavBackStack.current
                                 for (tag in illust.tags) {
+
+                                    var showBlockDialog by remember {
+                                        mutableStateOf(false)
+                                    }
+
+                                    if (showBlockDialog) {
+                                        AlertDialog(
+                                            onDismissRequest = {
+                                                showBlockDialog = false
+                                            },
+                                            title = {
+                                                Text(
+                                                    stringResource(
+                                                        Res.string.filter_add,
+                                                        stringResource(Res.string.tags)
+                                                    )
+                                                )
+                                            },
+                                            text = {
+                                                Text(stringResource(Res.string.filter_add_tags_confirm))
+                                            },
+                                            confirmButton = {
+                                                TextButton(onClick = {
+                                                    showBlockDialog = false
+                                                    model.blackTag(tag)
+                                                }) {
+                                                    Text(stringResource(Res.string.confirm))
+                                                }
+                                            },
+                                            dismissButton = {
+                                                TextButton(onClick = { showBlockDialog = false }) {
+                                                    Text(stringResource(Res.string.cancel))
+                                                }
+                                            }
+                                        )
+                                    }
+
                                     AssistChip(
-                                        modifier = Modifier.padding(4.dp),
+                                        modifier = Modifier.padding(4.dp).onSubClick { showBlockDialog = true },
                                         onClick = {
                                             stack += SearchResultRoute(
                                                 keyword = listOf(tag.name),

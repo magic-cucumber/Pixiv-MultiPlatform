@@ -300,6 +300,16 @@ class IllustDetailViewModel(private val illust: Illust) :
             postSideEffect(IllustDetailSideEffect.NavigateBack)
         }
     }
+
+    @OptIn(OrbitExperimental::class)
+    fun blackTag(tag: Tag) = intent {
+        runOn<IllustDetailViewState.Success> {
+            black.insert(BlackListItem(tag.name))
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.filter_add_tags_tips)))
+            delay(3.seconds)
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+        }
+    }
 }
 
 sealed class IllustDetailViewState {

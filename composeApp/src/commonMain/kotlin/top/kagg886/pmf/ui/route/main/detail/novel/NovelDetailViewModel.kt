@@ -61,6 +61,8 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailSideEffect
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewState
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
@@ -489,6 +491,16 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         runOn<NovelDetailViewState.Success> {
             black.insert(BlackListItem(state.novel.id.toLong()))
             postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.filter_add_user_tips)))
+            delay(3.seconds)
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+        }
+    }
+
+    @OptIn(OrbitExperimental::class)
+    fun blackTag(tag: Tag) = intent {
+        runOn<NovelDetailViewState.Success> {
+            black.insert(BlackListItem(tag.name))
+            postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.filter_add_tags_tips)))
             delay(3.seconds)
             postSideEffect(NovelDetailSideEffect.NavigateBack)
         }
