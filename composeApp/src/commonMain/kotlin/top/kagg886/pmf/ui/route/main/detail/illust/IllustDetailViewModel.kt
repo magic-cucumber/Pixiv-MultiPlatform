@@ -31,6 +31,7 @@ import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.BlackListItem
+import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.backend.database.dao.IllustHistory
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
@@ -72,6 +73,13 @@ class IllustDetailViewModel(private val illust: Illust) :
     }
 
     fun load(showLoading: Boolean = true) = intent {
+        if (black.matchRules(BlackListType.AUTHOR_ID, illust.user.id.toString())) {
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.blocking_because_black_user)))
+            delay(3000)
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
         val inWatchLater = database.watchLaterDAO().exists(WatchLaterType.ILLUST, illust.id.toLong())
 
         val loadingState = IllustDetailViewState.Loading()

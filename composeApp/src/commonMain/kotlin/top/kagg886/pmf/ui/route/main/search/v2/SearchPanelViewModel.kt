@@ -87,9 +87,13 @@ class SearchPanelViewModel(
         try {
             val tags = client.getRecommendTags().map {
                 viewModelScope.async {
-                    if (blackingListDao.matchRules(BlackListType.TAG_NAME, it.tag.name)) it.apply {
-                        logger.d("successfully filter tag $this, because it is blacklisted")
-                    } else null
+                    if (!blackingListDao.matchRules(BlackListType.TAG_NAME, it.tag.name)) {
+                        it
+                    } else {
+                        null.apply {
+                            logger.d("successfully filter tag ${it.tag.name}, because it is blacklisted")
+                        }
+                    }
                 }
             }.awaitAll().filterNotNull()
             reduce {

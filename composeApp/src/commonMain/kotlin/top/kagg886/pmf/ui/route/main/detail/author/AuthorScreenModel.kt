@@ -18,6 +18,7 @@ import top.kagg886.pixko.module.user.getUserInfo
 import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.BlackListItem
+import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
@@ -35,6 +36,12 @@ class AuthorScreenModel(val id: Int) :
     private val client = PixivConfig.newAccountFromConfig()
 
     fun loadUserById(id: Int, silent: Boolean = true) = intent {
+        if (black.matchRules(BlackListType.AUTHOR_ID, id.toString())) {
+            postSideEffect(AuthorScreenSideEffect.Toast(getString(Res.string.blocking_because_black_user)))
+            delay(3000)
+            postSideEffect(AuthorScreenSideEffect.NavigateBack)
+            return@intent
+        }
         if (silent) {
             reduce { AuthorScreenState.Loading }
         }

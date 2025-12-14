@@ -26,7 +26,6 @@ import top.kagg886.pixko.module.illust.BookmarkVisibility
 import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.bookmarkIllust
 import top.kagg886.pixko.module.illust.deleteBookmarkIllust
-import top.kagg886.pixko.module.novel.Novel
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.BlackListType
@@ -34,7 +33,9 @@ import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.util.logger
 
-abstract class IllustFetchViewModel : ContainerHost<IllustFetchViewState, IllustFetchSideEffect>, ViewModel(),
+abstract class IllustFetchViewModel :
+    ContainerHost<IllustFetchViewState, IllustFetchSideEffect>,
+    ViewModel(),
     KoinComponent {
     protected val client = PixivConfig.newAccountFromConfig()
     private val signal = MutableSharedFlow<Unit>()
@@ -57,24 +58,23 @@ abstract class IllustFetchViewModel : ContainerHost<IllustFetchViewState, Illust
     private val database by inject<AppDatabase>()
     private val blackListDao = database.blacklistDAO()
 
-    suspend fun Illust.blockSuspend(): Boolean =
-        blackListDao.matchRules(BlackListType.AUTHOR_ID, user.id.toString()).apply {
-            if (this) {
-                logger.d("successfully to filter illust. cause author id(${user.id}) is in black list")
-            }
-        } || tags.map {
-            viewModelScope.async {
-                blackListDao.matchRules(BlackListType.TAG_NAME, it.name)
-            }
-        }.awaitAll().contains(true).apply {
-            if (this) {
-                logger.d("successfully to filter illust. cause tag names(${tags.joinToString { it.name }}) is in black list")
-            }
+    suspend fun Illust.blockSuspend(): Boolean = blackListDao.matchRules(BlackListType.AUTHOR_ID, user.id.toString()).apply {
+        if (this) {
+            logger.d("successfully to filter illust. cause author id(${user.id}) is in black list")
         }
+    } || tags.map {
+        viewModelScope.async {
+            blackListDao.matchRules(BlackListType.TAG_NAME, it.name)
+        }
+    }.awaitAll().contains(true).apply {
+        if (this) {
+            logger.d("successfully to filter illust. cause tag names(${tags.joinToString { it.name }}) is in black list")
+        }
+    }
 
     val data = merge(flowOf(Unit), signal).flatMapLatestScoped { scope, _ ->
         illustRouter.intercept(
-            source().cachedIn(scope).map { data -> data.filterNot { i -> i.blockSuspend() } }
+            source().cachedIn(scope).map { data -> data.filterNot { i -> i.blockSuspend() } },
         ).map { data -> data.filterNot { i -> i.block() } }
     }.map { data -> MutableIntSet().let { s -> data.filter { s.add(it.id) } } }.cachedIn(viewModelScope)
 
