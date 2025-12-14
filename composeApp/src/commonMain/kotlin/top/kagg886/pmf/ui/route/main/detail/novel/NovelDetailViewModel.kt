@@ -2,6 +2,7 @@ package top.kagg886.pmf.ui.route.main.detail.novel
 
 import androidx.compose.ui.geometry.Size
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import arrow.core.Option
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -56,6 +57,7 @@ import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.BlackListItem
+import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.backend.database.dao.NovelHistory
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
@@ -79,6 +81,19 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
 
     @OptIn(ExperimentalNovelParserAPI::class)
     fun reload(coil: PlatformContext) = intent {
+        if (black.matchRules(BlackListType.AUTHOR_ID, id.toString())) {
+            postSideEffect(
+                NovelDetailSideEffect.Toast(
+                    getString(
+                        Res.string.blocking_because_black,
+                        getString(Res.string.user),
+                    ),
+                ),
+            )
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
         val loading =
             NovelDetailViewState.Loading(MutableStateFlow(getString(Res.string.get_novel_detail)))
         reduce { loading }
@@ -86,6 +101,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         val result = kotlin.runCatching {
             client.getNovelDetail(id) to client.getNovelContent(id)
         }
+
         if (result.isFailure) {
             logger.e("get novel info failed:", result.exceptionOrNull())
             val err = getString(Res.string.load_failed)
@@ -93,6 +109,22 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             return@intent
         }
         val (detail, content) = result.getOrThrow()
+
+        if (detail.tags.map { viewModelScope.async { black.matchRules(BlackListType.TAG_NAME, it.name) } }.awaitAll()
+                .any { it }
+        ) {
+            postSideEffect(
+                NovelDetailSideEffect.Toast(
+                    getString(
+                        Res.string.blocking_because_black,
+                        getString(Res.string.tags),
+                    ),
+                ),
+            )
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
         val images = kotlin.runCatching { content.images }.getOrElse { emptyMap() }
 
         val nodeMap = linkedMapOf<Int, NovelNodeElement>()
@@ -522,5 +554,6 @@ sealed class NovelDetailSideEffect {
     data class Toast(val msg: String) : NovelDetailSideEffect()
     data class NavigateToOtherNovel(val id: Long, val seriesInfo: SeriesInfo?) :
         NovelDetailSideEffect()
+
     data object NavigateBack : NovelDetailSideEffect()
 }

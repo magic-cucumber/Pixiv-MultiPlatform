@@ -401,5 +401,5 @@
     <string name="filter_add_tags_confirm">是否将此标签添加到屏蔽列表？\n您将无法在任何页面看到含有此标签的插画/小说，同时您也无法在搜索页面搜索此标签。\n您可以前往设置——浏览设置以解除屏蔽</string>
     <string name="filter_add_user_tips">添加成功！您将无法在任何页面看到此作者的插画/小说，同时您也不能前往该作者的主页。\n您可以前往设置——浏览设置以解除屏蔽</string>
     <string name="filter_add_tags_tips">添加成功！</string>
-    <string name="blocking_because_black_user">无法访问此页面，因为用户已被您加入过滤名单。\n解除过滤请前往：设置——浏览设置</string>
+    <string name="blocking_because_black">无法访问此页面，因为%1$s已被您加入过滤名单。\n解除过滤请前往：设置——浏览设置</string>
 </resources>

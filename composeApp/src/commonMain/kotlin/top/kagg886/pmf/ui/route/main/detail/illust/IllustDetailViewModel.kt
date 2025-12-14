@@ -1,11 +1,14 @@
 package top.kagg886.pmf.ui.route.main.detail.illust
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import coil3.Uri
 import coil3.toUri
 import io.ktor.util.encodeBase64
 import korlibs.time.seconds
 import kotlin.time.Clock
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
@@ -74,8 +77,13 @@ class IllustDetailViewModel(private val illust: Illust) :
 
     fun load(showLoading: Boolean = true) = intent {
         if (black.matchRules(BlackListType.AUTHOR_ID, illust.user.id.toString())) {
-            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.blocking_because_black_user)))
-            delay(3000)
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.blocking_because_black, getString(Res.string.user))))
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
+        if (illust.tags.map { viewModelScope.async { black.matchRules(BlackListType.TAG_NAME, it.name) } }.awaitAll().any { it }) {
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.blocking_because_black, getString(Res.string.tags))))
             postSideEffect(IllustDetailSideEffect.NavigateBack)
             return@intent
         }
@@ -114,7 +122,7 @@ class IllustDetailViewModel(private val illust: Illust) :
 
         // 部分API返回信息不全，需要重新拉取
         intent a@{
-            val result = kotlin.runCatching {
+            val result = runCatching {
                 client.getIllustDetail(illust.id.toLong())
             }
             if (result.isFailure) {

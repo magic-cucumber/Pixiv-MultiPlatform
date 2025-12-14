@@ -37,7 +37,7 @@ class AuthorScreenModel(val id: Int) :
 
     fun loadUserById(id: Int, silent: Boolean = true) = intent {
         if (black.matchRules(BlackListType.AUTHOR_ID, id.toString())) {
-            postSideEffect(AuthorScreenSideEffect.Toast(getString(Res.string.blocking_because_black_user)))
+            postSideEffect(AuthorScreenSideEffect.Toast(getString(Res.string.filter_add_tags_tips, getString(Res.string.user))))
             delay(3000)
             postSideEffect(AuthorScreenSideEffect.NavigateBack)
             return@intent

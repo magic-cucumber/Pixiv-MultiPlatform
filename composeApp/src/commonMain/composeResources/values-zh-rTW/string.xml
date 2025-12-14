@@ -397,5 +397,5 @@
     <string name="filter_add_tags_confirm">是否將此標籤加入封鎖清單？\n您將無法在任何頁面看到含有此標籤的插畫/小說，同時您也無法在搜尋頁面搜尋此標籤。\n您可以前往「設定」——「瀏覽設定」以解除封鎖</string>
     <string name="filter_add_user_tips">新增成功！您將無法在任何頁面看到此作者的插畫/小說，同時您也不能前往該作者的主頁。\n您可以前往「設定」——「瀏覽設定」以解除封鎖</string>
     <string name="filter_add_tags_tips">新增成功！</string>
-    <string name="blocking_because_black_user">無法存取此頁面，因為該使用者已被您加入過濾名單。\n若要解除過濾，請前往：「設定」——「瀏覽設定」</string>
+    <string name="blocking_because_black">無法存取此頁面，因為%1$s已被您加入過濾名單。\n如需解除過濾，請前往：設定——瀏覽設定</string>
 </resources>

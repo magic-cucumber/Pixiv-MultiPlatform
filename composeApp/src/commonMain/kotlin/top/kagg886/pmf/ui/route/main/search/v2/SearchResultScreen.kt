@@ -6,13 +6,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -25,6 +23,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.search.SearchSort
 import top.kagg886.pixko.module.search.SearchTarget
 import top.kagg886.pmf.LocalNavBackStack
+import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.TabContainer
 import top.kagg886.pmf.ui.util.AuthorFetchScreen
@@ -46,12 +45,15 @@ fun SearchResultScreen(route: SearchResultRoute) {
     val model = koinViewModel<SearchResultViewModel> { parametersOf(keyword, sort, target) }
     val state by model.collectAsState()
     val stack = LocalNavBackStack.current
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarHostState = LocalSnackBarHost.current
 
     model.collectSideEffect { sideEffect ->
         when (sideEffect) {
             is SearchResultSideEffect.Toast -> {
                 snackbarHostState.showSnackbar(sideEffect.message)
+            }
+            is SearchResultSideEffect.NavigateBack -> {
+                stack.removeLastOrNullWorkaround()
             }
         }
     }
