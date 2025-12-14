@@ -702,7 +702,6 @@ private fun IllustPreview(
                             FlowRow {
                                 val stack = LocalNavBackStack.current
                                 for (tag in illust.tags) {
-
                                     var showBlockDialog by remember {
                                         mutableStateOf(false)
                                     }
@@ -716,8 +715,8 @@ private fun IllustPreview(
                                                 Text(
                                                     stringResource(
                                                         Res.string.filter_add,
-                                                        stringResource(Res.string.tags)
-                                                    )
+                                                        stringResource(Res.string.tags),
+                                                    ),
                                                 )
                                             },
                                             text = {
@@ -735,7 +734,7 @@ private fun IllustPreview(
                                                 TextButton(onClick = { showBlockDialog = false }) {
                                                     Text(stringResource(Res.string.cancel))
                                                 }
-                                            }
+                                            },
                                         )
                                     }
 

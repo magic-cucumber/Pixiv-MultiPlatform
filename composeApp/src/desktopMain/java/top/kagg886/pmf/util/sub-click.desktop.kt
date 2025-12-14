@@ -7,5 +7,5 @@ import androidx.compose.ui.input.pointer.PointerButton
 
 actual fun Modifier.onSubClick(onSubClick: () -> Unit): Modifier = onClick(
     matcher = PointerMatcher.mouse(PointerButton.Secondary),
-    onClick = onSubClick
+    onClick = onSubClick,
 )

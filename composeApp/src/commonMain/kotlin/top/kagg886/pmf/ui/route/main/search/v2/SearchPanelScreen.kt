@@ -190,6 +190,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
                             onTargetChange = { model.updateTarget(it) },
                             onTagRequestRefresh = { model.refreshHotTag() },
                             onTagClicked = { t -> model.selectTag(t.tag) },
+                            onTagBlocked = { model.blockingTag(it) },
                         )
                     }
 

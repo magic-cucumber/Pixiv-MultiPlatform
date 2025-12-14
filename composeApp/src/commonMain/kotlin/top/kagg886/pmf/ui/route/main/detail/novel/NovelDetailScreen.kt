@@ -394,8 +394,8 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                                 Text(
                                                                     stringResource(
                                                                         Res.string.filter_add,
-                                                                        stringResource(Res.string.tags)
-                                                                    )
+                                                                        stringResource(Res.string.tags),
+                                                                    ),
                                                                 )
                                                             },
                                                             text = {

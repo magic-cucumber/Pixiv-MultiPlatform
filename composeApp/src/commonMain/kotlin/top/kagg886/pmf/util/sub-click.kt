@@ -1,9 +1,6 @@
 package top.kagg886.pmf.util
 
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import top.kagg886.pmf.backend.Platform
-import top.kagg886.pmf.backend.currentPlatform
 
 /**
  * ================================================

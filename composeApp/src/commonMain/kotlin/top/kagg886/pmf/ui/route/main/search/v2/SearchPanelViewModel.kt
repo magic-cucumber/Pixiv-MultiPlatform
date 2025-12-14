@@ -17,10 +17,12 @@ import top.kagg886.pixko.module.novel.getNovelSeries
 import top.kagg886.pixko.module.search.SearchSort
 import top.kagg886.pixko.module.search.SearchTarget
 import top.kagg886.pixko.module.search.searchTag
+import top.kagg886.pixko.module.trending.TrendingTags
 import top.kagg886.pixko.module.trending.getRecommendTags
 import top.kagg886.pixko.module.user.UserInfo
 import top.kagg886.pixko.module.user.getUserInfo
 import top.kagg886.pmf.backend.database.AppDatabase
+import top.kagg886.pmf.backend.database.dao.BlackListItem
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.main.search.v2.components.TagPropertiesState
 import top.kagg886.pmf.ui.util.container
@@ -203,6 +205,20 @@ class SearchPanelViewModel(
             state.panelState != SearchPanelState.SettingProperties
         ) {
             refreshHotTag()
+        }
+    }
+
+    val blackingListDao = database.blacklistDAO()
+
+    fun blockingTag(data: TrendingTags) = intent {
+        val state = state
+        if (state.hotTag !is TagPropertiesState.Loaded) {
+            return@intent
+        }
+        blackingListDao.insert(BlackListItem(data.tag.name))
+        postSideEffect(SearchPanelSideEffect.Toast(getString(Res.string.filter_add_tags_tips)))
+        reduce {
+            this.state.copy(hotTag = state.hotTag.copy(tags = state.hotTag.tags.filter { it != data }))
         }
     }
 }

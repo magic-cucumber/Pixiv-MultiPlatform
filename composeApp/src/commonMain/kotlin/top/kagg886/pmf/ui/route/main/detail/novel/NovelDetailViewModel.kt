@@ -61,8 +61,6 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailSideEffect
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewState
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
