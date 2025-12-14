@@ -8,8 +8,11 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import androidx.room.TypeConverters
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
+import top.kagg886.pixko.User
+import top.kagg886.pmf.backend.database.converters.UserConverter
 
 /**
  * ================================================
@@ -38,11 +41,13 @@ interface BlackListDao {
         Index(value = ["type", "payload"], unique = true),
     ],
 )
+@TypeConverters(UserConverter::class)
 data class BlackListItem(
     @PrimaryKey(autoGenerate = true)
     val id: Long? = null,
     val type: BlackListType,
-    val payload: String, // 为XXX_ID时，payload可以转换为数字
+    val payload: String, // 为AUTHOR_ID时，payload可以转换为数字，为TAG_NAME时，payload为标签名
+    val meta: User? = null, // 为AUTHOR_ID时，meta为用户信息的缓存(不能保证type为AUTHOR_ID时，这里一定有值)
     val createTime: Long = Clock.System.now().toEpochMilliseconds(),
 )
 
@@ -58,9 +63,10 @@ val BlackListItem.illustOrNovelId
         else -> error("can't cast payload to illust/novel id, because type is:$type")
     }
 
-fun BlackListItem(payload: Long) = BlackListItem(
+fun BlackListItem(payload: User) = BlackListItem(
     type = BlackListType.AUTHOR_ID,
-    payload = payload.toString(),
+    payload = payload.id.toString(),
+    meta = payload,
 )
 
 fun BlackListItem(payload: String) = BlackListItem(

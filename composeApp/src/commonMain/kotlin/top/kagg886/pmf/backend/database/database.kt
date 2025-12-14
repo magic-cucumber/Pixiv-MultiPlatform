@@ -16,6 +16,7 @@ import top.kagg886.pmf.util.absolutePath
     autoMigrations = [
         AutoMigration(7, 8),
         AutoMigration(8, 9),
+        AutoMigration(9, 10),
     ],
 )
 @ConstructedBy(AppDatabaseConstructor::class)

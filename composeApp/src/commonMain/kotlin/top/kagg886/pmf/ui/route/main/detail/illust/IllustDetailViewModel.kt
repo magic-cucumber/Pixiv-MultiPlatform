@@ -294,7 +294,7 @@ class IllustDetailViewModel(private val illust: Illust) :
     @OptIn(OrbitExperimental::class)
     fun black() = intent {
         runOn<IllustDetailViewState.Success> {
-            black.insert(BlackListItem(state.illust.id.toLong()))
+            black.insert(BlackListItem(state.illust.user))
             postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.filter_add_user_tips)))
             delay(3.seconds)
             postSideEffect(IllustDetailSideEffect.NavigateBack)

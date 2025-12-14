@@ -487,7 +487,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
     @OptIn(OrbitExperimental::class)
     fun black() = intent {
         runOn<NovelDetailViewState.Success> {
-            black.insert(BlackListItem(state.novel.id.toLong()))
+            black.insert(BlackListItem(state.novel.user))
             postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.filter_add_user_tips)))
             delay(3.seconds)
             postSideEffect(NovelDetailSideEffect.NavigateBack)

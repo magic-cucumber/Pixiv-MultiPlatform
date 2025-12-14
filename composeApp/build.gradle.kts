@@ -77,7 +77,7 @@ buildConfig {
     buildConfigField("APP_VERSION_NAME", pkgVersion)
     buildConfigField("APP_VERSION_CODE", pkgCode)
 
-    buildConfigField("DATABASE_VERSION", 9)
+    buildConfigField("DATABASE_VERSION", 10)
     buildConfigField("APP_COMMIT_ID", gitSha)
 }
 
