@@ -69,6 +69,7 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
     val data = model.data.collectAsLazyPagingItems()
     when {
         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
         state is CommentViewState.Success -> {
             val scroll = state.scrollerState
             val host = LocalSnackBarHost.current

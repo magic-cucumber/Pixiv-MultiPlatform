@@ -298,6 +298,7 @@ fun HTMLRichText(
         for (node in nodes) {
             when (node) {
                 is TextNode -> append(node.text())
+
                 is Element -> {
                     when (node.tagName()) {
                         "strong" -> {
@@ -311,6 +312,7 @@ fun HTMLRichText(
                         }
 
                         "br" -> appendLine()
+
                         "a" -> withLink(
                             scheme,
                             node.attr("href"),

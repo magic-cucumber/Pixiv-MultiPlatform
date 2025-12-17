@@ -35,7 +35,13 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.dokar.chiptextfield.util.runIf
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
 import okio.Buffer
 import okio.buffer
 import okio.use
@@ -71,9 +77,23 @@ import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
 import top.kagg886.pmf.ui.util.*
 import top.kagg886.pmf.util.*
 
+class TodoSerializer : KSerializer<List<Illust>> {
+    override val descriptor = PrimitiveSerialDescriptor("Todo", PrimitiveKind.STRING)
+    override fun serialize(encoder: Encoder, value: List<Illust>) {
+        val json = Json.encodeToString(value)
+        encoder.encodeString(json)
+    }
+
+    override fun deserialize(decoder: Decoder): List<Illust> {
+        val json = decoder.decodeString()
+        return Json.decodeFromString(json)
+    }
+}
+
 @Serializable
 data class IllustDetailRoute(
     val index: Int,
+    @Serializable(with = TodoSerializer::class)
     val todos: List<Illust>,
 ) : NavKey
 
