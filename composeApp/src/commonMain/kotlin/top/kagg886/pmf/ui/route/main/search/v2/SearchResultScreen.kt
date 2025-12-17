@@ -52,6 +52,7 @@ fun SearchResultScreen(route: SearchResultRoute) {
             is SearchResultSideEffect.Toast -> {
                 snackbarHostState.showSnackbar(sideEffect.message)
             }
+
             is SearchResultSideEffect.NavigateBack -> {
                 stack.removeLastOrNullWorkaround()
             }

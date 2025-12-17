@@ -116,7 +116,9 @@ fun SettingFilterScreen() = DialogPageScaffold(
                             }
                         }
                     }
+
                     USER -> SettingsFilterScreenUser()
+
                     TAG -> SettingFilterScreenTags()
                 }
             },
@@ -390,6 +392,7 @@ private fun SettingFilterScreenTags(database: AppDatabase = koinInject()) {
 
     when {
         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
         else -> {
             if (data.itemCount == 0 && data.loadState.isIdle) {
                 ErrorPage(text = stringResource(Res.string.page_is_empty)) {
@@ -463,6 +466,7 @@ private fun SettingsFilterScreenUser(database: AppDatabase = koinInject()) {
 
     when {
         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
         else -> {
             if (data.itemCount == 0 && data.loadState.isIdle) {
                 ErrorPage(text = stringResource(Res.string.page_is_empty)) {
