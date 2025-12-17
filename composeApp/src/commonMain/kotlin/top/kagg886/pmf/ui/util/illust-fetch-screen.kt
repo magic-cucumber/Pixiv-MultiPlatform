@@ -85,7 +85,8 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
                         isRefresh = false
                     }
                 },
-                modifier = Modifier.ifThen(x != null) { nestedScrollWorkaround(state.scrollerState, x!!) }.fillMaxSize(),
+                modifier = Modifier.ifThen(x != null) { nestedScrollWorkaround(state.scrollerState, x!!) }
+                    .fillMaxSize(),
             ) {
                 if (data.itemCount == 0 && data.loadState.isIdle) {
                     ErrorPage(text = stringResource(Res.string.page_is_empty)) {
@@ -113,11 +114,19 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
                         Box(modifier = Modifier.padding(5.dp)) {
                             Card(
                                 modifier = Modifier.fillMaxSize(),
-                                onClick = { stack += IllustDetailRoute(i, data.itemSnapshotList.items) },
+                                onClick = {
+                                    val startIndex = i.coerceIn(0, i - 10)
+                                    val endIndex = i.coerceIn(i + 10, data.itemCount - 1)
+                                    stack += IllustDetailRoute(
+                                        i - startIndex,
+                                        data.itemSnapshotList.items.subList(startIndex, endIndex).toList(),
+                                    )
+                                },
                             ) {
                                 AsyncImage(
                                     model = item.imageUrls.content,
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(item.width.toFloat() / item.height.toFloat()),
+                                    modifier = Modifier.fillMaxWidth()
+                                        .aspectRatio(item.width.toFloat() / item.height.toFloat()),
                                     contentDescription = null,
                                 )
                             }
