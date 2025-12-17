@@ -95,6 +95,7 @@ class TodoSerializer : KSerializer<List<Illust>> {
     override fun deserialize(decoder: Decoder): List<Illust> {
         val uuid = decoder.decodeSerializableValue(Uuid.serializer())
         val json: String = cache["$uuid"]!!
+        cache.remove("$uuid")
         return Json.decodeFromString(json)
     }
 }
