@@ -119,7 +119,7 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
                                     val endIndex = i.coerceIn(i + 10, data.itemCount - 1)
                                     stack += IllustDetailRoute(
                                         i,
-                                        data.itemSnapshotList.items.subList(startIndex, endIndex),
+                                        data.itemSnapshotList.items.subList(startIndex, endIndex).toList(),
                                     )
                                 },
                             ) {
