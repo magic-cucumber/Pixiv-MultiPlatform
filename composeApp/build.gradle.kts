@@ -374,6 +374,7 @@ compose.desktop {
                 }
             }
         }
+        buildTypes.release.proguard { version = "7.8.2" }
     }
 }
 
