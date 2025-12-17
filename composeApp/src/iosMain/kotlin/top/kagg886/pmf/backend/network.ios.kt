@@ -21,6 +21,7 @@ private val InternalType: HttpClientConfig<DarwinClientEngineConfig>.() -> Unit 
     engine {
         when (val config = AppConfig.bypassSettings) {
             AppConfig.BypassSetting.None -> Unit
+
             is AppConfig.BypassSetting.Proxy -> {
                 configureSession {
                     connectionProxyDictionary = buildMap {

@@ -96,6 +96,7 @@ private fun DownloadContent(model: DownloadScreenModel, state: DownloadScreenSta
                     val data = state.data.collectAsLazyPagingItems()
                     when {
                         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
                         else -> {
                             if (data.itemCount == 0 && data.loadState.isIdle) {
                                 ErrorPage(text = stringResource(Res.string.page_is_empty)) {
@@ -333,6 +334,7 @@ private fun IllustDownloadItem(
                                 )
                             }
                         }
+
                         -1f if item.success -> {
                             Row {
                                 IconButton(
@@ -363,6 +365,7 @@ private fun IllustDownloadItem(
                                 }
                             }
                         }
+
                         else -> CircularProgressIndicator()
                     }
                 },
@@ -425,6 +428,7 @@ private fun NovelDownloadItem(
                                 )
                             }
                         }
+
                         -1f if item.success -> {
                             Row {
                                 IconButton(
@@ -455,6 +459,7 @@ private fun NovelDownloadItem(
                                 }
                             }
                         }
+
                         else -> CircularProgressIndicator()
                     }
                 },

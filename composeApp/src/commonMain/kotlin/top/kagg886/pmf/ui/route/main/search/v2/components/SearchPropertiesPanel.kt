@@ -104,6 +104,7 @@ fun SearchPropertiesPanel(
                     TagPropertiesState.Loading -> {
                         LinearProgressIndicator()
                     }
+
                     is TagPropertiesState.Loaded -> {
                         FlowRow {
                             for (unit in tag.tags) {
@@ -122,6 +123,7 @@ fun SearchPropertiesPanel(
                             }
                         }
                     }
+
                     is TagPropertiesState.Failed -> Text(stringResource(Res.string.load_failed))
                 }
             },

@@ -97,6 +97,7 @@ private fun ViewLaterContent(model: ViewLaterModel, state: ViewLaterState) {
                 val data = state.list.collectAsLazyPagingItems()
                 when {
                     !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
                     else -> {
                         if (data.itemCount == 0 && data.loadState.isIdle) {
                             ErrorPage(text = stringResource(Res.string.page_is_empty)) {
