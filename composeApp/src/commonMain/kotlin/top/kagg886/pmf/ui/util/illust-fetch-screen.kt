@@ -116,8 +116,8 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
                             Card(
                                 modifier = Modifier.fillMaxSize(),
                                 onClick = {
-                                    val startIndex = i.coerceIn(0, i - 10)
-                                    val endIndex = i.coerceIn(i + 10, data.itemCount - 1)
+                                    val startIndex = (i - 10).coerceAtLeast(0)
+                                    val endIndex = (i + 10).coerceAtMost(data.itemCount - 1)
                                     stack += IllustDetailRoute(
                                         i - startIndex,
                                         data.itemSnapshotList.items.subList(startIndex, endIndex).toList(),
