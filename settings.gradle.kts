@@ -36,14 +36,9 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 
-//some API libraries was in here
-//sometimes it can't publish
-//other is fork from others
 include(":lib:chip-text-field")
 include(":lib:epub")
 include(":lib:okio-enhancement-util")
 include(":lib:gif")
-include(":lib:compose-settings")
 include(":lib:file-picker")
 include(":lib:multiplatform-serializer-fix")
-//include(":plugin:compose-desktop-build-windows")
