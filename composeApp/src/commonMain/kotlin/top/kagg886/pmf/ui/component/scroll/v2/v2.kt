@@ -244,7 +244,9 @@ internal class LazyListScrollbarAdapter(
     private fun firstFloatingVisibleItemIndex() = with(scrollState.layoutInfo.visibleItemsInfo) {
         when (size) {
             0 -> null
+
             1 -> 0
+
             else -> {
                 val first = this[0]
                 val second = this[1]
@@ -327,7 +329,9 @@ internal class LazyStaggerGirdListScrollbarAdapter(
     private fun firstFloatingVisibleItemIndex() = with(scrollState.layoutInfo.visibleItemsInfo) {
         when (size) {
             0 -> null
+
             1 -> 0
+
             else -> {
                 val first = this[0]
                 val second = this[1]

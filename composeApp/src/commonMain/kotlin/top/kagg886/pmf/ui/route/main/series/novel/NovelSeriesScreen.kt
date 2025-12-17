@@ -82,6 +82,7 @@ fun NovelSeriesScreen(route: NovelSeriesRoute) {
 private fun NovelSeriesScreenContent(id: Int, state: NovelSeriesScreenState, model: NovelSeriesScreenModel) {
     when (state) {
         NovelSeriesScreenState.Loading -> Loading()
+
         is NovelSeriesScreenState.LoadingFailed -> ErrorPage(text = state.msg) {
             model.reload()
         }

@@ -142,6 +142,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
                         },
                     )
                 }
+
                 else -> {
                     LaunchedEffect(Unit) {
                         model.updateKeywords(listOf())

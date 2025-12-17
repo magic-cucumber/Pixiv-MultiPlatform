@@ -66,6 +66,7 @@ fun BackToTopOrRefreshButton(
                 }
                 Spacer(Modifier.size(88.dp, 88.dp)) // placeholder
             }
+
             SHOW_BTT -> {
                 KeyListenerFromGlobalPipe {
                     if (it.type != KeyEventType.KeyUp) return@KeyListenerFromGlobalPipe

@@ -61,6 +61,7 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
     val data = model.data.collectAsLazyPagingItems()
     when {
         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
         else -> {
             val scroll = state.scrollerState
             var isRefresh by remember { mutableStateOf(false) }
@@ -85,7 +86,8 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
                         isRefresh = false
                     }
                 },
-                modifier = Modifier.ifThen(x != null) { nestedScrollWorkaround(state.scrollerState, x!!) }.fillMaxSize(),
+                modifier = Modifier.ifThen(x != null) { nestedScrollWorkaround(state.scrollerState, x!!) }
+                    .fillMaxSize(),
             ) {
                 if (data.itemCount == 0 && data.loadState.isIdle) {
                     ErrorPage(text = stringResource(Res.string.page_is_empty)) {
@@ -113,11 +115,19 @@ private fun IllustFetchContent0(state: IllustFetchViewState, model: IllustFetchV
                         Box(modifier = Modifier.padding(5.dp)) {
                             Card(
                                 modifier = Modifier.fillMaxSize(),
-                                onClick = { stack += IllustDetailRoute(i, data.itemSnapshotList.items) },
+                                onClick = {
+                                    val startIndex = (i - 10).coerceAtLeast(0)
+                                    val endIndex = (i + 10).coerceAtMost(data.itemCount - 1)
+                                    stack += IllustDetailRoute(
+                                        i - startIndex,
+                                        data.itemSnapshotList.items.subList(startIndex, endIndex).toList(),
+                                    )
+                                },
                             ) {
                                 AsyncImage(
                                     model = item.imageUrls.content,
-                                    modifier = Modifier.fillMaxWidth().aspectRatio(item.width.toFloat() / item.height.toFloat()),
+                                    modifier = Modifier.fillMaxWidth()
+                                        .aspectRatio(item.width.toFloat() / item.height.toFloat()),
                                     contentDescription = null,
                                 )
                             }

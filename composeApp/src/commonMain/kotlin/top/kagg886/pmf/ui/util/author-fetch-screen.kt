@@ -41,6 +41,7 @@ private fun AuthorFetchContent0(state: AuthorFetchViewState, model: AuthorFetchV
     val data = model.data.collectAsLazyPagingItems()
     when {
         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
         else -> {
             val scroll = state.scrollerState
             val scope = rememberCoroutineScope()

@@ -634,6 +634,7 @@ fun SettingScreen() {
                 Column {
                     when (val readOnlySettings = bypassSetting) {
                         AppConfig.BypassSetting.None -> {}
+
                         is AppConfig.BypassSetting.Proxy -> {
                             SettingsDropdownMenu(
                                 title = { Text(stringResource(Res.string.proxy_type)) },

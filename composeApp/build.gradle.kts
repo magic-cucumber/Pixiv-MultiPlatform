@@ -153,9 +153,8 @@ kotlin {
 //            implementation(libs.multiplatform.settings.serialization)
 
             // settings-ui
-            implementation(project(":lib:compose-settings"))
-//            implementation(libs.compose.settings.ui)
-//            implementation(libs.compose.settings.extended)
+            implementation(libs.compose.settings.ui)
+            implementation(libs.compose.settings.extended)
 
             // search-page-ui
             implementation(project(":lib:chip-text-field"))
@@ -374,6 +373,7 @@ compose.desktop {
                 }
             }
         }
+        buildTypes.release.proguard { version = "7.8.2" }
     }
 }
 

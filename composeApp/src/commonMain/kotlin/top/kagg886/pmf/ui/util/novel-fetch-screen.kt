@@ -49,6 +49,7 @@ private fun NovelFetchContent0(state: NovelFetchViewState, model: NovelFetchView
     val data = model.data.collectAsLazyPagingItems()
     when {
         !data.loadState.isIdle && data.itemCount == 0 -> Loading()
+
         else -> {
             val scroll = state.scrollerState
             var isRefresh by remember { mutableStateOf(false) }
