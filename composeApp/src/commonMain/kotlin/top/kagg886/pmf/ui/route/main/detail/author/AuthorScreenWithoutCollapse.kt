@@ -11,6 +11,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.ErrorPage
@@ -22,6 +23,7 @@ import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorIllustBookmark
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovel
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelBookmark
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorProfile
+import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
 @Composable
@@ -32,9 +34,11 @@ fun AuthorScreenWithoutCollapse(id: Int) {
     val state by model.collectAsState()
 
     val host = LocalSnackBarHost.current
+    val nav = LocalNavBackStack.current
     model.collectSideEffect {
         when (it) {
             is AuthorScreenSideEffect.Toast -> host.showSnackbar(it.msg)
+            else -> nav.removeLastOrNullWorkaround()
         }
     }
     Box(Modifier.fillMaxSize()) {

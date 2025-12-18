@@ -1,10 +1,15 @@
 package top.kagg886.pmf.ui.route.main.detail.illust
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import coil3.Uri
 import coil3.toUri
 import io.ktor.util.encodeBase64
+import korlibs.time.seconds
 import kotlin.time.Clock
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
@@ -28,6 +33,8 @@ import top.kagg886.pixko.module.user.followUser
 import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
+import top.kagg886.pmf.backend.database.dao.BlackListItem
+import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.backend.database.dao.IllustHistory
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
@@ -69,6 +76,18 @@ class IllustDetailViewModel(private val illust: Illust) :
     }
 
     fun load(showLoading: Boolean = true) = intent {
+        if (black.matchRules(BlackListType.AUTHOR_ID, illust.user.id.toString())) {
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.blocking_because_black, getString(Res.string.user))))
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
+        if (illust.tags.map { viewModelScope.async { black.matchRules(BlackListType.TAG_NAME, it.name) } }.awaitAll().any { it }) {
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.blocking_because_black, getString(Res.string.tags))))
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
         val inWatchLater = database.watchLaterDAO().exists(WatchLaterType.ILLUST, illust.id.toLong())
 
         val loadingState = IllustDetailViewState.Loading()
@@ -103,7 +122,7 @@ class IllustDetailViewModel(private val illust: Illust) :
 
         // 部分API返回信息不全，需要重新拉取
         intent a@{
-            val result = kotlin.runCatching {
+            val result = runCatching {
                 client.getIllustDetail(illust.id.toLong())
             }
             if (result.isFailure) {
@@ -285,6 +304,28 @@ class IllustDetailViewModel(private val illust: Illust) :
             }
         }
     }
+
+    private val black = database.blacklistDAO()
+
+    @OptIn(OrbitExperimental::class)
+    fun black() = intent {
+        runOn<IllustDetailViewState.Success> {
+            black.insert(BlackListItem(state.illust.user))
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.filter_add_user_tips)))
+            delay(3.seconds)
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+        }
+    }
+
+    @OptIn(OrbitExperimental::class)
+    fun blackTag(tag: Tag) = intent {
+        runOn<IllustDetailViewState.Success> {
+            black.insert(BlackListItem(tag.name))
+            postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.filter_add_tags_tips)))
+            delay(3.seconds)
+            postSideEffect(IllustDetailSideEffect.NavigateBack)
+        }
+    }
 }
 
 sealed class IllustDetailViewState {
@@ -300,4 +341,5 @@ sealed class IllustDetailViewState {
 
 sealed class IllustDetailSideEffect {
     data class Toast(val msg: String) : IllustDetailSideEffect()
+    data object NavigateBack : IllustDetailSideEffect()
 }

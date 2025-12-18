@@ -51,6 +51,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import co.touchlab.kermit.Severity
@@ -168,6 +169,8 @@ import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesFetchModel
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreen
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesScreenModel
+import top.kagg886.pmf.ui.route.main.setting.filter.SettingFilterRoute
+import top.kagg886.pmf.ui.route.main.setting.filter.SettingFilterScreen
 import top.kagg886.pmf.ui.route.main.space.NewestIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceIllustViewModel
 import top.kagg886.pmf.ui.route.main.space.SpaceRoute
@@ -177,6 +180,7 @@ import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
+import top.kagg886.pmf.ui.util.dialog
 import top.kagg886.pmf.ui.util.rememberSupportPixivNavigateUriHandler
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
@@ -229,6 +233,8 @@ private val config = SavedStateConfiguration {
             subclass(serializer = EmptySearchRoute.serializer())
             subclass(serializer = SearchResultRoute.serializer())
             subclass(serializer = SearchPanelRoute.serializer())
+
+            subclass(serializer = SettingFilterRoute.serializer())
         }
     }
 }
@@ -302,6 +308,7 @@ fun App(start: NavKey = WelcomeRoute) {
                             backStack = stack,
                             modifier = modifier.fillMaxSize(),
                             onBack = { stack.removeLastOrNullWorkaround() },
+                            sceneStrategy = DialogSceneStrategy(),
                             entryDecorators = listOf(
                                 rememberSaveableStateHolderNavEntryDecorator(),
                                 rememberViewModelStoreNavEntryDecorator(),
@@ -544,6 +551,7 @@ fun setupEnv() {
 
                 single { NewestIllustViewModel() }
 
+                dialog<SettingFilterRoute> { SettingFilterScreen() }
                 viewModelOf(::ViewLaterModel)
             },
             // pixiv

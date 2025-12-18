@@ -110,9 +110,11 @@ fun IllustDetailScreen(route: IllustDetailRoute) = BoxWithConstraints(Modifier.f
         }
         val state by model.collectAsState()
         val host = LocalSnackBarHost.current
+        val nav = LocalNavBackStack.current
         model.collectSideEffect {
             when (it) {
                 is IllustDetailSideEffect.Toast -> host.showSnackbar(it.msg)
+                is IllustDetailSideEffect.NavigateBack -> nav.removeLastOrNullWorkaround()
             }
         }
         Box(Modifier.width(maxWidth).height(maxHeight)) {
@@ -155,6 +157,7 @@ private fun IllustTopAppBar(
     onCommentPanelBtnClick: () -> Unit = {},
     onOriginImageRequest: () -> Unit = {},
     onViewLaterBtnClick: (Boolean) -> Unit = {},
+    onBlackRequest: () -> Unit = {},
 ) {
     val stack = LocalNavBackStack.current
     TopAppBar(
@@ -202,6 +205,14 @@ private fun IllustTopAppBar(
                     )
                 }
 
+                DropdownMenuItem(
+                    text = { Text(stringResource(Res.string.filter_add, stringResource(Res.string.user))) },
+                    onClick = {
+                        onBlackRequest()
+                        enabled = false
+                    },
+                )
+
                 val clip = LocalClipboard.current
                 val scope = rememberCoroutineScope()
                 DropdownMenuItem(
@@ -245,6 +256,9 @@ private fun WideScreenIllustDetail(
                 },
                 onViewLaterBtnClick = {
                     if (it) model.addViewLater() else model.removeViewLater()
+                },
+                onBlackRequest = {
+                    model.black()
                 },
             )
         },
@@ -300,6 +314,9 @@ private fun IllustDetail(
                     },
                     onViewLaterBtnClick = {
                         if (it) model.addViewLater() else model.removeViewLater()
+                    },
+                    onBlackRequest = {
+                        model.black()
                     },
                 )
             },
@@ -676,8 +693,44 @@ private fun IllustPreview(
                             FlowRow {
                                 val stack = LocalNavBackStack.current
                                 for (tag in illust.tags) {
+                                    var showBlockDialog by remember {
+                                        mutableStateOf(false)
+                                    }
+
+                                    if (showBlockDialog) {
+                                        AlertDialog(
+                                            onDismissRequest = {
+                                                showBlockDialog = false
+                                            },
+                                            title = {
+                                                Text(
+                                                    stringResource(
+                                                        Res.string.filter_add,
+                                                        stringResource(Res.string.tags),
+                                                    ),
+                                                )
+                                            },
+                                            text = {
+                                                Text(stringResource(Res.string.filter_add_tags_confirm))
+                                            },
+                                            confirmButton = {
+                                                TextButton(onClick = {
+                                                    showBlockDialog = false
+                                                    model.blackTag(tag)
+                                                }) {
+                                                    Text(stringResource(Res.string.confirm))
+                                                }
+                                            },
+                                            dismissButton = {
+                                                TextButton(onClick = { showBlockDialog = false }) {
+                                                    Text(stringResource(Res.string.cancel))
+                                                }
+                                            },
+                                        )
+                                    }
+
                                     AssistChip(
-                                        modifier = Modifier.padding(4.dp),
+                                        modifier = Modifier.padding(4.dp).onSubClick { showBlockDialog = true },
                                         onClick = {
                                             stack += SearchResultRoute(
                                                 keyword = listOf(tag.name),

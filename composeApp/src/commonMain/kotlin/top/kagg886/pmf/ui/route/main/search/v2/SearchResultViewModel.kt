@@ -113,4 +113,5 @@ data class SearchResultState(
 
 sealed interface SearchResultSideEffect {
     data class Toast(val message: String) : SearchResultSideEffect
+    data object NavigateBack : SearchResultSideEffect
 }

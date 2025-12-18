@@ -79,20 +79,27 @@ fun AuthorScreen(route: AuthorRoute) {
         parametersOf(id)
     }
     val state by model.collectAsState()
+    val nav = LocalNavBackStack.current
 
     val host = LocalSnackBarHost.current
     model.collectSideEffect {
         when (it) {
             is AuthorScreenSideEffect.Toast -> host.showSnackbar(it.msg)
+            AuthorScreenSideEffect.NavigateBack -> nav.removeLastOrNullWorkaround()
         }
     }
     Box(Modifier.fillMaxSize()) {
-        AuthorContent(id, state) { if (it) model.addViewLater() else model.removeViewLater() }
+        AuthorContent(id, state, { model.black() }) { if (it) model.addViewLater() else model.removeViewLater() }
     }
 }
 
 @Composable
-private fun AuthorContent(id: Int, state: AuthorScreenState, onViewLaterBtnClick: (Boolean) -> Unit) {
+private fun AuthorContent(
+    id: Int,
+    state: AuthorScreenState,
+    onBlackRequest: () -> Unit,
+    onViewLaterBtnClick: (Boolean) -> Unit,
+) {
     val model = koinViewModel<AuthorScreenModel>(key = "$id") {
         parametersOf(id)
     }
@@ -217,6 +224,14 @@ private fun AuthorContent(id: Int, state: AuthorScreenState, onViewLaterBtnClick
                                 openBrowser(
                                     "https://www.pixiv.net/users/${state.user.user.id}",
                                 )
+                                show = false
+                            },
+                        )
+
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.filter_add, stringResource(Res.string.user))) },
+                            onClick = {
+                                onBlackRequest()
                                 show = false
                             },
                         )

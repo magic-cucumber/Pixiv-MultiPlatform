@@ -2,18 +2,21 @@ package top.kagg886.pmf.ui.route.main.detail.novel
 
 import androidx.compose.ui.geometry.Size
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import arrow.core.Option
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.size.Size as CoilSize
+import korlibs.time.seconds
 import kotlin.collections.set
 import kotlin.time.Clock
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -53,6 +56,8 @@ import top.kagg886.pixko.module.user.followUser
 import top.kagg886.pixko.module.user.unFollowUser
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
+import top.kagg886.pmf.backend.database.dao.BlackListItem
+import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.backend.database.dao.NovelHistory
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
@@ -76,6 +81,19 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
 
     @OptIn(ExperimentalNovelParserAPI::class)
     fun reload(coil: PlatformContext) = intent {
+        if (black.matchRules(BlackListType.AUTHOR_ID, id.toString())) {
+            postSideEffect(
+                NovelDetailSideEffect.Toast(
+                    getString(
+                        Res.string.blocking_because_black,
+                        getString(Res.string.user),
+                    ),
+                ),
+            )
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
         val loading =
             NovelDetailViewState.Loading(MutableStateFlow(getString(Res.string.get_novel_detail)))
         reduce { loading }
@@ -83,6 +101,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         val result = kotlin.runCatching {
             client.getNovelDetail(id) to client.getNovelContent(id)
         }
+
         if (result.isFailure) {
             logger.e("get novel info failed:", result.exceptionOrNull())
             val err = getString(Res.string.load_failed)
@@ -90,6 +109,22 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             return@intent
         }
         val (detail, content) = result.getOrThrow()
+
+        if (detail.tags.map { viewModelScope.async { black.matchRules(BlackListType.TAG_NAME, it.name) } }.awaitAll()
+                .any { it }
+        ) {
+            postSideEffect(
+                NovelDetailSideEffect.Toast(
+                    getString(
+                        Res.string.blocking_because_black,
+                        getString(Res.string.tags),
+                    ),
+                ),
+            )
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+            return@intent
+        }
+
         val images = kotlin.runCatching { content.images }.getOrElse { emptyMap() }
 
         val nodeMap = linkedMapOf<Int, NovelNodeElement>()
@@ -478,6 +513,28 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             )
         }
     }
+
+    private val black = database.blacklistDAO()
+
+    @OptIn(OrbitExperimental::class)
+    fun black() = intent {
+        runOn<NovelDetailViewState.Success> {
+            black.insert(BlackListItem(state.novel.user))
+            postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.filter_add_user_tips)))
+            delay(3.seconds)
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+        }
+    }
+
+    @OptIn(OrbitExperimental::class)
+    fun blackTag(tag: Tag) = intent {
+        runOn<NovelDetailViewState.Success> {
+            black.insert(BlackListItem(tag.name))
+            postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.filter_add_tags_tips)))
+            delay(3.seconds)
+            postSideEffect(NovelDetailSideEffect.NavigateBack)
+        }
+    }
 }
 
 sealed class NovelDetailViewState {
@@ -497,4 +554,6 @@ sealed class NovelDetailSideEffect {
     data class Toast(val msg: String) : NovelDetailSideEffect()
     data class NavigateToOtherNovel(val id: Long, val seriesInfo: SeriesInfo?) :
         NovelDetailSideEffect()
+
+    data object NavigateBack : NovelDetailSideEffect()
 }

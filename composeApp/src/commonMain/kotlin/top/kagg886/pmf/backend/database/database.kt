@@ -11,10 +11,12 @@ import top.kagg886.pmf.backend.database.dao.*
 import top.kagg886.pmf.util.absolutePath
 
 @Database(
-    entities = [IllustHistory::class, NovelHistory::class, DownloadItem::class, SearchHistory::class, WatchLaterItem::class],
+    entities = [IllustHistory::class, NovelHistory::class, DownloadItem::class, SearchHistory::class, WatchLaterItem::class, BlackListItem::class],
     version = BuildConfig.DATABASE_VERSION,
     autoMigrations = [
         AutoMigration(7, 8),
+        AutoMigration(8, 9),
+        AutoMigration(9, 10),
     ],
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -25,6 +27,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun searchHistoryDAO(): SearchHistoryDAO
 
     abstract fun watchLaterDAO(): WatchLaterDao
+
+    abstract fun blacklistDAO(): BlackListDao
 }
 
 // The Room compiler generates the `actual` implementations.

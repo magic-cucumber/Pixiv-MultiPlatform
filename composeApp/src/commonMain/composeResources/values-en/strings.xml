@@ -391,4 +391,11 @@
 
     <string name="multiapp_hint">This file is required to ensure Pixiv-MultiPlatform running correctly. Please do not delete this file!</string>
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform allows only one instance to run. Please close the existing instance</string>
+
+    <string name="settings_filter">Browse Settings</string>
+    <string name="settings_filter_clicked">Click to configure browse items</string>
+    <string name="filter_add">Add this %1$s to the block list</string>
+    <string name="filter_add_tags_confirm">Add this tag to the block list?\nYou will not be able to see illustrations/novels containing this tag on any page, and you will not be able to search for this tag on the search page.\nYou can go to Settings - Browsing Settings to unblock it.</string>
+    <string name="filter_add_user_tips">Added successfully! You will not be able to see this creator's illustrations/novels on any page, and you will not be able to visit their homepage.\nYou can go to Settings - Browsing Settings to unblock it.</string>
+    <string name="filter_add_tags_tips">Added successfully!</string><string name="blocking_because_black">Cannot access this page because %1$s has been added to your filter list.\nTo unblock, please go to: Settings — Browsing Settings</string>
 </resources>
