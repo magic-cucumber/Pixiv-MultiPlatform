@@ -2,6 +2,8 @@ package top.kagg886.pmf.ui.route.main.search.v2
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -175,7 +177,12 @@ class SearchPanelViewModel(
         }
 
         try {
-            val result = client.searchTag(query)
+            val result = client.searchTag(query).map {
+                viewModelScope.async {
+                    if (database.blacklistDAO().matchRules(BlackListType.TAG_NAME, it.name)) null else it
+                }
+            }.awaitAll().filterNotNull()
+
             reduce {
                 state.copy(panelState = SearchPanelState.SelectTag(result))
             }
@@ -234,6 +241,32 @@ class SearchPanelViewModel(
         reduce {
             this.state.copy(hotTag = state.hotTag.copy(tags = state.hotTag.tags.filter { it != data }))
         }
+    }
+
+    fun navigateToSearchResult(stack: NavBackStack<NavKey>) = intent {
+        val tagInBlackList = state.keyword.map {
+            viewModelScope.async {
+                database.blacklistDAO().matchRules(BlackListType.TAG_NAME, it)
+            }
+        }.awaitAll()
+
+        if (tagInBlackList.any { it }) {
+            postSideEffect(
+                SearchPanelSideEffect.Toast(
+                    getString(
+                        Res.string.blocking_because_black,
+                        getString(Res.string.tags),
+                    ),
+                ),
+            )
+            return@intent
+        }
+
+        stack += SearchResultRoute(
+            state.keyword,
+            state.sort,
+            state.target,
+        )
     }
 }
 

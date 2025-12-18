@@ -19,7 +19,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -75,7 +74,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
     val model = koinViewModel<SearchPanelViewModel> { parametersOf(sort, target, keyword, initialText) }
     val state by model.collectAsState()
     val stack = LocalNavBackStack.current
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarHostState = LocalSnackBarHost.current
 
     model.collectSideEffect { sideEffect ->
         when (sideEffect) {
@@ -128,11 +127,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
                             IconButton(
                                 onClick = {
                                     if (state.keyword.isNotEmpty()) {
-                                        stack += SearchResultRoute(
-                                            state.keyword,
-                                            state.sort,
-                                            state.target,
-                                        )
+                                        model.navigateToSearchResult(stack)
                                     }
                                 },
                                 enabled = state.keyword.isNotEmpty() && state.panelState !is SearchPanelState.RedirectToPage,

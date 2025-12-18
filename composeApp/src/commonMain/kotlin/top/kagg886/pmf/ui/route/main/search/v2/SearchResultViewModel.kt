@@ -2,8 +2,6 @@ package top.kagg886.pmf.ui.route.main.search.v2
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -13,11 +11,7 @@ import top.kagg886.pixko.module.search.SearchSort
 import top.kagg886.pixko.module.search.SearchTarget
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
-import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.backend.database.dao.SearchHistory
-import top.kagg886.pmf.res.Res
-import top.kagg886.pmf.res.blocking_because_black
-import top.kagg886.pmf.res.tags
 import top.kagg886.pmf.ui.route.main.search.SearchResultIllustModel
 import top.kagg886.pmf.ui.route.main.search.SearchResultNovelModel
 import top.kagg886.pmf.ui.route.main.search.SearchResultUserModel
@@ -25,7 +19,6 @@ import top.kagg886.pmf.ui.util.AuthorFetchViewModel
 import top.kagg886.pmf.ui.util.IllustFetchViewModel
 import top.kagg886.pmf.ui.util.NovelFetchViewModel
 import top.kagg886.pmf.ui.util.container
-import top.kagg886.pmf.util.getString
 
 class SearchResultViewModel(
     private val keyword: List<String>,
@@ -38,18 +31,6 @@ class SearchResultViewModel(
     override val container: Container<SearchResultState, SearchResultSideEffect> = container(
         initialState = initViewModel(),
     ) {
-        val tagInBlackList = keyword.map {
-            viewModelScope.async {
-                database.blacklistDAO().matchRules(BlackListType.TAG_NAME, it)
-            }
-        }.awaitAll()
-
-        if (tagInBlackList.any { it }) {
-            postSideEffect(SearchResultSideEffect.Toast(getString(Res.string.blocking_because_black, getString(Res.string.tags))))
-            postSideEffect(SearchResultSideEffect.NavigateBack)
-            return@container
-        }
-
         saveHistoryIfConfigOn(keyword, sort, target)
     }
 
