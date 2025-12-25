@@ -228,7 +228,7 @@ private fun IllustTopAppBar(
                     onClick = onOriginImageRequest,
                 )
             }
-            if (currentPlatform !is Platform.Desktop) {
+            if (!useWideScreenMode) {
                 IconButton(
                     onClick = onCommentPanelBtnClick,
                     modifier = Modifier.padding(start = 8.dp),
