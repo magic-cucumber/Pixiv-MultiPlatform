@@ -247,7 +247,7 @@ class DownloadScreenModel : ContainerHost<DownloadScreenState, DownloadScreenSid
                                             {
                                                 val upd = {
                                                     val bytes = src.totalBytesRead
-                                                    if (length == 0L) {
+                                                    if (length != 0L) {
                                                         atom.value = bytes
                                                     }
                                                     logger.v("Illust:${illust.id}'s download link: $url, fetched data size: $bytes")
