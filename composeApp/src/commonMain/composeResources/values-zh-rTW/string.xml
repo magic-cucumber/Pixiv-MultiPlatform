@@ -3,6 +3,7 @@
     <string name="about">關於</string>
     <string name="account_info">帳戶資訊</string>
     <string name="account_verification_failed">驗證帳號狀態時發生問題，請重新登入。</string>
+    <string name="add_watch_later">加入稍後再看</string>
     <string name="advanced">進階</string>
     <string name="advanced_bookmark_settings">進階收藏設定</string>
     <string name="ai_acceptance">您對 AI 作品的接受程度如何呢？</string>
@@ -18,17 +19,12 @@
     <string name="auto_typography">自動排版</string>
     <string name="auto_typography_description">移除多餘的空行，並首行縮排 %1$ssp</string>
     <string name="birthday">生日</string>
+    <string name="blocking_because_black">無法存取此頁面，因為%1$s已被您加入過濾名單。\n如需解除過濾，請前往：設定——瀏覽設定</string>
     <string name="bookmark">收藏</string>
     <string name="bookmark_extra_options">進階收藏設定</string>
     <string name="bookmark_failed">收藏失敗...</string>
     <string name="bookmark_settings">收藏設定</string>
     <string name="bookmark_success">收藏成功！</string>
-    <string name="browser_archive_should_be_tar_gz">檔案必須是 .tar.gz 結尾！</string>
-    <string name="browser_init_failed">無法初始化內嵌瀏覽器</string>
-    <string name="browser_init_failed_msg_backend">的內容以手動安裝內嵌瀏覽器。\n\n</string>
-    <string name="browser_init_failed_msg_clickable">點擊此處查看詳細資訊</string>
-    <string name="browser_init_failed_msg_fronted">由於某些未知原因，無法初始化內嵌瀏覽器。\n請關閉應用後嘗試使用 Token 登入。\n或參閱</string>
-    <string name="browser_init_failed_msg_this_link">此連結</string>
     <string name="bypass_intro">在某些地區可能無法正常存取 Pixiv。\n 我們提供了 SNI 繞過和代理兩種連線方案。\n SNI 繞過：透過特殊方式直接連線 Pixiv 伺服器。\n 代理：透過代理伺服器轉發請求。</string>
     <string name="bypass_none">無</string>
     <string name="bypass_note">如果您使用內嵌瀏覽器搭配 VPN (梯子) 登入 Pixiv，請不要開啟 SNI 繞過功能，否則程式將無法正常登入。\n啟用/停用此功能後，您需要重新啟動客戶端才能生效。</string>
@@ -46,7 +42,6 @@
     <string name="check_update_on_start">啟動時檢查更新</string>
     <string name="check_update_on_startup">啟動時檢查更新</string>
     <string name="checking_token">正在檢查token...</string>
-    <string name="choose_zip_path">選擇壓縮檔路徑</string>
     <string name="clear_log_archive">清除日誌存檔</string>
     <string name="clear_log_archive_description">日誌可能會佔用儲存空間</string>
     <string name="clear_log_description">日誌可能會佔用儲存空間</string>
@@ -74,7 +69,6 @@
     <string name="coroutine_exception_description">除錯用，沒事別點</string>
     <string name="country">國家</string>
     <string name="create_time">建立時間</string>
-    <string name="creating_install_lock">建立安裝鎖...</string>
     <string name="current_mode">目前為: %1$s</string>
     <string name="current_value">目前值: %1$s</string>
     <string name="dark_mode">夜間模式</string>
@@ -93,13 +87,15 @@
     <string name="download_completed">%1$s(%2$s) 下載完成！</string>
     <string name="download_failed">%1$s(%2$s) 下載失敗</string>
     <string name="download_manager">下載管理</string>
+    <string name="download_path_current">目前路徑: %1$s</string>
+    <string name="download_path_not_set">尚未設定下載路徑，點擊此處選擇</string>
+    <string name="download_root_not_set">尚未設定下載根目錄，請前往設定頁面進行設定</string>
+    <string name="download_root_permission_revoked">下載根目錄的讀寫權限已被系統撤銷，請前往設定頁面重新設定</string>
     <string name="download_started">下載已開始，是否要跳轉到下載頁面？</string>
     <string name="download_success">下載完成</string>
     <string name="download_theme">下載主題</string>
-    <string name="downloading_browser">正在下載瀏覽器核心... %1$s</string>
     <string name="edit_prop">編輯屬性</string>
     <string name="error">載入失敗</string>
-    <string name="error_details">錯誤詳情</string>
     <string name="exit_preview">退出預覽</string>
     <string name="expand_more">展開更多</string>
     <string name="export_all_logs">匯出全部日誌</string>
@@ -116,6 +112,10 @@
     <string name="favorite_tag">標籤收藏 (可不填)</string>
     <string name="favorite_type">收藏類型 (必填)</string>
     <string name="file_was_downloading">檔案仍在下載中，請稍候...</string>
+    <string name="filter_add">新增此%1$s到封鎖清單</string>
+    <string name="filter_add_tags_confirm">是否將此標籤加入封鎖清單？\n您將無法在任何頁面看到含有此標籤的插畫/小說，同時您也無法在搜尋頁面搜尋此標籤。\n您可以前往「設定」——「瀏覽設定」以解除封鎖</string>
+    <string name="filter_add_tags_tips">新增成功！</string>
+    <string name="filter_add_user_tips">新增成功！您將無法在任何頁面看到此作者的插畫/小說，同時您也不能前往該作者的主頁。\n您可以前往「設定」——「瀏覽設定」以解除封鎖</string>
     <string name="filter_ai_illustrations">AI 插畫過濾</string>
     <string name="filter_ai_novel">AI 小說過濾</string>
     <string name="filter_ai_server_hint">若在伺服器端設定了過濾，則可以不用開啟</string>
@@ -168,9 +168,7 @@
     <string name="illustration_works">插畫作品</string>
     <string name="image_details">圖片詳情</string>
     <string name="import_theme_fail">無法匯入主題，原因：%1$s</string>
-    <string name="init_browser">正在初始化內嵌瀏覽器...</string>
     <string name="input_token">請輸入 Token</string>
-    <string name="installing_browser">正在安裝瀏覽器核心...</string>
     <string name="ip_pool">內建 IP 集區列表</string>
     <string name="ip_pool_description">DoH 無法使用時直接提供此列表中的 IP</string>
     <string name="ip_pool_hint">作為最後的備用方案，此 IP 必須可以直連</string>
@@ -179,6 +177,7 @@
     <string name="jump_browser_tips">外部連結確認提示</string>
     <string name="jump_browser_tips_question">是否要開啟連結：%1$s</string>
     <string name="jump_to_chapter">跳轉至第 %1$s 章</string>
+    <string name="keyword">關鍵字</string>
     <string name="language_en">English</string>
     <string name="language_zh">簡體中文</string>
     <string name="language_zh_TW">繁體中文</string>
@@ -200,6 +199,8 @@
     <string name="match_keyword">關鍵字 (僅小說)</string>
     <string name="match_text">內文符合 (僅小說)</string>
     <string name="match_title_caption">符合標題簡介 (僅插畫/作者)</string>
+    <string name="multiapp_hint">此檔案用於確保 Pixiv-MultiPlatform 正常運行，請勿刪除此檔案！</string>
+    <string name="multiapp_not_allowed">Pixiv-MultiPlatform 只允許一個實例運行，請先關閉已存在的實例</string>
     <string name="my_bookmark">我的收藏</string>
     <string name="network_settings">網路設定</string>
     <string name="next_page">下一章</string>
@@ -232,6 +233,11 @@
     <string name="open_in_browser">在瀏覽器中開啟</string>
     <string name="open_in_clipboard">複製作品鏈接</string>
     <string name="open_source">開放原始碼授權</string>
+    <string name="option_filter_aspect_ratio_none">不啟用</string>
+    <string name="option_filter_aspect_ratio_pc">寬度 &gt; 高度 (電腦桌布)</string>
+    <string name="option_filter_aspect_ratio_phone">高度 &gt; 寬度 (手機桌布)</string>
+    <string name="option_filter_aspect_ratio_usage">用於選擇手機/電腦桌布</string>
+    <string name="options_filter_aspect_ratio">長寬比過濾</string>
     <string name="page_is_empty">頁面為空</string>
     <string name="parse_novel_node">正在解析小說節點...%1$s/%2$s</string>
     <string name="parsing_novel_series">正在解析小說節點...</string>
@@ -242,6 +248,7 @@
     <string name="platform_not_support">暫不支援此平台</string>
     <string name="please_bookmark_author_to_detail">請前往詳情頁面收藏作者！</string>
     <string name="please_input">請輸入</string>
+    <string name="please_input_keyword">請輸入關鍵字</string>
     <string name="previous_page">上一章</string>
     <string name="previous_step">上一步</string>
     <string name="private">私人</string>
@@ -270,25 +277,37 @@
     <string name="record_search_history">記錄搜尋歷史</string>
     <string name="record_search_history_off">關閉後將不會記錄搜尋歷史</string>
     <string name="region">地區</string>
+    <string name="remove_watch_later">從稍後再看中移除</string>
+    <string name="remove_watch_later_success">從稍後再看中移除成功</string>
     <string name="reply_for">回覆 %1$s 的評論</string>
     <string name="reset_theme">還原主題</string>
     <string name="reset_theme_description">將主題重設為預設</string>
-    <string name="retry">重試</string>
     <string name="save">儲存</string>
     <string name="search">搜尋</string>
+    <string name="search_metadata">搜尋中繼資料</string>
     <string name="search_mode">搜尋模式</string>
     <string name="search_result_for">「%1$s」的搜尋結果</string>
     <string name="search_result_none">沒有搜尋結果</string>
+    <string name="search_type">搜尋類型</string>
+    <string name="select_path">選擇</string>
     <string name="series_belong">所屬系列</string>
     <string name="session_copied">登入階段資訊已複製到剪貼簿。注意：請勿將此資訊傳送至公開場合，這可能會導致您的帳戶遭到惡意修改。</string>
     <string name="set_theme">設定主題</string>
     <string name="settings">程式設定</string>
+    <string name="settings_download">下載設定</string>
+    <string name="settings_download_path">下載根目錄設定</string>
+    <string name="settings_download_path_desc">選擇程式下載圖片等檔案的位置</string>
+    <string name="settings_download_path_not_supported">iOS 不支援選擇下載路徑</string>
+    <string name="settings_filter">浏览设置</string>
+    <string name="settings_filter_clicked">点击以配置浏览项</string>
     <string name="setup_complete">大功告成！</string>
     <string name="setup_finish_note">您已完成所有設定。現在，我們將跳轉到登入頁面。這些設定可在登入後前往設定頁面進行修改。\n 在初次登入前，我們會下載內嵌瀏覽器以提供完整的登入體驗，這會佔用您大約 300MB 的磁碟空間。</string>
     <string name="setup_finish_note_simple">您已完成所有設定。現在，我們將跳轉到登入頁面。這些設定可在登入後前往設定頁面進行修改。</string>
     <string name="share">分享</string>
     <string name="shield_config">封鎖設定</string>
     <string name="shield_intro">透過這三個問題，讓我們協助您選擇最適合的封鎖設定。更進階的小說封鎖功能，請在登入後前往設定頁面。</string>
+    <string name="show_original_image">顯示原圖</string>
+    <string name="show_original_image_hint">可能會拖慢網路速度，請謹慎開啟</string>
     <string name="show_toast_on_fail">檢查失敗時顯示提示訊息</string>
     <string name="show_toast_on_latest">已是最新版本時顯示提示訊息</string>
     <string name="show_toast_when_failed">檢查失敗時顯示提示訊息</string>
@@ -329,8 +348,7 @@
     <string name="unfollow_fail">取消追蹤失敗~(*^▽^*)</string>
     <string name="unfollow_success">取消追蹤成功~o(╥﹏╥)o</string>
     <string name="unknown">未知</string>
-    <string name="unknown_error">未知的錯誤</string>
-    <string name="unzipping_browser">正在解壓縮瀏覽器核心...</string>
+    <string name="unknown_error">未知錯誤</string>
     <string name="update">更新</string>
     <string name="update_check_failed">更新檢查失敗...</string>
     <string name="updates">更新</string>
@@ -345,57 +363,16 @@
     <string name="version_latest">目前為最新版本</string>
     <string name="visibility">可見性</string>
     <string name="warning">警告</string>
+    <string name="watch_later">稍後再看</string>
+    <string name="watch_later_setting_auto_remove_click">點擊時自動刪除</string>
+    <string name="watch_later_setting_auto_remove_click_desc">從稍後再看頁面點擊時會自動刪除該項目。</string>
+    <string name="watch_later_setting_auto_remove_days">稍後再看保留天數</string>
+    <string name="watch_later_setting_auto_remove_days_desc">過期的稍後再看項目會自動移除，設為 0 表示停用此功能。</string>
     <string name="welcome">歡迎！</string>
     <string name="welcome_text">%1$s 是一個基於 Compose Multiplatform 的跨平台第三方 Pixiv 用戶端，由</string>
     <string name="welcome_text_after_pixko">強力驅動。\n\n 在登入之前，讓我們先完成一些設定。這些設定可能會因您所在的地區、網路環境而異。如果您決定結束設定，請點擊下方的「略過設定」按鈕，否則請點擊下一步以前往後續設定。\n\n 準備好了嗎？點擊下一步以開始設定。\n\n 遇到問題了嗎？請前往 TG 交流群組描述您遇到的問題。</string>
     <string name="welcome_user">歡迎您！ %1$s</string>
     <string name="word_count">總字數</string>
-    <string name="xattr_setting">正在設定 xattr...</string>
     <string name="yes">是</string>
     <string name="you_can_still_check_update_on_setting">您仍可前往設定中檢查更新</string>
-
-    <string name="options_filter_aspect_ratio">長寬比過濾</string>
-    <string name="option_filter_aspect_ratio_usage">用於選擇手機/電腦桌布</string>
-    <string name="option_filter_aspect_ratio_none">不啟用</string>
-    <string name="option_filter_aspect_ratio_phone">高度 > 寬度 (手機桌布)</string>
-    <string name="option_filter_aspect_ratio_pc">寬度 > 高度 (電腦桌布)</string>
-
-    <string name="settings_download">下載設定</string>
-    <string name="settings_download_path">下載根目錄設定</string>
-    <string name="settings_download_path_desc">選擇程式下載圖片等檔案的位置</string>
-    <string name="settings_download_path_not_supported">iOS 不支援選擇下載路徑</string>
-    <string name="download_root_not_set">尚未設定下載根目錄，請前往設定頁面進行設定</string>
-    <string name="download_root_permission_revoked">下載根目錄的讀寫權限已被系統撤銷，請前往設定頁面重新設定</string>
-    <string name="download_path_not_set">尚未設定下載路徑，點擊此處選擇</string>
-    <string name="download_path_current">目前路徑: %1$s</string>
-    <string name="select_path">選擇</string>
-    <string name="show_original_image">顯示原圖</string>
-    <string name="show_original_image_hint">可能會拖慢網路速度，請謹慎開啟</string>
-
-    <string name="keyword">關鍵字</string>
-    <string name="please_input_keyword">請輸入關鍵字</string>
-    <string name="search_metadata">搜尋中繼資料</string>
-    <string name="search_type">搜尋類型</string>
-
-    <string name="watch_later">稍後再看</string>
-    <string name="add_watch_later">加入稍後再看</string>
-    <string name="remove_watch_later">從稍後再看中移除</string>
-    <string name="remove_watch_later_success">從稍後再看中移除成功</string>
-
-    <string name="watch_later_setting_auto_remove_days">稍後再看保留天數</string>
-    <string name="watch_later_setting_auto_remove_days_desc">過期的稍後再看項目會自動移除，設為 0 表示停用此功能。</string>
-
-    <string name="watch_later_setting_auto_remove_click">點擊時自動刪除</string>
-    <string name="watch_later_setting_auto_remove_click_desc">從稍後再看頁面點擊時會自動刪除該項目。</string>
-
-    <string name="multiapp_hint">此檔案用於確保 Pixiv-MultiPlatform 正常運行，請勿刪除此檔案！</string>
-    <string name="multiapp_not_allowed">Pixiv-MultiPlatform 只允許一個實例運行，請先關閉已存在的實例</string>
-
-    <string name="settings_filter">浏览设置</string>
-    <string name="settings_filter_clicked">点击以配置浏览项</string>
-    <string name="filter_add">新增此%1$s到封鎖清單</string>
-    <string name="filter_add_tags_confirm">是否將此標籤加入封鎖清單？\n您將無法在任何頁面看到含有此標籤的插畫/小說，同時您也無法在搜尋頁面搜尋此標籤。\n您可以前往「設定」——「瀏覽設定」以解除封鎖</string>
-    <string name="filter_add_user_tips">新增成功！您將無法在任何頁面看到此作者的插畫/小說，同時您也不能前往該作者的主頁。\n您可以前往「設定」——「瀏覽設定」以解除封鎖</string>
-    <string name="filter_add_tags_tips">新增成功！</string>
-    <string name="blocking_because_black">無法存取此頁面，因為%1$s已被您加入過濾名單。\n如需解除過濾，請前往：設定——瀏覽設定</string>
 </resources>
