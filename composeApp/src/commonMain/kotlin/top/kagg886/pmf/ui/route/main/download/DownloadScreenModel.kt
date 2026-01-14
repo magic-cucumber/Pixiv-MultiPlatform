@@ -232,7 +232,12 @@ class DownloadScreenModel : ContainerHost<DownloadScreenState, DownloadScreenSid
                                     }
                                 }.execute { resp ->
                                     logger.d("the illust:${illust.id}'s download link: $url, status: ${resp.status}")
-                                    val length = resp.contentLength()!!
+                                    val length = resp.contentLength() ?: 0
+
+                                    if (length == 0L) {
+                                        logger.w("the illust: ${illust.id}'s download link: $url not supported show download progress.")
+                                    }
+
                                     size.update { v -> v + length }
                                     logger.d("the illust:${illust.id}'s download link: $url, length is: $length")
 
@@ -242,7 +247,9 @@ class DownloadScreenModel : ContainerHost<DownloadScreenState, DownloadScreenSid
                                             {
                                                 val upd = {
                                                     val bytes = src.totalBytesRead
-                                                    atom.value = bytes
+                                                    if (length != 0L) {
+                                                        atom.value = bytes
+                                                    }
                                                     logger.v("Illust:${illust.id}'s download link: $url, fetched data size: $bytes")
                                                 }
                                                 try {
