@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,9 +21,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.navigation3.runtime.NavKey
+import co.touchlab.kermit.Severity
 import io.github.kdroidfilter.webview.request.RequestInterceptor
 import io.github.kdroidfilter.webview.request.WebRequest
 import io.github.kdroidfilter.webview.request.WebRequestInterceptResult
+import io.github.kdroidfilter.webview.util.KLogSeverity
+import io.github.kdroidfilter.webview.util.KLogSeverity.*
+import io.github.kdroidfilter.webview.util.KLogger
 import io.github.kdroidfilter.webview.web.LoadingState
 import io.github.kdroidfilter.webview.web.WebView
 import io.github.kdroidfilter.webview.web.WebViewNavigator
@@ -40,6 +46,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.guide.GuideScaffold
 import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
+import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -197,6 +204,45 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
             }
         },
     )
+
+    DisposableEffect(Unit) {
+
+        val log = object : KLogger {
+
+            override fun setMinSeverity(severity: KLogSeverity) = Unit
+
+            override fun log(
+                severity: KLogSeverity,
+                tag: String?,
+                t: Throwable?,
+                msg: () -> String
+            ) {
+                if (severity == None) return
+                logger.withTag(tag ?: "ComposeNativeWebView").logBlock(
+                    severity = when (severity) {
+                        Verbose -> Severity.Verbose
+                        Debug -> Severity.Debug
+                        Info -> Severity.Info
+                        Warn -> Severity.Warn
+                        Error -> Severity.Error
+                        Assert -> Severity.Assert
+                        None -> error("Unreachable")
+                    },
+                    tag = tag ?: "ComposeNativeWebView",
+                    throwable = t,
+                    message = msg
+                )
+            }
+
+        }
+
+        KLogger.addLogger(log)
+        KLogger.setMinSeverity(Verbose)
+
+        onDispose {
+            KLogger.removeLogger(log)
+        }
+    }
 
     val progress = remember(state.loadingState) {
         when (state.loadingState) {
