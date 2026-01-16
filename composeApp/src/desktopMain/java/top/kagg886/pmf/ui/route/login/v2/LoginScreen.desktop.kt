@@ -14,7 +14,6 @@ internal actual fun WebviewPlatformInstall() {
         System.setErr(PrintStream2KermitLogger(ByteArrayOutputStream()))
 
         onDispose {
-            System.setProperty("composewebview.wry.log", null)
             System.setErr(origin)
         }
     }
