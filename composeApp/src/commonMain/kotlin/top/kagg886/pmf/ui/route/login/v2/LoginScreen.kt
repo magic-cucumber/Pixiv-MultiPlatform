@@ -12,7 +12,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -206,7 +205,6 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
     )
 
     DisposableEffect(Unit) {
-
         val log = object : KLogger {
 
             override fun setMinSeverity(severity: KLogSeverity) = Unit
@@ -215,7 +213,7 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
                 severity: KLogSeverity,
                 tag: String?,
                 t: Throwable?,
-                msg: () -> String
+                msg: () -> String,
             ) {
                 if (severity == None) return
                 logger.withTag(tag ?: "ComposeNativeWebView").logBlock(
@@ -230,10 +228,9 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
                     },
                     tag = tag ?: "ComposeNativeWebView",
                     throwable = t,
-                    message = msg
+                    message = msg,
                 )
             }
-
         }
 
         KLogger.addLogger(log)
