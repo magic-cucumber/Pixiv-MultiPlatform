@@ -185,6 +185,8 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
 
 @Composable
 private fun WebViewLogin(model: LoginScreenViewModel) {
+    WebviewPlatformInstall()
+
     val auth = remember { PixivAccountFactory.newAccount(PlatformEngine) }
     val state = rememberWebViewState(auth.url) {
         customUserAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36 EdgA/135.0.0.0"
@@ -259,3 +261,6 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
         )
     }
 }
+
+@Composable
+internal expect fun WebviewPlatformInstall()
