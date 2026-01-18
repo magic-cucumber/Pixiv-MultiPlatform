@@ -28,8 +28,8 @@ import io.github.kdroidfilter.webview.util.KLogSeverity
 import io.github.kdroidfilter.webview.util.KLogSeverity.*
 import io.github.kdroidfilter.webview.util.KLogger
 import io.github.kdroidfilter.webview.web.LoadingState
-import io.github.kdroidfilter.webview.web.WebView
 import io.github.kdroidfilter.webview.web.WebViewNavigator
+import io.github.kdroidfilter.webview.web.WebViewState
 import io.github.kdroidfilter.webview.web.rememberWebViewNavigator
 import io.github.kdroidfilter.webview.web.rememberWebViewState
 import kotlinx.serialization.Serializable
@@ -254,7 +254,7 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
         if (progress in 0.0f..<1.0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
-        WebView(
+        PlatformWebView(
             modifier = Modifier.fillMaxSize(),
             state = state,
             navigator = webNav,
@@ -264,3 +264,10 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
 
 @Composable
 internal expect fun WebviewPlatformInstall()
+
+@Composable
+internal expect fun PlatformWebView(
+    state: WebViewState,
+    modifier: Modifier = Modifier,
+    navigator: WebViewNavigator = rememberWebViewNavigator(),
+)
