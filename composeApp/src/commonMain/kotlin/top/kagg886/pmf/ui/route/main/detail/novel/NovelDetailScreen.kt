@@ -38,7 +38,6 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -93,7 +92,6 @@ import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.openBrowser
 import top.kagg886.pmf.res.*
-import top.kagg886.pmf.ui.component.BackToTopOrRefreshButton
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.FavoriteButton
 import top.kagg886.pmf.ui.component.FavoriteState
@@ -116,7 +114,6 @@ import top.kagg886.pmf.ui.util.CommentPanel
 import top.kagg886.pmf.ui.util.HTMLRichText
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
 import top.kagg886.pmf.ui.util.RichText
-import top.kagg886.pmf.ui.util.awaitNextState
 import top.kagg886.pmf.ui.util.keyboardScrollerController
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.withClickable
@@ -717,7 +714,7 @@ private fun NovelDetailContent(
                         modifier = Modifier.align(Alignment.BottomEnd),
                         transitionSpec = {
                             slideInVertically { it / 2 } + fadeIn() togetherWith
-                                    slideOutVertically { it / 2 } + fadeOut()
+                                slideOutVertically { it / 2 } + fadeOut()
                         },
                     ) {
                         val scope = rememberCoroutineScope()
@@ -733,7 +730,6 @@ private fun NovelDetailContent(
                             }
                         }
 
-
                         if (!it) {
                             Spacer(Modifier.size(88.dp)) // placeholder
                             return@AnimatedContent
@@ -748,7 +744,7 @@ private fun NovelDetailContent(
                                     connect.scrollableState.animateScrollBy(connect.containerHeight.toFloat())
                                 }
                             },
-                            modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(16.dp),
                         ) {
                             Icon(Icons.Default.KeyboardArrowUp, null)
                         }
