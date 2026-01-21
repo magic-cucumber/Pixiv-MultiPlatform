@@ -4,36 +4,34 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.navigation3.runtime.NavKey
-import com.multiplatform.webview.request.RequestInterceptor
-import com.multiplatform.webview.request.WebRequest
-import com.multiplatform.webview.request.WebRequestInterceptResult
-import com.multiplatform.webview.web.LoadingState
-import com.multiplatform.webview.web.WebView
-import com.multiplatform.webview.web.WebViewNavigator
-import com.multiplatform.webview.web.rememberWebViewNavigator
-import com.multiplatform.webview.web.rememberWebViewState
-import kotlinx.coroutines.launch
+import co.touchlab.kermit.Severity
+import io.github.kdroidfilter.webview.request.RequestInterceptor
+import io.github.kdroidfilter.webview.request.WebRequest
+import io.github.kdroidfilter.webview.request.WebRequestInterceptResult
+import io.github.kdroidfilter.webview.util.KLogSeverity
+import io.github.kdroidfilter.webview.util.KLogSeverity.*
+import io.github.kdroidfilter.webview.util.KLogger
+import io.github.kdroidfilter.webview.web.LoadingState
+import io.github.kdroidfilter.webview.web.WebViewNavigator
+import io.github.kdroidfilter.webview.web.WebViewState
+import io.github.kdroidfilter.webview.web.rememberWebViewNavigator
+import io.github.kdroidfilter.webview.web.rememberWebViewState
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -47,9 +45,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.guide.GuideScaffold
 import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
-import top.kagg886.pmf.ui.util.withClickable
-import top.kagg886.pmf.ui.util.withLink
-import top.kagg886.pmf.util.setText
+import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -175,83 +171,6 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
                                 val msg by state.msg.collectAsState()
                                 Loading(text = msg)
                             }
-
-                            is LoginViewState.LoginType.BrowserLogin.Error -> {
-                                GuideScaffold(
-                                    title = {
-                                        Text(stringResource(Res.string.warning))
-                                    },
-                                    subTitle = {
-                                        Text(stringResource(Res.string.browser_init_failed))
-                                    },
-                                    skipButton = {
-                                        TextButton(
-                                            onClick = {
-                                                model.installKCEFLocal()
-                                            },
-                                        ) {
-                                            Text(stringResource(Res.string.choose_zip_path))
-                                        }
-                                    },
-                                    confirmButton = {
-                                        Button(
-                                            onClick = {
-                                                model.selectLoginType(LoginType.BrowserLogin)
-                                            },
-                                        ) {
-                                            Text(stringResource(Res.string.retry))
-                                        }
-                                    },
-                                    content = {
-                                        val theme = MaterialTheme.colorScheme
-                                        var detailsDialog by remember {
-                                            mutableStateOf(false)
-                                        }
-                                        if (detailsDialog) {
-                                            AlertDialog(
-                                                onDismissRequest = {
-                                                    detailsDialog = false
-                                                },
-                                                title = {
-                                                    Text(stringResource(Res.string.error_details))
-                                                },
-                                                text = {
-                                                    Text(state.exception.stackTraceToString(), modifier = Modifier.verticalScroll(rememberScrollState()))
-                                                },
-                                                confirmButton = {
-                                                    val clip = LocalClipboard.current
-                                                    val scope = rememberCoroutineScope()
-                                                    TextButton(
-                                                        onClick = {
-                                                            scope.launch {
-                                                                clip.setText(
-                                                                    state.exception.stackTraceToString(),
-                                                                )
-                                                            }
-                                                        },
-                                                    ) {
-                                                        Text(stringResource(Res.string.copy_to_clipboard))
-                                                    }
-                                                },
-                                            )
-                                        }
-                                        val fronted = stringResource(Res.string.browser_init_failed_msg_fronted)
-                                        val thisLink = stringResource(Res.string.browser_init_failed_msg_this_link)
-                                        val back = stringResource(Res.string.browser_init_failed_msg_backend)
-                                        val clickable = stringResource(Res.string.browser_init_failed_msg_clickable)
-                                        Text(
-                                            buildAnnotatedString {
-                                                append(fronted)
-                                                withLink(theme, "https://pmf.kagg886.top/docs/main/login.html#3-%E7%99%BB%E5%BD%95%E7%9A%84%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98", thisLink)
-                                                append(back)
-                                                withClickable(theme, clickable) {
-                                                    detailsDialog = true
-                                                }
-                                            },
-                                        )
-                                    },
-                                )
-                            }
                         }
                     }
                 }
@@ -266,12 +185,12 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
 
 @Composable
 private fun WebViewLogin(model: LoginScreenViewModel) {
+    WebviewPlatformInstall()
+
     val auth = remember { PixivAccountFactory.newAccount(PlatformEngine) }
-    val state = rememberWebViewState(auth.url)
-    // val state = rememberWebViewState("https://useragent.buyaocha.com/")
-    // 不能使用LaunchedEffect，初始化后不能修改UA
-    // issue: https://github.com/KevinnZou/compose-webview-multiplatform/issues/142
-    state.webSettings.customUserAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36 EdgA/135.0.0.0"
+    val state = rememberWebViewState(auth.url) {
+        customUserAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36 EdgA/135.0.0.0"
+    }
     val webNav = rememberWebViewNavigator(
         requestInterceptor = object : RequestInterceptor {
             override fun onInterceptUrlRequest(
@@ -287,6 +206,43 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
         },
     )
 
+    DisposableEffect(Unit) {
+        val log = object : KLogger {
+
+            override fun setMinSeverity(severity: KLogSeverity) = Unit
+
+            override fun log(
+                severity: KLogSeverity,
+                tag: String?,
+                t: Throwable?,
+                msg: () -> String,
+            ) {
+                if (severity == None) return
+                logger.withTag(tag ?: "ComposeNativeWebView").logBlock(
+                    severity = when (severity) {
+                        Verbose -> Severity.Verbose
+                        Debug -> Severity.Debug
+                        Info -> Severity.Info
+                        Warn -> Severity.Warn
+                        Error -> Severity.Error
+                        Assert -> Severity.Assert
+                        None -> error("Unreachable")
+                    },
+                    tag = tag ?: "ComposeNativeWebView",
+                    throwable = t,
+                    message = msg,
+                )
+            }
+        }
+
+        KLogger.addLogger(log)
+        KLogger.setMinSeverity(Verbose)
+
+        onDispose {
+            KLogger.removeLogger(log)
+        }
+    }
+
     val progress = remember(state.loadingState) {
         when (state.loadingState) {
             is LoadingState.Loading -> (state.loadingState as LoadingState.Loading).progress
@@ -298,10 +254,20 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
         if (progress in 0.0f..<1.0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
-        WebView(
+        PlatformWebView(
             modifier = Modifier.fillMaxSize(),
             state = state,
             navigator = webNav,
         )
     }
 }
+
+@Composable
+internal expect fun WebviewPlatformInstall()
+
+@Composable
+internal expect fun PlatformWebView(
+    state: WebViewState,
+    modifier: Modifier = Modifier,
+    navigator: WebViewNavigator = rememberWebViewNavigator(),
+)
