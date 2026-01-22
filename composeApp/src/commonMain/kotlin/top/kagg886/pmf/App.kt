@@ -39,7 +39,6 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,7 +46,6 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -83,7 +81,6 @@ import kotlinx.serialization.modules.subclass
 import okio.Path
 import org.jetbrains.compose.resources.StringResource
 import org.koin.compose.navigation3.koinEntryProvider
-import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -216,7 +213,6 @@ val LocalColorScheme = compositionLocalOf<MutableState<SerializedTheme?>> {
 val LocalKeyStateFlow = compositionLocalOf<SharedFlow<KeyEvent>> {
     error("not provided")
 }
-
 
 private val config = SavedStateConfiguration {
     serializersModule = SerializersModule {

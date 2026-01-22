@@ -17,8 +17,7 @@ val LocalGlobalViewModelStoreOwner = staticCompositionLocalOf<ViewModelStoreOwne
     error("not provided")
 }
 
-
 @Composable
 inline fun <reified T : ViewModel> globalViewModel() = koinViewModel<T>(
-    viewModelStoreOwner = LocalGlobalViewModelStoreOwner.current
+    viewModelStoreOwner = LocalGlobalViewModelStoreOwner.current,
 )

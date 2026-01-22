@@ -57,7 +57,6 @@ import coil3.compose.AsyncImage
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
 import top.kagg886.pixko.module.illust.get
 import top.kagg886.pmf.LocalNavBackStack
