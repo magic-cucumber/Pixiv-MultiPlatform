@@ -73,12 +73,13 @@ import top.kagg886.pmf.ui.component.icon.Download
 import top.kagg886.pmf.ui.component.icon.Save
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
+import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 
 @Composable
 fun DownloadScreen() {
-    val model = koinViewModel<DownloadScreenModel>()
+    val model = globalViewModel<DownloadScreenModel>()
     val state by model.collectAsState()
     DownloadContent(model, state)
 }

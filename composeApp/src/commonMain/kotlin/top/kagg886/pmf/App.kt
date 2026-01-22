@@ -39,6 +39,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -46,6 +47,8 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -178,9 +181,11 @@ import top.kagg886.pmf.ui.route.main.space.SpaceScreen
 import top.kagg886.pmf.ui.route.welcome.WelcomeModel
 import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
+import top.kagg886.pmf.ui.util.LocalGlobalViewModelStoreOwner
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
 import top.kagg886.pmf.ui.util.dialog
+import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.rememberSupportPixivNavigateUriHandler
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
@@ -211,6 +216,7 @@ val LocalColorScheme = compositionLocalOf<MutableState<SerializedTheme?>> {
 val LocalKeyStateFlow = compositionLocalOf<SharedFlow<KeyEvent>> {
     error("not provided")
 }
+
 
 private val config = SavedStateConfiguration {
     serializersModule = SerializersModule {
@@ -252,6 +258,7 @@ fun App(start: NavKey = WelcomeRoute) {
         LocalDarkSettings provides darkModeValue,
         LocalColorScheme provides colorSchemeValue,
         LocalSnackBarHost provides remember { SnackbarHostState() },
+        LocalGlobalViewModelStoreOwner provides LocalViewModelStoreOwner.current!!,
     ) {
         val currentThemeSerialized by LocalColorScheme.current
         val lightTheme = remember(currentThemeSerialized) {
@@ -273,7 +280,7 @@ fun App(start: NavKey = WelcomeRoute) {
                 ) {
                     val s = LocalSnackBarHost.current
                     CheckUpdateDialog()
-                    val model = koinViewModel<DownloadScreenModel>()
+                    val model = globalViewModel<DownloadScreenModel>()
                     model.collectSideEffect { toast ->
                         when (toast) {
                             is DownloadScreenSideEffect.Toast -> {
@@ -585,7 +592,8 @@ fun setupEnv() {
                         setQueryCoroutineContext(Dispatchers.IO)
                     }.build()
                 }
-                single { DownloadScreenModel() }
+
+//                single { DownloadScreenModel() }
                 single { UpdateCheckViewModel() }
             },
         )

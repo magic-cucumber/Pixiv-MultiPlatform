@@ -656,7 +656,7 @@ private fun IllustPreview(
                                     }
                                     RollingNumber(illust.totalBookmarks)
                                 }
-                                val downloadModel = koinViewModel<DownloadScreenModel>()
+                                val downloadModel = globalViewModel<DownloadScreenModel>()
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     IconButton(
                                         onClick = {
