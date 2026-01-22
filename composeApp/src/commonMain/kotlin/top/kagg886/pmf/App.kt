@@ -589,7 +589,7 @@ fun setupEnv() {
                     }.build()
                 }
 
-//                single { DownloadScreenModel() }
+                single { DownloadScreenModel() }
                 single { UpdateCheckViewModel() }
             },
         )
