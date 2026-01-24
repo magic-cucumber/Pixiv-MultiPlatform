@@ -46,6 +46,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -80,7 +81,6 @@ import kotlinx.serialization.modules.subclass
 import okio.Path
 import org.jetbrains.compose.resources.StringResource
 import org.koin.compose.navigation3.koinEntryProvider
-import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
@@ -178,9 +178,11 @@ import top.kagg886.pmf.ui.route.main.space.SpaceScreen
 import top.kagg886.pmf.ui.route.welcome.WelcomeModel
 import top.kagg886.pmf.ui.route.welcome.WelcomeRoute
 import top.kagg886.pmf.ui.route.welcome.WelcomeScreen
+import top.kagg886.pmf.ui.util.LocalGlobalViewModelStoreOwner
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
 import top.kagg886.pmf.ui.util.dialog
+import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.rememberSupportPixivNavigateUriHandler
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
@@ -252,6 +254,7 @@ fun App(start: NavKey = WelcomeRoute) {
         LocalDarkSettings provides darkModeValue,
         LocalColorScheme provides colorSchemeValue,
         LocalSnackBarHost provides remember { SnackbarHostState() },
+        LocalGlobalViewModelStoreOwner provides LocalViewModelStoreOwner.current!!,
     ) {
         val currentThemeSerialized by LocalColorScheme.current
         val lightTheme = remember(currentThemeSerialized) {
@@ -273,7 +276,7 @@ fun App(start: NavKey = WelcomeRoute) {
                 ) {
                     val s = LocalSnackBarHost.current
                     CheckUpdateDialog()
-                    val model = koinViewModel<DownloadScreenModel>()
+                    val model = globalViewModel<DownloadScreenModel>()
                     model.collectSideEffect { toast ->
                         when (toast) {
                             is DownloadScreenSideEffect.Toast -> {
@@ -585,6 +588,7 @@ fun setupEnv() {
                         setQueryCoroutineContext(Dispatchers.IO)
                     }.build()
                 }
+
                 single { DownloadScreenModel() }
                 single { UpdateCheckViewModel() }
             },

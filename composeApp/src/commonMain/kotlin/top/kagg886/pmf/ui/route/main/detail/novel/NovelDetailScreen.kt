@@ -114,6 +114,7 @@ import top.kagg886.pmf.ui.util.CommentPanel
 import top.kagg886.pmf.ui.util.HTMLRichText
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
 import top.kagg886.pmf.ui.util.RichText
+import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.keyboardScrollerController
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.withClickable
@@ -582,7 +583,7 @@ private fun NovelDetailTopAppBar(
                             },
                         )
 
-                        val download = koinViewModel<DownloadScreenModel>()
+                        val download = globalViewModel<DownloadScreenModel>()
                         if (novel != null) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(Res.string.export_to_epub)) },
