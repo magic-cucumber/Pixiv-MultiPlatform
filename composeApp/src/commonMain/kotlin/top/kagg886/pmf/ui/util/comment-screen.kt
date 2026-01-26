@@ -42,9 +42,7 @@ import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -60,14 +58,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
-import com.mikepenz.aboutlibraries.Libs
-import kotlin.sequences.forEach
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -102,7 +96,7 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
     val medias by produceState(initialValue = CommentMedia(emptyMap(), emptyList())) {
         value = withContext(Dispatchers.Default) {
             Json.decodeFromString(
-                Res.readBytes("files/comment-media.json").decodeToString()
+                Res.readBytes("files/comment-media.json").decodeToString(),
             )
         }
     }
@@ -319,11 +313,11 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                             state,
                             transitionSpec = {
                                 (fadeIn() + slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up)) togetherWith (
-                                        fadeOut() +
-                                                slideOutOfContainer(
-                                                    AnimatedContentTransitionScope.SlideDirection.Up,
-                                                )
+                                    fadeOut() +
+                                        slideOutOfContainer(
+                                            AnimatedContentTransitionScope.SlideDirection.Up,
                                         )
+                                    )
                             },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
@@ -370,7 +364,6 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                 Icon(Icons.AutoMirrored.Filled.Send, null)
                             }
 
-
                             /**
                              * https://s.pximg.net/soy/pixiv-web-next/_next/static/chunks/87525-06fbd0afc12d9863.js
                              * 79036: (e, t, n) => {
@@ -407,21 +400,20 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                         LocalWindowInfo.current.containerSize.height.toDp() * 0.8f
                                     }
 
-
                                     SecondaryTabRow(
                                         selectedTabIndex = index,
                                         tabs = {
                                             Tab(
                                                 selected = index == 0,
                                                 onClick = { index = 0 },
-                                                text = { Text("Emoji") }
+                                                text = { Text("Emoji") },
                                             )
                                             Tab(
                                                 selected = index == 1,
                                                 onClick = { index = 1 },
-                                                text = { Text("Stamp") }
+                                                text = { Text("Stamp") },
                                             )
-                                        }
+                                        },
                                     )
 
                                     OutlinedTextField(
@@ -447,28 +439,28 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                         LazyVerticalStaggeredGrid(
                                             columns = StaggeredGridCells.Adaptive(size),
                                             modifier = Modifier.height(configuration).padding(size / 4),
-                                            contentPadding = PaddingValues(size / 4)
+                                            contentPadding = PaddingValues(size / 4),
                                         ) {
                                             if (index == 0) {
-                                                //https://s.pximg.net/common/images/emoji/303.png
+                                                // https://s.pximg.net/common/images/emoji/303.png
                                                 items(medias.emojis.toList()) { (name, code) ->
                                                     AsyncImage(
-                                                        model = "https://s.pximg.net/common/images/emoji/${code}.png",
+                                                        model = "https://s.pximg.net/common/images/emoji/$code.png",
                                                         contentDescription = "emoji: $name",
                                                         modifier = Modifier.size(32.dp).clickable {
-                                                            text += "(${name})"
-                                                        }
+                                                            text += "($name)"
+                                                        },
                                                     )
                                                 }
                                             }
 
                                             if (index == 1) {
-                                                //https://s.pximg.net/common/images/stamp/generated-stamps/304_s.jpg?20180605
+                                                // https://s.pximg.net/common/images/stamp/generated-stamps/304_s.jpg?20180605
                                                 items(medias.stamps) { code ->
                                                     AsyncImage(
                                                         model = "https://s.pximg.net/common/images/stamp/generated-stamps/${code}_s.jpg?20180605",
                                                         contentDescription = "stamp: $code",
-                                                        modifier = Modifier.size(64.dp)
+                                                        modifier = Modifier.size(64.dp),
                                                     )
                                                 }
                                             }
@@ -503,10 +495,10 @@ private fun CommentText(modifier: Modifier = Modifier, comment: String, emojis: 
                         Placeholder(
                             width = style.fontSize * 1.1,
                             height = style.fontSize,
-                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                        )
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        ),
                     ) {
-                        val url = "https://s.pximg.net/common/images/emoji/${emojiCode}.png"
+                        val url = "https://s.pximg.net/common/images/emoji/$emojiCode.png"
                         AsyncImage(
                             model = url,
                             contentDescription = key,
