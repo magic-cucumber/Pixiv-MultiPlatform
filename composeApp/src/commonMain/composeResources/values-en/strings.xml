@@ -398,4 +398,9 @@
     <string name="filter_add_tags_confirm">Add this tag to the block list?\nYou will not be able to see illustrations/novels containing this tag on any page, and you will not be able to search for this tag on the search page.\nYou can go to Settings - Browsing Settings to unblock it.</string>
     <string name="filter_add_user_tips">Added successfully! You will not be able to see this creator's illustrations/novels on any page, and you will not be able to visit their homepage.\nYou can go to Settings - Browsing Settings to unblock it.</string>
     <string name="filter_add_tags_tips">Added successfully!</string><string name="blocking_because_black">Cannot access this page because %1$s has been added to your filter list.\nTo unblock, please go to: Settings — Browsing Settings</string>
+
+    <string name="emoji">Emoji</string>
+    <string name="emoji_desc">Emoji format: (Code)</string>
+    <string name="stamp">Stickers</string>
+    <string name="stamp_desc">Text will not be sent when sending stickers</string>
 </resources>

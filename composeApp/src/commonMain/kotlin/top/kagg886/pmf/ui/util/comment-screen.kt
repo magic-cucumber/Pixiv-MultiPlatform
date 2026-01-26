@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -407,14 +408,21 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                             Tab(
                                                 selected = index == 0,
                                                 onClick = { index = 0 },
-                                                text = { Text("Emoji") },
+                                                text = { Text(stringResource(Res.string.emoji)) },
                                             )
                                             Tab(
                                                 selected = index == 1,
                                                 onClick = { index = 1 },
-                                                text = { Text("Stamp") },
+                                                text = { Text(stringResource(Res.string.stamp)) },
                                             )
                                         },
+                                    )
+
+                                    Text(
+                                        if (index == 0) stringResource(Res.string.emoji_desc) else stringResource(Res.string.stamp_desc),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                                     )
 
                                     OutlinedTextField(
@@ -526,11 +534,13 @@ private fun CommentText(modifier: Modifier = Modifier, comment: String, emojis: 
     }
 
     // 3. 渲染 Text
-    Text(
-        text = state.first,
-        inlineContent = state.second,
-        modifier = modifier,
-    )
+    SelectionContainer {
+        Text(
+            text = state.first,
+            inlineContent = state.second,
+            modifier = modifier,
+        )
+    }
 }
 
 @Serializable
