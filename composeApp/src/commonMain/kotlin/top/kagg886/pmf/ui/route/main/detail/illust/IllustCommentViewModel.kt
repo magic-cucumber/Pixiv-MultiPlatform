@@ -18,7 +18,15 @@ class IllustCommentViewModel(id: Long) : CommentViewModel(id) {
         client.sendIllustComment {
             parentCommentId = parentId
             illustId = id
-            comment = text
+            comment(text)
+        }
+    }
+
+    override suspend fun sendComment(parentId: Long?, id: Long, stamp: Long) {
+        client.sendIllustComment {
+            parentCommentId = parentId
+            illustId = id
+            comment(stamp)
         }
     }
 }

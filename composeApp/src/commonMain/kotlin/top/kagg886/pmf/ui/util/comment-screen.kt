@@ -358,6 +358,7 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                             IconButton(
                                 onClick = {
                                     model.sendComment(text)
+                                    text = ""
                                 },
                                 enabled = text.isNotBlank(),
                             ) {
@@ -425,6 +426,8 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                             IconButton(
                                                 onClick = {
                                                     model.sendComment(text)
+                                                    text = ""
+                                                    sheet = false
                                                 },
                                                 enabled = text.isNotBlank(),
                                             ) {
@@ -447,7 +450,7 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                                     AsyncImage(
                                                         model = "https://s.pximg.net/common/images/emoji/$code.png",
                                                         contentDescription = "emoji: $name",
-                                                        modifier = Modifier.size(32.dp).clickable {
+                                                        modifier = Modifier.size(48.dp).clickable {
                                                             text += "($name)"
                                                         },
                                                     )
@@ -460,7 +463,11 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                                     AsyncImage(
                                                         model = "https://s.pximg.net/common/images/stamp/generated-stamps/${code}_s.jpg?20180605",
                                                         contentDescription = "stamp: $code",
-                                                        modifier = Modifier.size(64.dp),
+                                                        modifier = Modifier.size(64.dp).clickable {
+                                                            model.sendComment(code.toLong())
+                                                            text = ""
+                                                            sheet = false
+                                                        },
                                                     )
                                                 }
                                             }

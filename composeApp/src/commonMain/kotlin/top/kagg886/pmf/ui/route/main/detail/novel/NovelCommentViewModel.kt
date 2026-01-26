@@ -1,5 +1,6 @@
 package top.kagg886.pmf.ui.route.main.detail.novel
 
+import top.kagg886.pixko.module.illust.sendIllustComment
 import top.kagg886.pixko.module.novel.getNovelComment
 import top.kagg886.pixko.module.novel.getNovelCommentReply
 import top.kagg886.pixko.module.novel.sendNovelComment
@@ -17,7 +18,15 @@ class NovelCommentViewModel(id: Long) : CommentViewModel(id) {
         client.sendNovelComment {
             novelId = id
             parentCommentId = parentId
-            comment = text
+            comment(text)
+        }
+    }
+
+    override suspend fun sendComment(parentId: Long?, id: Long, stamp: Long) {
+        client.sendIllustComment {
+            parentCommentId = parentId
+            illustId = id
+            comment(stamp)
         }
     }
 }
