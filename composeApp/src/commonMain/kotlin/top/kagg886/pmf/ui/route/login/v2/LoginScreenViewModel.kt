@@ -2,34 +2,24 @@ package top.kagg886.pmf.ui.route.login.v2
 
 import androidx.lifecycle.ViewModel
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import okio.Path
-import okio.buffer
-import okio.use
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.annotation.OrbitExperimental
-import top.kagg886.filepicker.FilePicker
-import top.kagg886.filepicker.openFilePicker
 import top.kagg886.pixko.PixivVerification
 import top.kagg886.pixko.TokenType
 import top.kagg886.pixko.module.user.getCurrentUserSimpleProfile
-import top.kagg886.pmf.backend.Platform
-import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.pixiv.PixivTokenStorage
-import top.kagg886.pmf.backend.useTempFile
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.login.v2.LoginType.BrowserLogin
 import top.kagg886.pmf.ui.route.login.v2.LoginType.InputTokenLogin
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
-import top.kagg886.pmf.util.sink
 
 class LoginScreenViewModel : ContainerHost<LoginViewState, LoginSideEffect>, ViewModel(), KoinComponent {
     private val storage by inject<PixivTokenStorage>()
@@ -37,25 +27,14 @@ class LoginScreenViewModel : ContainerHost<LoginViewState, LoginSideEffect>, Vie
 
     @OptIn(OrbitExperimental::class)
     fun selectLoginType(loginType: LoginType) = intent {
-        runOn<LoginViewState.LoginType.BrowserLogin.Error> {
-            reduce {
-                LoginViewState.WaitChooseLogin
-            }
-        }
         runOn<LoginViewState.WaitChooseLogin> {
             when (loginType) {
                 InputTokenLogin -> reduce {
                     LoginViewState.LoginType.InputTokenLogin
                 }
 
-                BrowserLogin -> {
-                    if (currentPlatform is Platform.Desktop) {
-                        initKCEF().join()
-                        return@runOn
-                    }
-                    reduce {
-                        LoginViewState.LoginType.BrowserLogin.ShowBrowser
-                    }
+                BrowserLogin -> reduce {
+                    LoginViewState.LoginType.BrowserLogin.ShowBrowser
                 }
             }
         }
@@ -126,38 +105,12 @@ class LoginScreenViewModel : ContainerHost<LoginViewState, LoginSideEffect>, Vie
         delay(3.seconds)
         postSideEffect(LoginSideEffect.NavigateToMain)
     }
-
-    fun installKCEFLocal() = intent {
-        val platformFile = FilePicker.openFilePicker(
-            ext = listOf("tar.gz"),
-        )
-        if (platformFile == null) {
-            postSideEffect(LoginSideEffect.Toast(getString(Res.string.no_file_selected)))
-            return@intent
-        }
-        useTempFile { tmp ->
-            tmp.sink().buffer().use { out ->
-                platformFile.buffer().use { input ->
-                    val buffer = ByteArray(2048)
-                    var len: Int
-                    while (input.read(buffer).also { len = it } != -1) {
-                        out.write(buffer, 0, len)
-                    }
-                }
-                out.flush()
-            }
-            initKCEFLocal(tmp).join()
-        }
-    }
 }
 
 enum class LoginType {
     InputTokenLogin,
     BrowserLogin,
 }
-
-expect fun LoginScreenViewModel.initKCEF(): Job
-expect fun LoginScreenViewModel.initKCEFLocal(file: Path): Job
 
 sealed interface LoginViewState {
     data object WaitChooseLogin : LoginViewState
@@ -169,7 +122,6 @@ sealed interface LoginViewState {
         sealed interface BrowserLogin : LoginType {
             data class Loading(val msg: MutableStateFlow<String>) : BrowserLogin
             data object ShowBrowser : BrowserLogin
-            data class Error(val exception: Throwable) : BrowserLogin
         }
     }
 

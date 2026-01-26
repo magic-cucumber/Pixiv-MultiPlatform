@@ -352,27 +352,12 @@ compose.desktop {
             macOS { iconFile.set(file("icons/pixiv.icns")) }
         }
 
-        // release mode
-        jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
-        jvmArgs("--add-opens", "java.desktop/java.awt.peer=ALL-UNNAMED") // recommended but not necessary
-
-        if ("Mac" in System.getProperty("os.name")) {
-            jvmArgs("--add-opens", "java.desktop/sun.lwawt=ALL-UNNAMED")
-            jvmArgs("--add-opens", "java.desktop/sun.lwawt.macosx=ALL-UNNAMED")
-        }
-        afterEvaluate {
-            tasks.withType<JavaExec> {
-                // debug mode
-                jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
-                jvmArgs("--add-opens", "java.desktop/java.awt.peer=ALL-UNNAMED")
-
-                if ("Mac" in System.getProperty("os.name")) {
-                    jvmArgs("--add-opens", "java.desktop/sun.awt=ALL-UNNAMED")
-                    jvmArgs("--add-opens", "java.desktop/sun.lwawt=ALL-UNNAMED")
-                    jvmArgs("--add-opens", "java.desktop/sun.lwawt.macosx=ALL-UNNAMED")
-                }
-            }
-        }
+        jvmArgs += "--enable-native-access=ALL-UNNAMED"
+//        afterEvaluate {
+//            tasks.withType<JavaExec> {
+//                this.jvmArgs?.plusAssign("--enable-native-access=ALL-UNNAMED")
+//            }
+//        }
         buildTypes.release.proguard { version = "7.8.2" }
     }
 }
@@ -453,98 +438,6 @@ fun getGitHeaderCommitIdShort(): String {
         throw IllegalStateException("git rev-parse failed, rtn:\n$rtn")
     }
     return rtn
-}
-
-// FIXME: 升级到compose 1.9.0后出错，需要添加这个fix。
-tasks.withType(com.google.devtools.ksp.gradle.KspAATask::class.java).configureEach {
-    if (name == "kspKotlinDesktop") {
-        dependsOn(
-            // compose-resources tasks for desktop and common
-            "generateResourceAccessorsForDesktopMain",
-            "generateActualResourceCollectorsForDesktopMain",
-            "generateComposeResClass",
-            "generateResourceAccessorsForCommonMain",
-            "generateExpectResourceCollectorsForCommonMain",
-            // buildConfig for non-Android targets
-            "generateNonAndroidBuildConfig",
-        )
-    }
-
-    if (name == "kspDebugKotlinAndroid") {
-        dependsOn(
-            // compose-resources tasks for android
-            "generateResourceAccessorsForAndroidDebug",
-            "generateResourceAccessorsForAndroidMain",
-            "generateActualResourceCollectorsForAndroidMain",
-            // common + res class
-            "generateComposeResClass",
-            "generateResourceAccessorsForCommonMain",
-            "generateExpectResourceCollectorsForCommonMain",
-            // buildConfig used by KSP inputs
-            "generateNonAndroidBuildConfig",
-        )
-    }
-
-    if (name == "kspReleaseKotlinAndroid") {
-        dependsOn(
-            // compose-resources tasks for android release
-            "generateResourceAccessorsForAndroidRelease",
-            "generateResourceAccessorsForAndroidMain",
-            "generateActualResourceCollectorsForAndroidMain",
-            // common + res class
-            "generateComposeResClass",
-            "generateResourceAccessorsForCommonMain",
-            "generateExpectResourceCollectorsForCommonMain",
-            // buildConfig used by KSP inputs
-            "generateNonAndroidBuildConfig",
-        )
-    }
-
-    // iOS targets
-    if (name == "kspKotlinIosSimulatorArm64") {
-        dependsOn(
-            // compose-resources for ios sim and its hierarchy
-            "generateResourceAccessorsForIosSimulatorArm64Main",
-            "generateActualResourceCollectorsForIosSimulatorArm64Main",
-            "generateResourceAccessorsForIosMain",
-            "generateResourceAccessorsForAppleMain",
-            "generateResourceAccessorsForNativeMain",
-            // common + res class
-            "generateComposeResClass",
-            "generateResourceAccessorsForCommonMain",
-            "generateExpectResourceCollectorsForCommonMain",
-            // buildConfig used by KSP inputs
-            "generateNonAndroidBuildConfig",
-        )
-    }
-
-    if (name == "kspKotlinIosArm64") {
-        dependsOn(
-            "generateResourceAccessorsForIosArm64Main",
-            "generateActualResourceCollectorsForIosArm64Main",
-            "generateResourceAccessorsForIosMain",
-            "generateResourceAccessorsForAppleMain",
-            "generateResourceAccessorsForNativeMain",
-            "generateComposeResClass",
-            "generateResourceAccessorsForCommonMain",
-            "generateExpectResourceCollectorsForCommonMain",
-            "generateNonAndroidBuildConfig",
-        )
-    }
-
-    if (name == "kspKotlinIosX64") {
-        dependsOn(
-            "generateResourceAccessorsForIosX64Main",
-            "generateActualResourceCollectorsForIosX64Main",
-            "generateResourceAccessorsForIosMain",
-            "generateResourceAccessorsForAppleMain",
-            "generateResourceAccessorsForNativeMain",
-            "generateComposeResClass",
-            "generateResourceAccessorsForCommonMain",
-            "generateExpectResourceCollectorsForCommonMain",
-            "generateNonAndroidBuildConfig",
-        )
-    }
 }
 
 // ------------------ IOS Packages Build ------------------

@@ -49,7 +49,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
-import org.koin.compose.viewmodel.koinViewModel
 import org.koin.ext.getFullName
 import org.koin.mp.KoinPlatform.getKoin
 import top.kagg886.pmf.LocalColorScheme
@@ -72,6 +71,7 @@ import top.kagg886.pmf.ui.route.main.about.AboutRoute
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.setting.filter.SettingFilterRoute
 import top.kagg886.pmf.ui.util.UpdateCheckViewModel
+import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
 import top.kagg886.pmf.util.ComposeI18N
@@ -459,7 +459,7 @@ fun SettingScreen() {
                 mutableStateOf(AppConfig.downloadUri)
             }
 
-            val downloadModel = koinViewModel<DownloadScreenModel>()
+            val downloadModel = globalViewModel<DownloadScreenModel>()
             LaunchedEffect(uri) {
                 AppConfig.downloadUri = uri
                 downloadModel.stopAll()

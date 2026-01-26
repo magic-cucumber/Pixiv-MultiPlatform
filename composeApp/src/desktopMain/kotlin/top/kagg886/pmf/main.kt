@@ -36,6 +36,7 @@ import top.kagg886.pmf.util.writeString
 
 fun launch(start: () -> NavKey) {
     setupEnv()
+    System.setProperty("composewebview.wry.log", "true")
     SingletonImageLoader.setSafe {
         ImageLoader.Builder(PlatformContext.INSTANCE).applyCustomConfig().build()
     }

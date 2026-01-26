@@ -3,6 +3,7 @@
     <string name="about">关于</string>
     <string name="account_info">账户信息</string>
     <string name="account_verification_failed">验证账号状态时出了点问题，请重新登录。</string>
+    <string name="add_watch_later">添加到稍后再看</string>
     <string name="advanced">高级</string>
     <string name="advanced_bookmark_settings">高级收藏设置</string>
     <string name="ai_acceptance">您对 AI 作品的接受程度如何呢？</string>
@@ -18,17 +19,12 @@
     <string name="auto_typography">自动排版</string>
     <string name="auto_typography_description">去除多余的空行，并首行缩进%1$ssp</string>
     <string name="birthday">生日</string>
+    <string name="blocking_because_black">无法访问此页面，因为%1$s已被您加入过滤名单。\n解除过滤请前往：设置——浏览设置</string>
     <string name="bookmark">收藏</string>
     <string name="bookmark_extra_options">高级收藏设置</string>
     <string name="bookmark_failed">收藏失败...</string>
     <string name="bookmark_settings">收藏设置</string>
     <string name="bookmark_success">收藏成功！</string>
-    <string name="browser_archive_should_be_tar_gz">必须是.tar.gz结尾的文件！</string>
-    <string name="browser_init_failed">无法初始化嵌入式浏览器</string>
-    <string name="browser_init_failed_msg_backend">的内容以手动安装嵌入式浏览器。\n\n</string>
-    <string name="browser_init_failed_msg_clickable">点击此文本以查看详细信息</string>
-    <string name="browser_init_failed_msg_fronted">由于一些未知的原因，无法初始化嵌入式浏览器。\n请关闭程序后尝试使用token登录。\n或者参阅</string>
-    <string name="browser_init_failed_msg_this_link">此链接</string>
     <string name="bypass_intro">        在某些地区可能无法正常访问Pixiv。\n        我们提供了SNI绕过和代理两种连接方案。\n        SNI绕过：通过特殊方式直接连接Pixiv服务器。\n        代理：通过代理服务器转发请求。</string>
     <string name="bypass_none">无</string>
     <string name="bypass_note">如果您使用嵌入式浏览器搭配梯子登录pixiv，请不要开启SNI绕过功能，否则程序将无法正常登录。\n启用/禁用功能后，你需要重启客户端以生效。</string>
@@ -46,7 +42,6 @@
     <string name="check_update_on_start">启动时检查更新</string>
     <string name="check_update_on_startup">启动时检查更新</string>
     <string name="checking_token">正在检查token...</string>
-    <string name="choose_zip_path">选择压缩包路径</string>
     <string name="clear_log_archive">清空日志归档</string>
     <string name="clear_log_archive_description">日志可能会占用存储空间</string>
     <string name="clear_log_description">日志可能会占用存储空间</string>
@@ -74,7 +69,6 @@
     <string name="coroutine_exception_description">调试用，没事别点</string>
     <string name="country">国家</string>
     <string name="create_time">创建时间</string>
-    <string name="creating_install_lock">创建安装锁...</string>
     <string name="current_mode">当前为:%1$s</string>
     <string name="current_value">当前值:%1$s</string>
     <string name="dark_mode">夜间模式</string>
@@ -92,14 +86,17 @@
     <string name="download_completed">%1$s(%2$s)下载完成！</string>
     <string name="download_failed">%1$s(%2$s)下载失败</string>
     <string name="download_manager">下载管理</string>
+    <string name="download_path_current">当前路径: %1$s</string>
+    <string name="download_path_not_set">未设置下载路径，点击此处选择</string>
+    <string name="download_root_not_set">未设置下载根路径，请前往设置页面进行设置</string>
+    <string name="download_root_permission_revoked">下载根路径读写权限被系统收回，请前往设置页面重新进行设置</string>
     <string name="download_started">下载已开始，是否跳转到下载页？</string>
     <string name="download_success">下载完成</string>
     <string name="download_theme">下载主题</string>
-    <string name="downloading_browser">下载浏览器内核中...%1$s</string>
     <string name="edit_prop">编辑属性</string>
     <string name="error">加载失败</string>
-    <string name="error_details">错误详情</string>
     <string name="exit_preview">退出预览</string>
+    <string name="expand_comment">展开评论区</string>
     <string name="expand_more">展开更多</string>
     <string name="export_all_logs">导出全部日志</string>
     <string name="export_all_logs_description">一定会很卡</string>
@@ -115,6 +112,10 @@
     <string name="favorite_tag">标签收藏(可不填写)</string>
     <string name="favorite_type">收藏类型(必填)</string>
     <string name="file_was_downloading">文件仍在下载，请稍等片刻...</string>
+    <string name="filter_add">添加此%1$s到屏蔽列表</string>
+    <string name="filter_add_tags_confirm">是否将此标签添加到屏蔽列表？\n您将无法在任何页面看到含有此标签的插画/小说，同时您也无法在搜索页面搜索此标签。\n您可以前往设置——浏览设置以解除屏蔽</string>
+    <string name="filter_add_tags_tips">添加成功！</string>
+    <string name="filter_add_user_tips">添加成功！您将无法在任何页面看到此作者的插画/小说，同时您也不能前往该作者的主页。\n您可以前往设置——浏览设置以解除屏蔽</string>
     <string name="filter_ai_illustrations">AI插画过滤</string>
     <string name="filter_ai_novel">AI小说过滤</string>
     <string name="filter_ai_server_hint">若在服务端设置了过滤，则可以不用开启</string>
@@ -162,14 +163,13 @@
     <string name="ignore_ssl_errors">忽略SSL错误</string>
     <string name="ignore_ssl_errors_description">关闭后将不会忽略非严格SSL错误(可能造成DoH解析失败)，一般不会调整此设置。</string>
     <string name="illust">插画</string>
+    <string name="illust_details_open_for">插画详情页面滑动时</string>
     <string name="illust_details_show_all">默认显示所有画廊图片</string>
     <string name="illustration_bookmarks">插画收藏</string>
     <string name="illustration_works">插画作品</string>
     <string name="image_details">图片详情</string>
     <string name="import_theme_fail">无法导入主题，原因：%1$s</string>
-    <string name="init_browser">正在初始化嵌入式浏览器...</string>
     <string name="input_token">请输入token</string>
-    <string name="installing_browser">安装浏览器内核中...</string>
     <string name="ip_pool">内置IP池列表</string>
     <string name="ip_pool_description">DoH不可用时直接提供此表中的IP</string>
     <string name="ip_pool_hint">作为最后的防御手段，该ip一定要可以直连</string>
@@ -178,6 +178,7 @@
     <string name="jump_browser_tips">外部链接确认提示</string>
     <string name="jump_browser_tips_question">是否打开链接：%1$s</string>
     <string name="jump_to_chapter">跳转到第%1$s章节</string>
+    <string name="keyword">关键词</string>
     <string name="language_en">English</string>
     <string name="language_zh">简体中文</string>
     <string name="language_zh_TW">繁體中文</string>
@@ -199,6 +200,8 @@
     <string name="match_keyword">关键词(仅小说)</string>
     <string name="match_text">正文匹配(仅小说)</string>
     <string name="match_title_caption">匹配标题简介(仅插画/作者)</string>
+    <string name="multiapp_hint">该文件用于确保Pixiv-MultiPlatform正常运行，请不要删除此文件！</string>
+    <string name="multiapp_not_allowed">Pixiv-MultiPlatform只允许一个实例运行，请关闭已有的实例。</string>
     <string name="my_bookmark">我的收藏</string>
     <string name="network_settings">网络设置</string>
     <string name="next_page">下一章</string>
@@ -231,6 +234,11 @@
     <string name="open_in_browser">在浏览器中打开</string>
     <string name="open_in_clipboard">复制作品链接</string>
     <string name="open_source">开源许可</string>
+    <string name="option_filter_aspect_ratio_none">不启用</string>
+    <string name="option_filter_aspect_ratio_pc">(长度＞宽度)(电脑壁纸)</string>
+    <string name="option_filter_aspect_ratio_phone">宽度&gt;长度(手机壁纸)</string>
+    <string name="option_filter_aspect_ratio_usage">选择手机/电脑壁纸用</string>
+    <string name="options_filter_aspect_ratio">宽高比过滤</string>
     <string name="page_is_empty">页面为空</string>
     <string name="parse_novel_node">解析小说节点中...%1$s/%2$s</string>
     <string name="parsing_novel_series">解析小说节点中...</string>
@@ -241,6 +249,7 @@
     <string name="platform_not_support">暂不支持该平台</string>
     <string name="please_bookmark_author_to_detail">请前往详情页面收藏作者！</string>
     <string name="please_input">请输入</string>
+    <string name="please_input_keyword">请输入关键词</string>
     <string name="previous_page">上一章</string>
     <string name="previous_step">上一步</string>
     <string name="private">私密</string>
@@ -269,25 +278,37 @@
     <string name="record_search_history">记录搜索记录</string>
     <string name="record_search_history_off">关闭后将不会记录搜索记录</string>
     <string name="region">地区</string>
+    <string name="remove_watch_later">从稍后再看中移除</string>
+    <string name="remove_watch_later_success">已从稍后再看中删除</string>
     <string name="reply_for">回复 %1$s 的评论</string>
     <string name="reset_theme">还原主题</string>
     <string name="reset_theme_description">将主题重置为默认</string>
-    <string name="retry">重试</string>
     <string name="save">保存</string>
     <string name="search">搜索</string>
+    <string name="search_metadata">搜索元数据</string>
     <string name="search_mode">搜索模式</string>
     <string name="search_result_for">［%1$s］的搜索结果</string>
     <string name="search_result_none">没有搜索结果</string>
+    <string name="search_type">搜索类型</string>
+    <string name="select_path">选择</string>
     <string name="series_belong">所属系列</string>
     <string name="session_copied">已将会话信息已复制到剪切板。注意：请勿将此会话发送到公开场合，这可能会导致您的账户被恶意修改。</string>
     <string name="set_theme">设置主题</string>
     <string name="settings">程序设置</string>
+    <string name="settings_download">下载设置</string>
+    <string name="settings_download_path">下载根设置</string>
+    <string name="settings_download_path_desc">选择程序将图片等所下载的位置</string>
+    <string name="settings_download_path_not_supported">iOS不支持选取下载路径</string>
+    <string name="settings_filter">浏览设置</string>
+    <string name="settings_filter_clicked">点击以配置浏览项</string>
     <string name="setup_complete">大功告成！</string>
     <string name="setup_finish_note">        您已经完成了所有的设置。现在，我们将跳转到登录页面。这些设置可以在登录后前往设置页面进行修改。\n        在初次登录前，我们会下载嵌入式浏览器以提供完整的登录体验，这会占用您大约300M的磁盘空间。</string>
     <string name="setup_finish_note_simple">        您已经完成了所有的设置。现在，我们将跳转到登录页面。这些设置可以在登录后前往设置页面进行修改。</string>
     <string name="share">分享</string>
     <string name="shield_config">屏蔽配置</string>
     <string name="shield_intro">        通过这三个问题，让我们帮您选择最适合您的屏蔽设置。更高级的小说屏蔽功能，请在登录后前往设置页面。</string>
+    <string name="show_original_image">显示原图</string>
+    <string name="show_original_image_hint">可能会拖慢网络速度，请谨慎开启</string>
     <string name="show_toast_on_fail">检查失败时显示Toast</string>
     <string name="show_toast_on_latest">检查为最新版本时显示Toast</string>
     <string name="show_toast_when_failed">检查失败时显示Toast</string>
@@ -302,6 +323,7 @@
     <string name="sort_popular_desc">热度降序</string>
     <string name="space">动态</string>
     <string name="step_number">第%1$s/%2$s步</string>
+    <string name="switch_detail">切换插画</string>
     <string name="system_default">跟随系统</string>
     <string name="tag_max_length">TAG最大长度</string>
     <string name="tag_max_length_description">当某一TAG长度超出这个值时，将不会显示</string>
@@ -329,7 +351,6 @@
     <string name="unfollow_success">取关成功~o(╥﹏╥)o</string>
     <string name="unknown">未知</string>
     <string name="unknown_error">未知错误</string>
-    <string name="unzipping_browser">解压浏览器内核中...</string>
     <string name="update">更新</string>
     <string name="update_check_failed">更新检测失败...</string>
     <string name="updates">更新</string>
@@ -344,64 +365,18 @@
     <string name="version_latest">当前为最新版本</string>
     <string name="visibility">可见性</string>
     <string name="warning">警告</string>
+    <string name="watch_later">稍后再看</string>
+    <string name="watch_later_setting_auto_remove_click">从稍后再看页点击时自动删除</string>
+    <string name="watch_later_setting_auto_remove_click_desc">点击时自动删除该条目</string>
+    <string name="watch_later_setting_auto_remove_days">稍后再看保留天数</string>
+    <string name="watch_later_setting_auto_remove_days_desc">过期的稍后再看会自动移除，为0表示禁用此功能</string>
     <string name="welcome">欢迎！</string>
     <string name="welcome_text">        %1$s 是一个基于 Compose Multiplatform 的跨平台第三方Pixiv客户端，由</string>
     <string name="welcome_text_after_pixko">强力驱动。\n\n        在进行登录之前，让我们完成一些设置。这些设置于可能会随你所在的地区，网络环境而变动。如果您决定结束设置。请点击下方的 \'跳过设置\' 按钮，否则点按下一步以前往下一步设置。\n\n        准备好了吗？点击下一步以开始设置。\n\n        出现问题了? 请前往TG交流群描述您的问题。</string>
     <string name="welcome_user">欢迎您！ %1$s</string>
     <string name="word_count">总字数</string>
-    <string name="xattr_setting">正在设置xattr......</string>
     <string name="yes">是</string>
     <string name="you_can_still_check_update_on_setting">您仍可以前往设置中检查更新</string>
-
-    <string name="options_filter_aspect_ratio">宽高比过滤</string>
-    <string name="option_filter_aspect_ratio_usage">选择手机/电脑壁纸用</string>
-    <string name="option_filter_aspect_ratio_none">不启用</string>
-    <string name="option_filter_aspect_ratio_phone">宽度>长度(手机壁纸)</string>
-    <string name="option_filter_aspect_ratio_pc">(长度＞宽度)(电脑壁纸)</string>
-
-    <string name="settings_download">下载设置</string>
-    <string name="settings_download_path">下载根设置</string>
-    <string name="settings_download_path_desc">选择程序将图片等所下载的位置</string>
-    <string name="settings_download_path_not_supported">iOS不支持选取下载路径</string>
-    <string name="download_root_not_set">未设置下载根路径，请前往设置页面进行设置</string>
-    <string name="download_root_permission_revoked">下载根路径读写权限被系统收回，请前往设置页面重新进行设置</string>
-    <string name="download_path_not_set">未设置下载路径，点击此处选择</string>
-    <string name="download_path_current">当前路径: %1$s</string>
-    <string name="select_path">选择</string>
-    <string name="show_original_image">显示原图</string>
-    <string name="show_original_image_hint">可能会拖慢网络速度，请谨慎开启</string>
-
-    <string name="illust_details_open_for">插画详情页面滑动时</string>
-    <string name="switch_detail">切换插画</string>
-    <string name="expand_comment">展开评论区</string>
-
-    <string name="keyword">关键词</string>
-    <string name="please_input_keyword">请输入关键词</string>
-    <string name="search_metadata">搜索元数据</string>
-    <string name="search_type">搜索类型</string>
-
-    <string name="watch_later">稍后再看</string>
-    <string name="add_watch_later">添加到稍后再看</string>
-    <string name="remove_watch_later">从稍后再看中移除</string>
-    <string name="remove_watch_later_success">已从稍后再看中删除</string>
-
-    <string name="watch_later_setting_auto_remove_days">稍后再看保留天数</string>
-    <string name="watch_later_setting_auto_remove_days_desc">过期的稍后再看会自动移除，为0表示禁用此功能</string>
-
-    <string name="watch_later_setting_auto_remove_click">从稍后再看页点击时自动删除</string>
-    <string name="watch_later_setting_auto_remove_click_desc">点击时自动删除该条目</string>
-
-    <string name="multiapp_hint">该文件用于确保Pixiv-MultiPlatform正常运行，请不要删除此文件！</string>
-    <string name="multiapp_not_allowed">Pixiv-MultiPlatform只允许一个实例运行，请关闭已有的实例。</string>
-
-    <string name="settings_filter">浏览设置</string>
-    <string name="settings_filter_clicked">点击以配置浏览项</string>
-
-    <string name="filter_add">添加此%1$s到屏蔽列表</string>
-    <string name="filter_add_tags_confirm">是否将此标签添加到屏蔽列表？\n您将无法在任何页面看到含有此标签的插画/小说，同时您也无法在搜索页面搜索此标签。\n您可以前往设置——浏览设置以解除屏蔽</string>
-    <string name="filter_add_user_tips">添加成功！您将无法在任何页面看到此作者的插画/小说，同时您也不能前往该作者的主页。\n您可以前往设置——浏览设置以解除屏蔽</string>
-    <string name="filter_add_tags_tips">添加成功！</string>
-    <string name="blocking_because_black">无法访问此页面，因为%1$s已被您加入过滤名单。\n解除过滤请前往：设置——浏览设置</string>
 
     <string name="emoji">表情符号</string>
     <string name="emoji_desc">表情符号格式为: (代码)</string>

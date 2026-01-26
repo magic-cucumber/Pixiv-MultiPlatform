@@ -8,7 +8,7 @@ arrow = "2.2.0"
 coil = "3.3.0"
 compose-multiplatform = "1.10.0-rc02"
 compose-settings = "2.21.0"
-composeWebviewMultiplatform = "2.0.3"
+composeWebviewMultiplatform = "1.0.0-alpha-10"
 filekitCompose = "0.12.0"
 kermit = "2.0.8"
 koin = "4.2.0-beta2"
@@ -57,7 +57,7 @@ compose-settings-extended = { module = "com.github.alorma.compose-settings:ui-ti
 compose-settings-ui = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "compose-settings" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
-compose-webview-multiplatform = { module = "io.github.kevinnzou:compose-webview-multiplatform", version.ref = "composeWebviewMultiplatform" }
+compose-webview-multiplatform = { module = "io.github.kdroidfilter:composewebview", version.ref = "composeWebviewMultiplatform" }
 filekit-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }

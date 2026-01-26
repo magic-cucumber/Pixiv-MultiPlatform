@@ -12,6 +12,11 @@
 -keep interface org.freedesktop.dbus.interfaces.Properties { *; }
 -keep class androidx.sqlite.driver.bundled.** { *; }
 
+# JNA
+-keep class com.sun.jna.* { *; }
+-keep class * extends com.sun.jna.* { *; }
+-keepclassmembers class * extends com.sun.jna.* { public *; }
+
 -ignorewarnings
 
 

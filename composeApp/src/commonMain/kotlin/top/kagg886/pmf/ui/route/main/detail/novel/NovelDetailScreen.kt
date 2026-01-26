@@ -1,6 +1,13 @@
 package top.kagg886.pmf.ui.route.main.detail.novel
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -29,6 +37,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,6 +61,10 @@ import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
@@ -101,6 +114,7 @@ import top.kagg886.pmf.ui.util.CommentPanel
 import top.kagg886.pmf.ui.util.HTMLRichText
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
 import top.kagg886.pmf.ui.util.RichText
+import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.keyboardScrollerController
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.withClickable
@@ -569,7 +583,7 @@ private fun NovelDetailTopAppBar(
                             },
                         )
 
-                        val download = koinViewModel<DownloadScreenModel>()
+                        val download = globalViewModel<DownloadScreenModel>()
                         if (novel != null) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(Res.string.export_to_epub)) },
@@ -662,11 +676,19 @@ private fun NovelDetailContent(
                     KeyListenerFromGlobalPipe(controller)
 
                     Column(Modifier.verticalScroll(scroll)) {
+                        val scope = rememberCoroutineScope()
                         RichText(
                             state = state.nodeMap,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 15.dp),
+                                .padding(horizontal = 15.dp)
+                                .clickable(interactionSource = null, indication = null) {
+                                    scope.launch {
+                                        connect.scrollableState.animateScrollBy(
+                                            (if (connect.isScrolledTop) 1 else -1) * connect.containerHeight.toFloat(),
+                                        )
+                                    }
+                                },
                         )
 
                         if (AppConfig.enableFetchSeries) {
@@ -687,6 +709,47 @@ private fun NovelDetailContent(
                             .padding(end = 5.dp)
                             .fillMaxHeight(),
                     )
+
+                    AnimatedContent(
+                        targetState = scroll.canScrollBackward && !connect.isScrolledTop,
+                        modifier = Modifier.align(Alignment.BottomEnd),
+                        transitionSpec = {
+                            slideInVertically { it / 2 } + fadeIn() togetherWith
+                                slideOutVertically { it / 2 } + fadeOut()
+                        },
+                    ) {
+                        val scope = rememberCoroutineScope()
+                        KeyListenerFromGlobalPipe {
+                            if (it.type != KeyEventType.KeyUp) return@KeyListenerFromGlobalPipe
+                            if (it.key == Key.R) {
+                                scope.launch {
+                                    scroll.animateScrollBy(-scroll.value.toFloat())
+                                }
+                                scope.launch {
+                                    connect.scrollableState.animateScrollBy(connect.containerHeight.toFloat())
+                                }
+                            }
+                        }
+
+                        if (!it) {
+                            Spacer(Modifier.size(88.dp)) // placeholder
+                            return@AnimatedContent
+                        }
+
+                        FloatingActionButton(
+                            onClick = {
+                                scope.launch {
+                                    scroll.animateScrollBy(-scroll.value.toFloat())
+                                }
+                                scope.launch {
+                                    connect.scrollableState.animateScrollBy(connect.containerHeight.toFloat())
+                                }
+                            },
+                            modifier = Modifier.padding(16.dp),
+                        ) {
+                            Icon(Icons.Default.KeyboardArrowUp, null)
+                        }
+                    }
                 }
             }
         }
