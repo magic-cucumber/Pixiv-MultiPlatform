@@ -37,9 +37,6 @@
     <img src="./README.assets/630c53942ab78d98e13d0ac9e566211c.png" />
 </div>
 
-
-> Before the new version is released, please go to workflow to download the iOS ipa file.
-
 ## 1. Download Links
 
 **Click here to download -->** [![release](https://img.shields.io/github/v/release/magic-cucumber/Pixiv-MultiPlatform)](https://github.com/magic-cucumber/Pixiv-MultiPlatform/releases/latest) [![F-Droid](https://img.shields.io/f-droid/v/top.kagg886.pmf.svg?logo=F-Droid)](https://f-droid.org/packages/top.kagg886.pmf/) 
@@ -141,5 +138,5 @@
   - [x] Block novels with excessive tags
   - [x] Block novels with very short content
   - [x] Direct connection using DoH
-  - [ ] Custom TAG filtering
-  - [ ] Internationalization
+  - [x] Custom TAG filtering
+  - [x] Internationalization

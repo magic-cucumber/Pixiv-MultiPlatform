@@ -37,8 +37,6 @@
     <img src="./README.assets/630c53942ab78d98e13d0ac9e566211c.png" />
 </div>
 
-> 在新版本发布前，iOS的ipa文件请前往 workflow 处下载。
-
 ## 一. 下载链接
 
 **戳此处进行下载-->** [![release](https://img.shields.io/github/v/release/magic-cucumber/Pixiv-MultiPlatform)](https://github.com/magic-cucumber/Pixiv-MultiPlatform/releases/latest) [![F-Droid](https://img.shields.io/f-droid/v/top.kagg886.pmf.svg?logo=F-Droid)](https://f-droid.org/packages/top.kagg886.pmf/) 
@@ -142,5 +140,5 @@
   - [x] 屏蔽TAG过长小说
   - [x] 屏蔽正文过短小说
   - [x] 使用DoH实现直连
-  - [ ] 自定义TAG过滤
-  - [ ] 国际化
+  - [x] 自定义TAG过滤
+  - [x] 国际化
