@@ -377,4 +377,9 @@
     <string name="word_count">总字数</string>
     <string name="yes">是</string>
     <string name="you_can_still_check_update_on_setting">您仍可以前往设置中检查更新</string>
+
+    <string name="emoji">表情符号</string>
+    <string name="emoji_desc">表情符号格式为: (代码)</string>
+    <string name="stamp">贴纸</string>
+    <string name="stamp_desc">发送贴纸时不会发送文本</string>
 </resources>

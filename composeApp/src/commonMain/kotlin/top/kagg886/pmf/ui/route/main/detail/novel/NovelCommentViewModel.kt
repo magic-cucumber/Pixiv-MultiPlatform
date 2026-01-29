@@ -17,7 +17,15 @@ class NovelCommentViewModel(id: Long) : CommentViewModel(id) {
         client.sendNovelComment {
             novelId = id
             parentCommentId = parentId
-            comment = text
+            comment(text)
+        }
+    }
+
+    override suspend fun sendComment(parentId: Long?, id: Long, stamp: Long) {
+        client.sendNovelComment {
+            parentCommentId = parentId
+            novelId = id
+            comment(stamp)
         }
     }
 }

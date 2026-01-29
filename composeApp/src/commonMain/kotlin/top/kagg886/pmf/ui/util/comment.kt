@@ -5,24 +5,28 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.*
 import org.jetbrains.compose.resources.getString
 import org.koin.core.component.KoinComponent
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
 import org.orbitmvi.orbit.annotation.OrbitExperimental
 import top.kagg886.pixko.module.illust.Comment
-import top.kagg886.pmf.res.*
+import top.kagg886.pmf.res.Res
+import top.kagg886.pmf.res.comment_failed
+import top.kagg886.pmf.res.comment_success
 
-abstract class CommentViewModel(private val id: Long) : ContainerHost<CommentViewState, CommentSideEffect>, ViewModel(), KoinComponent {
-    override val container: Container<CommentViewState, CommentSideEffect> = container(CommentViewState.Success.Generic())
+abstract class CommentViewModel(private val id: Long) :
+    ContainerHost<CommentViewState, CommentSideEffect>,
+    ViewModel(),
+    KoinComponent {
+    override val container: Container<CommentViewState, CommentSideEffect> =
+        container(CommentViewState.Success.Generic())
+
     abstract fun source(id: Long): Flow<PagingData<Comment>>
     abstract fun reply(id: Long): Flow<PagingData<Comment>>
     abstract suspend fun sendComment(parentId: Long?, id: Long, text: String)
+    abstract suspend fun sendComment(parentId: Long?, id: Long, stamp: Long)
 
     private val refreshSignal = MutableSharedFlow<Unit>()
 
@@ -53,10 +57,10 @@ abstract class CommentViewModel(private val id: Long) : ContainerHost<CommentVie
     }
 
     @OptIn(OrbitExperimental::class)
-    fun sendComment(text: String) = intent {
+    private inline fun ContainerHost<CommentViewState, CommentSideEffect>.sendCommentInternal(crossinline block: suspend (CommentViewState) -> Unit) = intent {
         runOn<CommentViewState.Success> {
             val result = kotlin.runCatching {
-                sendComment((state as? CommentViewState.Success.HasReply)?.target?.id, id, text)
+                block(state)
             }
             if (result.isSuccess) {
                 postSideEffect(CommentSideEffect.Toast(getString(Res.string.comment_success)))
@@ -66,6 +70,12 @@ abstract class CommentViewModel(private val id: Long) : ContainerHost<CommentVie
             postSideEffect(CommentSideEffect.Toast(getString(Res.string.comment_failed)))
         }
     }
+
+    @OptIn(OrbitExperimental::class)
+    fun sendComment(text: String) = sendCommentInternal { sendComment((it as? CommentViewState.Success.HasReply)?.target?.id, id, text) }
+
+    @OptIn(OrbitExperimental::class)
+    fun sendComment(stamp: Long) = sendCommentInternal { sendComment((it as? CommentViewState.Success.HasReply)?.target?.id, id, stamp) }
 }
 
 sealed interface CommentViewState {

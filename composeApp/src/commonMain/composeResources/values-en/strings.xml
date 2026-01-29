@@ -375,4 +375,9 @@
     <string name="word_count">Words</string>
     <string name="yes">Yes</string>
     <string name="you_can_still_check_update_on_setting">You can still check for updates in settings</string>
+
+    <string name="emoji">Emoji</string>
+    <string name="emoji_desc">Emoji format: (Code)</string>
+    <string name="stamp">Stickers</string>
+    <string name="stamp_desc">Text will not be sent when sending stickers</string>
 </resources>
