@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.runtime.Composable
@@ -14,7 +15,7 @@ fun SelectionCard(
     modifier: Modifier = Modifier,
     select: Boolean,
     onClick: () -> Unit,
-    content: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     AnimatedContent(
         targetState = select,
