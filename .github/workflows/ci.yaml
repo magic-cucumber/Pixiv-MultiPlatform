@@ -82,7 +82,7 @@ jobs:
       - name: Build with Gradle Wrapper
         run: |
           chmod +x ./gradlew
-          ./gradlew packageReleaseDistributionForCurrentOS
+          ./gradlew packageReleaseAppImage
 
       - name: Zip artifact
         run: tar -czvf linux.tar.gz -C composeApp/build/compose/binaries/main-release/app .
@@ -93,11 +93,24 @@ jobs:
           name: linux.tar.gz
           path: linux.tar.gz
 
+      - name: Find AppImage Path
+        run: |
+          # 在目标目录中寻找 .AppImage 文件
+          APP_PATH=$(find . -name "*.AppImage" -type f | head -n 1)
+
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: No AppImage found!"
+            exit 1
+          fi
+
+          # 将路径写入环境变量供后续步骤使用
+          echo "DYNAMIC_APP_PATH=$APP_PATH" >> $GITHUB_ENV
+
       - name: Upload Linux Portable
         uses: actions/upload-artifact@v4
         with:
           name: linux.AppImage
-          path: composeApp/build/compose/binaries/main-release/app/*.AppImage
+          path: ${{ env.DYNAMIC_APP_PATH }}
           if-no-files-found: error
 
       - name: Upload Proguard Mapping File
@@ -106,6 +119,7 @@ jobs:
           name: proguard-linux.mapping
           path: composeApp/build/compose/binaries/main-release/proguard
           if-no-files-found: error
+
 #  build-android:
 #    runs-on: ubuntu-latest
 #    permissions:
