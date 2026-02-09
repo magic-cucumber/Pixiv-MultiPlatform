@@ -344,7 +344,7 @@ private fun ThemeSelectionContent() {
                         }
                     }
                 },
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterVertically),
+                modifier = Modifier.fillMaxHeight().weight(1f),
             )
         }
 
@@ -362,7 +362,7 @@ private fun ThemeSelectionContent() {
                 headlineContent = {
                     Text(stringResource(Res.string.night_mode))
                 },
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterVertically),
+                modifier = Modifier.fillMaxHeight().weight(1f),
             )
         }
 
@@ -380,7 +380,7 @@ private fun ThemeSelectionContent() {
                 headlineContent = {
                     Text(stringResource(Res.string.follow_system))
                 },
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterVertically),
+                modifier = Modifier.fillMaxHeight().weight(1f),
             )
         }
     }
@@ -431,7 +431,7 @@ private fun BypassSettingsContent() {
                 headlineContent = {
                     Text(stringResource(Res.string.no_bypass))
                 },
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterVertically),
+                modifier = Modifier.fillMaxHeight().weight(1f),
             )
         }
 
@@ -449,7 +449,7 @@ private fun BypassSettingsContent() {
                 headlineContent = {
                     Text(stringResource(Res.string.use_sni_bypass))
                 },
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterVertically),
+                modifier = Modifier.fillMaxHeight().weight(1f),
             )
         }
 
@@ -467,7 +467,7 @@ private fun BypassSettingsContent() {
                 headlineContent = {
                     Text(stringResource(Res.string.use_proxy))
                 },
-                modifier = Modifier.fillMaxHeight().align(Alignment.CenterVertically),
+                modifier = Modifier.fillMaxHeight().weight(1f),
             )
         }
     }
