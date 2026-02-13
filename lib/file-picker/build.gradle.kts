@@ -40,7 +40,6 @@ kotlin {
     jvmToolchain(17)
     jvm()
 
-    
     iosArm64()
     iosSimulatorArm64()
 
