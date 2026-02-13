@@ -86,7 +86,7 @@ kotlin {
     androidTarget()
     jvm("desktop")
 
-    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
+    listOf(iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true

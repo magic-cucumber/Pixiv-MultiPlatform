@@ -1,38 +1,38 @@
 [versions]
-aboutlibraries = "13.1.0"
+aboutlibraries = "13.2.1"
 agp = "8.13.2"
 #androidx-documentfile = "1.1.0"
-androidx-documentfile = "1.2"
-androidx-lifecycle = "2.10.0-alpha07"
-arrow = "2.2.0"
+androidx-documentfile = "1.3"
+androidx-lifecycle = "2.10.0-alpha08"
+arrow = "2.2.1.1"
 coil = "3.3.0"
-compose-multiplatform = "1.10.0-rc02"
-compose-settings = "2.21.0"
+compose-multiplatform = "1.10.1"
+compose-settings = "2.26.0"
 composeWebviewMultiplatform = "1.0.0-alpha-10"
 filekitCompose = "0.12.0"
 kermit = "2.0.8"
-koin = "4.2.0-beta2"
+koin = "4.2.0-RC1"
 korlibsIo = "6.0.2"
-kotlin = "2.3.0"
+kotlin = "2.3.10"
 kotlinx-coroutines = "1.10.2"
-kotlinxSerialization = "1.9.0"
+kotlinxSerialization = "1.10.0"
 ksoup = "0.2.5"
-ksp = "2.3.4"
-ktor = "3.3.3"
+ksp = "2.3.5"
+ktor = "3.4.0"
 multiplatformSettings = "1.3.0"
 okio = "3.16.4"
 orbit = "11.0.0"
-paging = "3.4.0-alpha04"
+paging = "3.4.1"
 pixko = "2.10"
 room = "2.7.2"
-sqliteBundled = "2.6.0"
+sqliteBundled = "2.6.2"
 telephoto = "0.18.0"
 versionCatalogUpdate = "1.0.1"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
-androidx-activity-compose = "androidx.activity:activity-compose:1.12.1"
+androidx-activity-compose = "androidx.activity:activity-compose:1.12.4"
 #androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "androidx-documentfile" }
 androidx-documentfile = { module = "com.lazygeniouz:dfc", version.ref = "androidx-documentfile" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
@@ -51,7 +51,7 @@ compose-components-resources = { module = "org.jetbrains.compose.components:comp
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
 compose-material-icons-core = "org.jetbrains.compose.material:material-icons-core:1.7.3"
 compose-material3 = "org.jetbrains.compose.material3:material3:1.9.0"
-compose-navigation3-ui = "org.jetbrains.androidx.navigation3:navigation3-ui:1.0.0-alpha06"
+compose-navigation3-ui = "org.jetbrains.androidx.navigation3:navigation3-ui:1.1.0-alpha02"
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
 compose-settings-extended = { module = "com.github.alorma.compose-settings:ui-tiles-extended", version.ref = "compose-settings" }
 compose-settings-ui = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "compose-settings" }
@@ -90,14 +90,14 @@ aboutlibrariesPlugin = { id = "com.mikepenz.aboutlibraries.plugin", version.ref 
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 benmanes-versions = "com.github.ben-manes.versions:0.53.0"
-buildConfig = "com.github.gmazzo.buildconfig:5.7.1"
+buildConfig = "com.github.gmazzo.buildconfig:6.0.7"
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
-spotless = "com.diffplug.spotless:8.1.0"
+spotless = "com.diffplug.spotless:8.2.1"
 version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCatalogUpdate" }
 
 [bundles]
