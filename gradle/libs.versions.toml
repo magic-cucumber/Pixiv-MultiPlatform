@@ -1,11 +1,12 @@
 [versions]
 aboutlibraries = "13.2.1"
-agp = "8.13.2"
+agp = "8.12.0"
 #androidx-documentfile = "1.1.0"
 androidx-documentfile = "1.3"
 androidx-lifecycle = "2.10.0-alpha08"
 arrow = "2.2.1.1"
 coil = "3.3.0"
+chip-textfield = "0.7.2-alpha01"
 compose-multiplatform = "1.10.1"
 compose-settings = "2.26.0"
 composeWebviewMultiplatform = "1.0.0-alpha-10"
@@ -84,6 +85,7 @@ okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 orbit-core = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
 pixko = { module = "top.kagg886:pixko", version.ref = "pixko" }
 telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
+chip-textfield = { module = "io.github.dokar3:chiptextfield-m3", version.ref = "chip-textfield" }
 
 [plugins]
 aboutlibrariesPlugin = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
