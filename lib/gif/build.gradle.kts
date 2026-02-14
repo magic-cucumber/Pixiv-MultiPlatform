@@ -52,7 +52,6 @@ android {
 }
 
 val kotlinArchToRustArch = mapOf(
-    "iosX64" to "x86_64-apple-ios",
     "iosArm64" to "aarch64-apple-ios",
     "iosSimulatorArm64" to "aarch64-apple-ios-sim",
 )
@@ -61,7 +60,7 @@ kotlin {
     jvmToolchain(17)
     jvm()
 
-    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { t ->
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { t ->
         t.apply {
             compilations.all {
                 cinterops {

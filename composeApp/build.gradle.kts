@@ -86,7 +86,7 @@ kotlin {
     androidTarget()
     jvm("desktop")
 
-    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach {
+    listOf(iosArm64(), iosSimulatorArm64()).forEach {
         it.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
@@ -157,7 +157,8 @@ kotlin {
             implementation(libs.compose.settings.extended)
 
             // search-page-ui
-            implementation(project(":lib:chip-text-field"))
+            implementation(libs.chip.textfield)
+//            implementation(project(":lib:chip-text-field"))
 
             // webview
             api(libs.compose.webview.multiplatform)
