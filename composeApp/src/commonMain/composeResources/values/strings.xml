@@ -94,6 +94,8 @@
     <string name="download_success">下载完成</string>
     <string name="download_theme">下载主题</string>
     <string name="edit_prop">编辑属性</string>
+    <string name="emoji">表情符号</string>
+    <string name="emoji_desc">表情符号格式为: (代码)</string>
     <string name="error">加载失败</string>
     <string name="exit_preview">退出预览</string>
     <string name="expand_comment">展开评论区</string>
@@ -322,6 +324,8 @@
     <string name="sort_mode">排序方式</string>
     <string name="sort_popular_desc">热度降序</string>
     <string name="space">动态</string>
+    <string name="stamp">贴纸</string>
+    <string name="stamp_desc">发送贴纸时不会发送文本</string>
     <string name="step_number">第%1$s/%2$s步</string>
     <string name="switch_detail">切换插画</string>
     <string name="system_default">跟随系统</string>
@@ -377,9 +381,4 @@
     <string name="word_count">总字数</string>
     <string name="yes">是</string>
     <string name="you_can_still_check_update_on_setting">您仍可以前往设置中检查更新</string>
-
-    <string name="emoji">表情符号</string>
-    <string name="emoji_desc">表情符号格式为: (代码)</string>
-    <string name="stamp">贴纸</string>
-    <string name="stamp_desc">发送贴纸时不会发送文本</string>
 </resources>

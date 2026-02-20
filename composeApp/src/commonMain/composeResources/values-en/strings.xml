@@ -94,6 +94,8 @@
     <string name="download_success">Downloaded</string>
     <string name="download_theme">Download Theme</string>
     <string name="edit_prop">Edit properties</string>
+    <string name="emoji">Emoji</string>
+    <string name="emoji_desc">Emoji format: (Code)</string>
     <string name="error">Error</string>
     <string name="exit_preview">Exit preview</string>
     <string name="expand_comment">Expand comments</string>
@@ -241,6 +243,8 @@
     <string name="options_filter_aspect_ratio">Filter by aspect ratio</string>
     <string name="page_is_empty">Page is empty</string>
     <string name="parse_novel_node">Parsing...%1$s/%2$s</string>
+    <string name="parsing_novel_series">Parsing...</string>
+    <string name="parsing_novel_series_progress">Parsing... %1$s/%2$s</string>
     <string name="parsing_user_info">Parsing user information...</string>
     <string name="pawoo_link">Pawoo link</string>
     <string name="personal_profile">Profile</string>
@@ -320,6 +324,8 @@
     <string name="sort_mode">Sort by</string>
     <string name="sort_popular_desc">Most popular</string>
     <string name="space">Space</string>
+    <string name="stamp">Stickers</string>
+    <string name="stamp_desc">Text will not be sent when sending stickers</string>
     <string name="step_number">Step %1$s/%2$s</string>
     <string name="switch_detail">Switch illustration</string>
     <string name="system_default">System</string>
@@ -375,9 +381,4 @@
     <string name="word_count">Words</string>
     <string name="yes">Yes</string>
     <string name="you_can_still_check_update_on_setting">You can still check for updates in settings</string>
-
-    <string name="emoji">Emoji</string>
-    <string name="emoji_desc">Emoji format: (Code)</string>
-    <string name="stamp">Stickers</string>
-    <string name="stamp_desc">Text will not be sent when sending stickers</string>
 </resources>

@@ -95,8 +95,11 @@
     <string name="download_success">下載完成</string>
     <string name="download_theme">下載主題</string>
     <string name="edit_prop">編輯屬性</string>
+    <string name="emoji">表情符號</string>
+    <string name="emoji_desc">表情符號格式為：(代碼)</string>
     <string name="error">載入失敗</string>
     <string name="exit_preview">退出預覽</string>
+    <string name="expand_comment">展開評論區</string>
     <string name="expand_more">展開更多</string>
     <string name="export_all_logs">匯出全部日誌</string>
     <string name="export_all_logs_description">一定會很卡</string>
@@ -163,6 +166,7 @@
     <string name="ignore_ssl_errors">忽略 SSL 錯誤</string>
     <string name="ignore_ssl_errors_description">關閉後將不會忽略非嚴格 SSL 錯誤 (可能造成 DoH 解析失敗)，一般不需調整此設定。</string>
     <string name="illust">插畫</string>
+    <string name="illust_details_open_for">插畫詳情頁麵滑動時</string>
     <string name="illust_details_show_all">預設顯示所有作品牆圖片</string>
     <string name="illustration_bookmarks">插畫收藏</string>
     <string name="illustration_works">插畫作品</string>
@@ -321,7 +325,10 @@
     <string name="sort_mode">排序方式</string>
     <string name="sort_popular_desc">熱度遞減</string>
     <string name="space">動態</string>
+    <string name="stamp">貼圖</string>
+    <string name="stamp_desc">傳送貼圖時不會傳送文字</string>
     <string name="step_number">第 %1$s/%2$s 步</string>
+    <string name="switch_detail">切換插畫</string>
     <string name="system_default">跟隨系統</string>
     <string name="tag_max_length">TAG 最大長度</string>
     <string name="tag_max_length_description">當某個 TAG 長度超出此值時，將不會顯示</string>
@@ -375,9 +382,4 @@
     <string name="word_count">總字數</string>
     <string name="yes">是</string>
     <string name="you_can_still_check_update_on_setting">您仍可前往設定中檢查更新</string>
-
-    <string name="emoji">表情符號</string>
-    <string name="emoji_desc">表情符號格式為：(代碼)</string>
-    <string name="stamp">貼圖</string>
-    <string name="stamp_desc">傳送貼圖時不會傳送文字</string>
 </resources>
