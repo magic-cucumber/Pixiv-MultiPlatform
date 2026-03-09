@@ -148,7 +148,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
                     }
                     TextField(
                         value = state.text,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().windowInsetsPadding(TopAppBarDefaults.windowInsets),
                         onValueChange = { model.updateText(it) },
                         leadingIcon = {
                             IconButton(onClick = { stack.removeLastOrNullWorkaround() }) {
