@@ -2,6 +2,7 @@ package top.kagg886.filepicker
 
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.dialogs.openFileSaver
@@ -54,7 +55,7 @@ actual suspend fun FilePicker.openFilePicker(
 ): Source? {
     val file = FileKit.openFilePicker(
         type = FileKitType.File(extensions = ext?.toSet()),
-        title = title,
+        dialogSettings = FileKitDialogSettings(title = title),
         directory = directory?.let { PlatformFile(it.toString().toPath()) },
     )
 
