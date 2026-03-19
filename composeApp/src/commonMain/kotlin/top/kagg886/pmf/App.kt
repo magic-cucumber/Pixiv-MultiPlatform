@@ -311,7 +311,7 @@ fun App(start: NavKey = WelcomeRoute) {
                             backStack = stack,
                             modifier = modifier.fillMaxSize(),
                             onBack = { stack.removeLastOrNullWorkaround() },
-                            sceneStrategy = DialogSceneStrategy(),
+                            sceneStrategies = listOf(DialogSceneStrategy()),
                             entryDecorators = listOf(
                                 rememberSaveableStateHolderNavEntryDecorator(),
                                 rememberViewModelStoreNavEntryDecorator(),
