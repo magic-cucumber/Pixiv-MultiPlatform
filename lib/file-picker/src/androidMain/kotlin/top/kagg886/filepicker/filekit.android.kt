@@ -9,6 +9,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.context
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.init
 import io.github.vinceglb.filekit.dialogs.openFilePicker
@@ -68,7 +69,7 @@ actual suspend fun FilePicker.openFilePicker(
 ): Source? {
     val file = FileKit.openFilePicker(
         type = FileKitType.File(extensions = ext?.toSet()),
-        title = title,
+        dialogSettings = FileKitDialogSettings(),
         directory = directory?.let { PlatformFile(it.toFile()) },
     )
 
