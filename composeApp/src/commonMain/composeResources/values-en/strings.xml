@@ -206,6 +206,8 @@
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform allows only one instance to run. Please close the existing instance</string>
     <string name="my_bookmark">My Bookmarks</string>
     <string name="network_settings">Network</string>
+    <string name="custom_share_domain">Custom Share Domain</string>
+    <string name="custom_share_domain_description">Domain for copied links. Leave empty for pixiv.net</string>
     <string name="next_page">Next</string>
     <string name="next_step">Next</string>
     <string name="night_mode">Dark</string>

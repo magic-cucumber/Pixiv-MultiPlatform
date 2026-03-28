@@ -206,6 +206,8 @@
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform只允许一个实例运行，请关闭已有的实例。</string>
     <string name="my_bookmark">我的收藏</string>
     <string name="network_settings">网络设置</string>
+    <string name="custom_share_domain">自定义分享域名</string>
+    <string name="custom_share_domain_description">设置复制链接时使用的域名，留空则使用 pixiv.net</string>
     <string name="next_page">下一章</string>
     <string name="next_step">下一步</string>
     <string name="night_mode">夜间模式</string>

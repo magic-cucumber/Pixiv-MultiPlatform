@@ -218,7 +218,8 @@ private fun IllustTopAppBar(
                 DropdownMenuItem(
                     text = { Text(stringResource(Res.string.open_in_clipboard)) },
                     onClick = {
-                        scope.launch { clip.setText("https://pixiv.net/artworks/${illust.id}") }
+                        val domain = AppConfig.customShareDomain.ifEmpty { "pixiv.net" }
+                        scope.launch { clip.setText("https://$domain/artworks/${illust.id}") }
                         enabled = false
                     },
                 )
