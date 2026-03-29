@@ -37,7 +37,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.sp
-import com.alorma.compose.settings.ui.SettingsGroup
+import top.kagg886.pmf.ui.component.settings.SettingsGroup
 import top.kagg886.pmf.ui.component.settings.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
