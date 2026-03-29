@@ -76,7 +76,7 @@ fun SettingsFileUpload(
 }
 
 @Composable
-private fun ProvideContentColorAndTextStyle(
+internal fun ProvideContentColorAndTextStyle(
     contentColor: Color,
     textStyle: TextStyle,
     content: @Composable () -> Unit,
