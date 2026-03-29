@@ -64,6 +64,8 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
     var checkFailedToast by boolean("check_failed_toast", true)
     var checkSuccessToast by boolean("check_success_toast", false)
 
+    var customShareDomain by string("custom_share_domain", "pixiv.net")
+
     @Serializable
     enum class LanguageSettings(val tag: StringResource, val locale: Locale) {
         EN(Res.string.language_en, Locale("en-US")),

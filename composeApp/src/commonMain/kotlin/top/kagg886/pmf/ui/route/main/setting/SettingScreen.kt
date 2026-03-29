@@ -741,6 +741,17 @@ fun SettingScreen() {
                     }
                 }
             }
+
+            var customShareDomain by remember { mutableStateOf(AppConfig.customShareDomain) }
+            LaunchedEffect(customShareDomain) {
+                AppConfig.customShareDomain = customShareDomain
+            }
+            SettingsTextField(
+                title = { Text(stringResource(Res.string.custom_share_domain)) },
+                subTitle = { Text(stringResource(Res.string.custom_share_domain_description)) },
+                value = customShareDomain,
+                onValueChange = { customShareDomain = it },
+            )
         }
         SettingsGroup(title = { Text(stringResource(Res.string.login_sessions)) }) {
             val clip = LocalClipboard.current
