@@ -37,8 +37,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.sp
-import top.kagg886.pmf.ui.component.settings.SettingsGroup
-import top.kagg886.pmf.ui.component.settings.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
 import korlibs.io.net.MimeType
@@ -65,6 +63,8 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.shareFile
 import top.kagg886.pmf.ui.component.settings.SettingsDropdownMenu
 import top.kagg886.pmf.ui.component.settings.SettingsFileUpload
+import top.kagg886.pmf.ui.component.settings.SettingsGroup
+import top.kagg886.pmf.ui.component.settings.SettingsMenuLink
 import top.kagg886.pmf.ui.component.settings.SettingsTextField
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.main.about.AboutRoute

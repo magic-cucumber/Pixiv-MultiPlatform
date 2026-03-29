@@ -7,7 +7,6 @@ import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Modifier.Companion
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.semantics
@@ -22,7 +21,6 @@ import com.alorma.compose.settings.ui.core.LocalSettingsGroupEnabled
  * Created on: 2026/3/29 16:12
  * ================================================
  */
-
 
 @Composable
 fun SettingsMenuLink(
@@ -39,7 +37,6 @@ fun SettingsMenuLink(
     semanticProperties: (SemanticsPropertyReceiver.() -> Unit) = {},
     onClick: () -> Unit,
 ) {
-
     val decoratedTitle: @Composable () -> Unit = {
         ProvideContentColorAndTextStyle(
             contentColor = colors.headlineColor(enabled),

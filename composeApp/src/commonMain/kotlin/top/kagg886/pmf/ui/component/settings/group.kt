@@ -1,4 +1,5 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package top.kagg886.pmf.ui.component.settings
 
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Modifier.Companion
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -36,11 +36,11 @@ fun SettingsGroup(
 ) {
     Column(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .semantics(properties = semanticProperties)
-                .then(modifier)
-                .padding(contentPadding),
+        Modifier
+            .fillMaxWidth()
+            .semantics(properties = semanticProperties)
+            .then(modifier)
+            .padding(contentPadding),
         verticalArrangement = verticalArrangement,
     ) {
         if (title != null) {
@@ -62,16 +62,16 @@ fun SettingsGroup(
 internal fun SettingsGroupTitle(title: @Composable () -> Unit) {
     Box(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 16.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 16.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         title()
     }
 }
 
-//object SettingsTileDefaults {
+// object SettingsTileDefaults {
 //  val Elevation: Dp = ListItemDefaults.Elevation
 //  const val DisabledAlpha: Float = 0.38f
 //
@@ -131,11 +131,10 @@ internal fun SettingsGroupTitle(title: @Composable () -> Unit) {
 //      disabledSubtitleColor = disabledSubtitleColor,
 //      disabledActionColor = disabledActionColor,
 //    )
-//}
+// }
 
-
-//@Immutable
-//class SettingsTileColors(
+// @Immutable
+// class SettingsTileColors(
 //  val containerColor: Color,
 //  val titleColor: Color,
 //  val groupTitleColor: Color,
@@ -147,7 +146,7 @@ internal fun SettingsGroupTitle(title: @Composable () -> Unit) {
 //  val disabledIconColor: Color,
 //  val disabledSubtitleColor: Color,
 //  val disabledActionColor: Color,
-//) {
+// ) {
 //  @Stable
 //  fun groupTitleColor(enabled: Boolean): Color = if (enabled) groupTitleColor else disabledGroupTitleColor
 //
@@ -162,4 +161,4 @@ internal fun SettingsGroupTitle(title: @Composable () -> Unit) {
 //
 //  @Stable
 //  fun actionColor(enabled: Boolean): Color = if (enabled) actionColor else disabledActionColor
-//}
+// }
