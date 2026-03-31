@@ -207,7 +207,7 @@
     <string name="my_bookmark">我的收藏</string>
     <string name="network_settings">网络设置</string>
     <string name="custom_share_domain">自定义分享域名</string>
-    <string name="custom_share_domain_description">设置复制链接时使用的域名，留空则使用 pixiv.net</string>
+    <string name="custom_share_domain_description">对于telegram和discord，它们无法正常展示pixiv.com下的作品链接预览。如果修改此设置，分享链接的域名将不会是pixiv.com。 \n推荐修改为 </string>
     <string name="next_page">下一章</string>
     <string name="next_step">下一步</string>
     <string name="night_mode">夜间模式</string>
@@ -236,7 +236,7 @@
     <string name="novel_settings">小说设置</string>
     <string name="novel_works">小说作品</string>
     <string name="open_in_browser">在浏览器中打开</string>
-    <string name="open_in_clipboard">复制作品链接</string>
+    <string name="open_in_clipboard">复制%1$s链接</string>
     <string name="open_source">开源许可</string>
     <string name="option_filter_aspect_ratio_none">不启用</string>
     <string name="option_filter_aspect_ratio_pc">(长度＞宽度)(电脑壁纸)</string>

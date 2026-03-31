@@ -207,7 +207,7 @@
     <string name="my_bookmark">My Bookmarks</string>
     <string name="network_settings">Network</string>
     <string name="custom_share_domain">Custom Share Domain</string>
-    <string name="custom_share_domain_description">Domain for copied links. Leave empty for pixiv.net</string>
+    <string name="custom_share_domain_description">Make this a more detailed description. For Telegram and Discord, they cannot properly display preview cards for artwork links from pixiv.com. If you change this setting, the domain of the shared link will no longer be pixiv.com. \nIt is recommended to change it to </string>
     <string name="next_page">Next</string>
     <string name="next_step">Next</string>
     <string name="night_mode">Dark</string>
@@ -236,7 +236,7 @@
     <string name="novel_settings">Novel Settings</string>
     <string name="novel_works">Novels</string>
     <string name="open_in_browser">Open in Browser</string>
-    <string name="open_in_clipboard">Copy the illust link</string>
+    <string name="open_in_clipboard">Copy the %1$s link</string>
     <string name="open_source">Open source license</string>
     <string name="option_filter_aspect_ratio_none">Don't filter</string>
     <string name="option_filter_aspect_ratio_pc">Height &gt; Width (Computer wallpapers)</string>
