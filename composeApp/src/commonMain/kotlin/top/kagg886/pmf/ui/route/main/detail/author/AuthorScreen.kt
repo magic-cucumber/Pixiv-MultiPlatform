@@ -37,6 +37,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import coil3.compose.AsyncImage
@@ -51,6 +52,7 @@ import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
+import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.openBrowser
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.ErrorPage
@@ -67,6 +69,7 @@ import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorProfile
 import top.kagg886.pmf.ui.util.AuthorCard
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
+import top.kagg886.pmf.util.setText
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -216,6 +219,8 @@ private fun AuthorContent(
                         expanded = show,
                         onDismissRequest = { show = false },
                     ) {
+                        val clip = LocalClipboard.current
+                        val scope = rememberCoroutineScope()
                         DropdownMenuItem(
                             text = {
                                 Text(stringResource(Res.string.open_in_browser))
@@ -224,6 +229,16 @@ private fun AuthorContent(
                                 openBrowser(
                                     "https://www.pixiv.net/users/${state.user.user.id}",
                                 )
+                                show = false
+                            },
+                        )
+
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.open_in_clipboard, stringResource(Res.string.user))) },
+                            onClick = {
+                                scope.launch {
+                                    clip.setText("${AppConfig.customShareDomain}/users/${state.user.user.id}")
+                                }
                                 show = false
                             },
                         )

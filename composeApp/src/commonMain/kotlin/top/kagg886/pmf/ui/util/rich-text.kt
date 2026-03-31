@@ -81,15 +81,9 @@ fun AnnotatedString.Builder.withLink(
         link = LinkAnnotation.Url(
             url = link,
             styles = TextLinkStyles(
-                style = SpanStyle(
-                    color = colors.secondary,
-                    textDecoration = TextDecoration.None,
-                ),
+                style = SpanStyle(color = colors.primary),
                 hoveredStyle = SpanStyle(
-                    textDecoration = TextDecoration.Underline,
-                ),
-                pressedStyle = SpanStyle(
-                    color = colors.onSecondaryContainer,
+                    color = colors.primaryContainer,
                     textDecoration = TextDecoration.Underline,
                 ),
             ),

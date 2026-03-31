@@ -39,6 +39,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.sp
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
+import io.ktor.http.Url
 import korlibs.io.net.MimeType
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -74,6 +75,7 @@ import top.kagg886.pmf.ui.util.UpdateCheckViewModel
 import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
+import top.kagg886.pmf.ui.util.withLink
 import top.kagg886.pmf.util.ComposeI18N
 import top.kagg886.pmf.util.SerializedTheme
 import top.kagg886.pmf.util.b
@@ -744,11 +746,28 @@ fun SettingScreen() {
 
             var customShareDomain by remember { mutableStateOf(AppConfig.customShareDomain) }
             LaunchedEffect(customShareDomain) {
-                AppConfig.customShareDomain = customShareDomain
+                AppConfig.customShareDomain = try {
+                    Url(customShareDomain).toString()
+                } catch (_: Exception) {
+                    "https://pixiv.net"
+                }
             }
             SettingsTextField(
                 title = { Text(stringResource(Res.string.custom_share_domain)) },
-                subTitle = { Text(stringResource(Res.string.custom_share_domain_description)) },
+                subTitle = {
+                    val dist = stringResource(Res.string.custom_share_domain_description)
+                    val theme = MaterialTheme.colorScheme
+                    Text(
+                        text = buildAnnotatedString {
+                            append(dist)
+                            withLink(
+                                colors = theme,
+                                link = "https://github.com/HazelTheWitch/phixiv",
+                                display = "phixiv",
+                            )
+                        },
+                    )
+                },
                 value = customShareDomain,
                 onValueChange = { customShareDomain = it },
             )

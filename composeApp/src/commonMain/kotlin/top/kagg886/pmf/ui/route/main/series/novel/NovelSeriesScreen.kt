@@ -34,6 +34,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import kotlinx.coroutines.launch
@@ -45,6 +46,7 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.novel.SeriesDetail
 import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
+import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.openBrowser
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.ErrorPage
@@ -55,6 +57,7 @@ import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.ui.util.NovelFetchViewModel
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.ui.util.useWideScreenMode
+import top.kagg886.pmf.util.setText
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -244,10 +247,22 @@ private fun NovelSeriesScreenActions(
         expanded = expanded,
         onDismissRequest = { expanded = false },
     ) {
+        val clip = LocalClipboard.current
+        val scope = rememberCoroutineScope()
         DropdownMenuItem(
             text = { Text(stringResource(Res.string.open_in_browser)) },
             onClick = {
                 openBrowser("https://www.pixiv.net/novel/series/$id")
+                expanded = false
+            },
+        )
+
+        DropdownMenuItem(
+            text = { Text(stringResource(Res.string.open_in_clipboard, stringResource(Res.string.novel_series))) },
+            onClick = {
+                scope.launch {
+                    clip.setText("${AppConfig.customShareDomain}/novel/series/$id")
+                }
                 expanded = false
             },
         )

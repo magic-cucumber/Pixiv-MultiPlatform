@@ -557,6 +557,8 @@ private fun NovelDetailTopAppBar(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
                     ) {
+                        val clip = LocalClipboard.current
+                        val scope = rememberCoroutineScope()
                         if (inViewLater && novel != null) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(Res.string.remove_watch_later)) },
@@ -597,6 +599,16 @@ private fun NovelDetailTopAppBar(
                             text = { Text(stringResource(Res.string.open_in_browser)) },
                             onClick = {
                                 openBrowser("https://www.pixiv.net/novel/show.php?id=$id")
+                                expanded = false
+                            },
+                        )
+
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Res.string.open_in_clipboard, stringResource(Res.string.novel))) },
+                            onClick = {
+                                scope.launch {
+                                    clip.setText("${AppConfig.customShareDomain}/novel/show.php?id=$id")
+                                }
                                 expanded = false
                             },
                         )
