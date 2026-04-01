@@ -88,14 +88,11 @@ private data class SNIReplaceDNS(
         callTimeout(dohTimeout.seconds.toJavaDuration())
     }.build()
     override fun lookup(hostname: String): List<InetAddress> {
+        val host = when {
+            hostname.endsWith("pixiv.net") -> "pixiv.net"
+            else -> hostname
+        }
         val data = try {
-            val host = when {
-                hostname.endsWith("pixiv.net") -> {
-                    "pixiv.net"
-                }
-
-                else -> hostname
-            }
             val dnsQuery = Base64.getUrlEncoder().withoutPadding().encodeToString(buildDnsQuery(host))
             val resp = client.newCall(
                 Request.Builder()
@@ -109,8 +106,7 @@ private data class SNIReplaceDNS(
         } catch (e: Throwable) {
             logger.w(e) { "query DoH failed, use system dns" }
 
-            // FIXME 不知道什么情况下fallback前置好用
-            fallback[hostname]!!.map { InetAddress.getAllByName(it)!!.toList() }.flatten() + Dns.SYSTEM.lookup(hostname)
+            Dns.SYSTEM.lookup("$host" + ".cdn.cloudflare.net") + fallback[hostname]!!.map { InetAddress.getAllByName(it)!!.toList() }.flatten()
         }
         logger.d("DNS lookup $hostname result : $data")
         return data
