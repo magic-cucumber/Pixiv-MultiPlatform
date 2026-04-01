@@ -91,7 +91,7 @@ private data class SNIReplaceDNS(
         val data = try {
             val host = when {
                 hostname.endsWith("pixiv.net") -> {
-                    "www.pixivision.net"
+                    "pixiv.net"
                 }
 
                 else -> hostname
