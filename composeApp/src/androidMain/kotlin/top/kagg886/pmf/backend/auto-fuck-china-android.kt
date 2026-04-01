@@ -1,18 +1,18 @@
 package top.kagg886.pmf.backend
 
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Socket
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
+import java.util.Base64
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
-import java.io.ByteArrayOutputStream
-import java.util.Base64
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -52,15 +52,15 @@ private fun parseDnsARecords(bytes: ByteArray): List<String> {
     if (ancount == 0) return emptyList()
 
     // Skip header (12 bytes) and the single question entry
-    var pos = skipName(bytes, 12) + 4  // +4 for QTYPE + QCLASS
+    var pos = skipName(bytes, 12) + 4 // +4 for QTYPE + QCLASS
 
     val addresses = mutableListOf<String>()
     repeat(ancount) {
         pos = skipName(bytes, pos)
         val type = ((bytes[pos].toInt() and 0xFF) shl 8) or (bytes[pos + 1].toInt() and 0xFF)
         val rdlength = ((bytes[pos + 8].toInt() and 0xFF) shl 8) or (bytes[pos + 9].toInt() and 0xFF)
-        pos += 10  // TYPE(2) + CLASS(2) + TTL(4) + RDLENGTH(2)
-        if (type == 1 && rdlength == 4) {   // A record
+        pos += 10 // TYPE(2) + CLASS(2) + TTL(4) + RDLENGTH(2)
+        if (type == 1 && rdlength == 4) { // A record
             addresses.add("${bytes[pos].toInt() and 0xFF}.${bytes[pos + 1].toInt() and 0xFF}.${bytes[pos + 2].toInt() and 0xFF}.${bytes[pos + 3].toInt() and 0xFF}")
         }
         pos += rdlength
