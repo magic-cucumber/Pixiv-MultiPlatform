@@ -81,7 +81,9 @@ class DownloadScreenModel : ContainerHost<DownloadScreenState, DownloadScreenSid
         DownloadItemType.NOVEL -> "${novel.title} - ${novel.user.name}.epub"
     }.toPath()
 
-    override fun onCleared() = error("the global viewmodel can't been removed")
+    override fun onCleared() {
+        logger.w("the global viewmodel has been cleared. this can't happen in normal case except the app is in exiting.")
+    }
 
     fun startIllustDownloadOr(item: DownloadItem, orElse: () -> Unit = {}) = intent {
         if (AppConfig.downloadUri.isEmpty() && currentPlatform !is Platform.Apple) { // 检查uri是否成功设置
