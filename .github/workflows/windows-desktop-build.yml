@@ -1,0 +1,73 @@
+name: Windows Desktop Build
+
+on:
+  push:
+    branches:
+      - master
+      - desktop-windows-ui-rework
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-windows-desktop:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate formatting
+        run: ./gradlew spotlessCheck
+
+      - name: Generate AboutLibraries metadata
+        run: ./gradlew exportLibraryDefinitions
+
+      - name: Build Windows release distribution
+        run: ./gradlew packageReleaseDistributionForCurrentOS
+
+      - name: Rename MSI artifact
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem 'composeApp\build\compose\binaries\main-release\msi' -Filter '*.msi' | Select-Object -First 1
+          if (-not $msi) { throw 'MSI artifact not found' }
+          Rename-Item -Path $msi.FullName -NewName 'Pixiv-MultiPlatform-windows.msi'
+
+      - name: Pack portable desktop bundle
+        shell: pwsh
+        run: |
+          $appDir = 'composeApp\build\compose\binaries\main-release\app\Pixiv-MultiPlatform'
+          if (-not (Test-Path $appDir)) { throw 'Portable app directory not found' }
+          Compress-Archive -Path $appDir -DestinationPath 'composeApp\build\compose\binaries\main-release\app\Pixiv-MultiPlatform-windows-portable.zip'
+
+      - name: Upload portable bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pixiv-MultiPlatform-windows-portable
+          path: composeApp\build\compose\binaries\main-release\app\Pixiv-MultiPlatform-windows-portable.zip
+          if-no-files-found: error
+
+      - name: Upload MSI installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pixiv-MultiPlatform-windows-msi
+          path: composeApp\build\compose\binaries\main-release\msi\Pixiv-MultiPlatform-windows.msi
+          if-no-files-found: error
+
+      - name: Upload Proguard mapping
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pixiv-MultiPlatform-windows-proguard
+          path: composeApp\build\compose\binaries\main-release\proguard
+          if-no-files-found: error
