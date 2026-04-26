@@ -2,6 +2,7 @@ package top.kagg886.pmf.backend.database.dao
 
 import androidx.paging.PagingSource
 import androidx.room3.Dao
+import androidx.room3.DaoReturnTypeConverters
 import androidx.room3.Entity
 import androidx.room3.Index
 import androidx.room3.Insert
@@ -9,6 +10,7 @@ import androidx.room3.OnConflictStrategy
 import androidx.room3.PrimaryKey
 import androidx.room3.Query
 import androidx.room3.TypeConverters
+import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
 import top.kagg886.pixko.User
@@ -22,6 +24,7 @@ import top.kagg886.pmf.backend.database.converters.UserConverter
  */
 
 @Dao
+@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface BlackListDao {
     @Query("SELECT EXISTS(SELECT 1 FROM BlackListItem WHERE type = :type AND payload = :payload)")
     suspend fun matchRules(type: BlackListType, payload: String): Boolean
