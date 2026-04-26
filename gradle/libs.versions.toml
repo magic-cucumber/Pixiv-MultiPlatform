@@ -25,7 +25,7 @@ okio = "3.17.0"
 orbit = "11.0.0"
 paging = "3.4.2"
 pixko = "2.10"
-room = "2.7.2"
+room = "3.0.0-alpha03"
 sqliteBundled = "2.6.2"
 telephoto = "0.18.0"
 versionCatalogUpdate = "1.1.0"
@@ -38,9 +38,9 @@ androidx-activity-compose = "androidx.activity:activity-compose:1.13.0"
 androidx-documentfile = { module = "com.lazygeniouz:dfc", version.ref = "androidx-documentfile" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
-androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
-androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "room" }
-androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "room" }
+androidx-room-paging = { module = "androidx.room3:room3-paging", version.ref = "room" }
+androidx-room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqliteBundled" }
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines" }
 arrow-stack = { module = "io.arrow-kt:arrow-stack", version.ref = "arrow" }
@@ -98,7 +98,7 @@ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-multip
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-room = { id = "androidx.room", version.ref = "room" }
+room = { id = "androidx.room3", version.ref = "room" }
 spotless = "com.diffplug.spotless:8.4.0"
 version-catalog-update = { id = "nl.littlerobots.version-catalog-update", version.ref = "versionCatalogUpdate" }
 

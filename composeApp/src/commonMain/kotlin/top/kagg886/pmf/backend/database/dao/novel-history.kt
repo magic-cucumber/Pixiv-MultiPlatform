@@ -1,11 +1,13 @@
 package top.kagg886.pmf.backend.database.dao
 
 import androidx.paging.PagingSource
-import androidx.room.*
+import androidx.room3.*
+import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import top.kagg886.pixko.module.novel.Novel
 import top.kagg886.pmf.backend.database.converters.NovelConverter
 
 @Dao
+@DaoReturnTypeConverters(PagingSourceDaoReturnTypeConverter::class)
 interface NovelHistoryDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: NovelHistory)
