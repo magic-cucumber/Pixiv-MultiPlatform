@@ -207,7 +207,7 @@
     <string name="my_bookmark">My Bookmarks</string>
     <string name="network_settings">Network</string>
     <string name="custom_share_domain">Custom Share Domain</string>
-    <string name="custom_share_domain_description">Make this a more detailed description. For Telegram and Discord, they cannot properly display preview cards for artwork links from pixiv.com. If you change this setting, the domain of the shared link will no longer be pixiv.com. \nIt is recommended to change it to </string>
+    <string name="custom_share_domain_description">Telegram and Discord cannot properly display preview cards for artwork links from pixiv.com. If you change this setting, the domain of the shared link will no longer be pixiv.com. \nIt is recommended to change it to </string>
     <string name="next_page">Next</string>
     <string name="next_step">Next</string>
     <string name="night_mode">Dark</string>
