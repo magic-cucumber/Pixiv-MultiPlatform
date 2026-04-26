@@ -1,7 +1,7 @@
 package top.kagg886.pmf.backend.database.dao
 
 import androidx.paging.PagingSource
-import androidx.room.*
+import androidx.room3.*
 import top.kagg886.pixko.module.novel.Novel
 import top.kagg886.pmf.backend.database.converters.NovelConverter
 

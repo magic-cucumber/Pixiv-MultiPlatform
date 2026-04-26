@@ -62,7 +62,7 @@ plugins {
     alias(libs.plugins.aboutlibrariesPlugin)
 }
 
-room {
+room3 {
     schemaDirectory("$projectDir/schemas")
 }
 
