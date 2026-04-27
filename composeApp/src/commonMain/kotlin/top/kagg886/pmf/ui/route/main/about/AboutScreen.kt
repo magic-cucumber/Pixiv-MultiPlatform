@@ -37,8 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import top.kagg886.pmf.BuildConfig
@@ -60,7 +58,7 @@ fun AboutScreen() {
     }
 
     val lib = remember(libraries) {
-        libraries ?: Libs(persistentListOf(), persistentSetOf())
+        libraries ?: Libs(emptyList(), emptySet())
     }
 
     CollapsableTopAppBarScaffold(
