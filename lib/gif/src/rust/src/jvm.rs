@@ -1,12 +1,14 @@
 #![cfg(feature = "jvm")]
 use crate::encode_animated_image_unsafe;
-use jni::{JNIEnv, objects::{JByteBuffer, JClass}, sys::jint};
-use jni_fn::jni_fn;
+use jni::{EnvUnowned, errors::{LogErrorAndDefault, Result}, jni_mangle, objects::{JByteBuffer, JClass}, sys::jint};
 
-#[unsafe(no_mangle)]
 #[allow(non_snake_case)]
-#[jni_fn("moe.tarsin.gif.NativeBridgeKt")]
-pub fn encode(env: JNIEnv, _class: JClass, buffer: JByteBuffer, limit: jint) {
-    let ptr = env.get_direct_buffer_address(&buffer).unwrap();
-    encode_animated_image_unsafe(ptr, limit);
+#[jni_mangle("moe.tarsin.gif.NativeBridgeKt")]
+pub fn encode<'local>(mut env: EnvUnowned<'local>, _class: JClass, buffer: JByteBuffer, limit: jint) {
+    env.with_env(|env| -> Result<_> {
+        let ptr = env.get_direct_buffer_address(&buffer)?;
+        encode_animated_image_unsafe(ptr, limit);
+        Ok(())
+    })
+    .resolve::<LogErrorAndDefault>();
 }
