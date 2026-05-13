@@ -11,7 +11,7 @@ pub struct FFIClosure {
 }
 
 fn enter_jni<'local, T: Default>(mut env: EnvUnowned<'local>, f: impl FnOnce(&mut Env) -> Result<T>) -> T {
-    env.with_env(|env| -> Result<_> { Ok(f(env)?) }).resolve::<LogErrorAndDefault>()
+    env.with_env(|env| -> Result<_> { f(env) }).resolve::<LogErrorAndDefault>()
 }
 
 #[allow(non_snake_case)]
