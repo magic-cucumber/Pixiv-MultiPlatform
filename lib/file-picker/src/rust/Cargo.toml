@@ -7,12 +7,11 @@ edition = "2024"
 crate-type = ["staticlib", "cdylib"]
 
 [features]
-jvm = ["dep:jni", "dep:jni_fn"]
+jvm = ["dep:jni"]
 
 [dependencies]
-jni = { version = "0.21", optional = true }
-jni_fn = { version = "0.1", optional = true }
-rfd = { version = "0.16"}
+jni = { version = "0.22", optional = true }
+rfd = { version = "0.17"}
 futures = "0.3"
 
 [profile.release]
