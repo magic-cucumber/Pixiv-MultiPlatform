@@ -1,6 +1,6 @@
 [versions]
 aboutlibraries = "14.2.0"
-agp = "8.13.2"
+agp = "9.2.1"
 #androidx-documentfile = "1.1.0"
 androidx-documentfile = "1.6"
 androidx-lifecycle = "2.10.0"
