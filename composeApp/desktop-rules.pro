@@ -8,7 +8,9 @@
 
 -ignorewarnings
 
--optimizations !method/**
+-optimizations !method/inlining/unique
+-optimizations !method/specialization/parametertype
+-optimizations !method/specialization/returntype
 
 -printconfiguration build/compose/binaries/main-release/proguard/configuration.txt
 -printmapping build/compose/binaries/main-release/proguard/mapping.txt
