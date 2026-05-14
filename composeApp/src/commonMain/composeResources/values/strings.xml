@@ -205,6 +205,7 @@
     <string name="multiapp_hint">该文件用于确保Pixiv-MultiPlatform正常运行，请不要删除此文件！</string>
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform只允许一个实例运行，请关闭已有的实例。</string>
     <string name="my_bookmark">我的收藏</string>
+    <string name="my_follow">我的关注</string>
     <string name="network_settings">网络设置</string>
     <string name="custom_share_domain">自定义分享域名</string>
     <string name="custom_share_domain_description">对于telegram和discord，它们无法正常展示pixiv.com下的作品链接预览。如果修改此设置，分享链接的域名将不会是pixiv.com。 \n推荐修改为 </string>

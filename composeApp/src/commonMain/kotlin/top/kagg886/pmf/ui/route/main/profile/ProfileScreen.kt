@@ -56,6 +56,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.main.bookmark.BookmarkRoute
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorScreenWithoutCollapse
 import top.kagg886.pmf.ui.route.main.download.DownloadScreen
+import top.kagg886.pmf.ui.route.main.follow.FollowRoute
 import top.kagg886.pmf.ui.route.main.history.HistoryScreen
 import top.kagg886.pmf.ui.route.main.later.ViewLaterScreen
 import top.kagg886.pmf.ui.route.main.profile.ProfileItem.Download
@@ -150,6 +151,24 @@ fun ProfileScreen(route: ProfileRoute) {
                     selected = false,
                     onClick = {
                         stack += BookmarkRoute
+                        scope.launch {
+                            drawer.close()
+                        }
+                    },
+                )
+
+                Spacer(Modifier.height(8.dp))
+                NavigationDrawerItem(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    label = {
+                        Text(stringResource(Res.string.my_follow))
+                    },
+                    icon = {
+                        Icon(top.kagg886.pmf.ui.component.icon.View, "")
+                    },
+                    selected = false,
+                    onClick = {
+                        stack += FollowRoute
                         scope.launch {
                             drawer.close()
                         }
