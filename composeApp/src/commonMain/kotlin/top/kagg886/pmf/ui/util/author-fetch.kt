@@ -56,10 +56,10 @@ abstract class AuthorFetchViewModel : ContainerHost<AuthorFetchViewState, Author
             val result = runCatching { client.unFollowUser(author.id) }
 
             if (result.isFailure) {
-                postSideEffect(AuthorFetchSideEffect.Toast(getString(Res.string.un_bookmark_failed)))
+                postSideEffect(AuthorFetchSideEffect.Toast(getString(Res.string.unfollow_fail)))
                 return@runOn
             }
-            postSideEffect(AuthorFetchSideEffect.Toast(getString(Res.string.un_bookmark_success)))
+            postSideEffect(AuthorFetchSideEffect.Toast(getString(Res.string.unfollow_success)))
             userRouter.push { u -> if (u.id == author.id) u.copy(isFollowed = false) else u }
         }
     }
