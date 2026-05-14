@@ -1,5 +1,6 @@
 #![cfg(feature = "jvm")]
-use jni::errors::{LogErrorAndDefault, Result};
+use futures::executor::block_on;
+use jni::errors::{Result, ThrowRuntimeExAndDefault};
 use jni::objects::JObject;
 use jni::objects::{JClass, JObjectArray, JString};
 use jni::sys::jstring;
@@ -11,7 +12,7 @@ pub struct FFIClosure {
 }
 
 fn enter_jni<'local, T: Default>(mut env: EnvUnowned<'local>, f: impl FnOnce(&mut Env) -> Result<T>) -> T {
-    env.with_env(|env| -> Result<_> { f(env) }).resolve::<LogErrorAndDefault>()
+    env.with_env(f).resolve::<ThrowRuntimeExAndDefault>()
 }
 
 #[allow(non_snake_case)]
@@ -19,15 +20,14 @@ fn enter_jni<'local, T: Default>(mut env: EnvUnowned<'local>, f: impl FnOnce(&mu
 pub fn openFileSaver(env: EnvUnowned<'_>, _class: JClass, suggested_name: JString, extension: JString, directory: JString) -> *mut FFIClosure {
     enter_jni(env, |env| {
         let suggested_name = suggested_name.try_to_string(env)?;
-        let dir = if directory.is_null() { String::from("~") } else { directory.try_to_string(env)? };
+        let dir = directory.try_to_string(env).unwrap_or_else(|_| String::from("~"));
         let mut dialog = AsyncFileDialog::new().set_directory(dir).set_file_name(suggested_name);
         if !extension.is_null() {
-            let ext: String = extension.try_to_string(env)?;
+            let ext = extension.try_to_string(env)?;
             dialog = dialog.add_filter("file", &[ext])
         }
         let fut = dialog.save_file();
-        let f = Box::new(|| futures::executor::block_on(fut));
-        let bo = Box::new(FFIClosure { f });
+        let bo = Box::new(FFIClosure { f: Box::new(|| block_on(fut)) });
         Ok(Box::into_raw(bo))
     })
 }
@@ -53,7 +53,7 @@ pub fn openFilePicker(env: EnvUnowned, _class: JClass, ext: JObjectArray<JString
             let len = ext.len(env)?;
             for i in 0..len {
                 let jstr = ext.get_element(env, i)?;
-                let rust_str: String = jstr.try_to_string(env)?;
+                let rust_str = jstr.try_to_string(env)?;
                 vec.push(rust_str);
             }
             if !vec.is_empty() {
@@ -65,8 +65,7 @@ pub fn openFilePicker(env: EnvUnowned, _class: JClass, ext: JObjectArray<JString
             dialog = dialog.set_title(title)
         }
         let fut = dialog.pick_file();
-        let f = Box::new(|| futures::executor::block_on(fut));
-        let bo = Box::new(FFIClosure { f });
+        let bo = Box::new(FFIClosure { f: Box::new(|| block_on(fut)) });
         Ok(Box::into_raw(bo))
     })
 }
@@ -82,8 +81,7 @@ pub fn openDictionaryPicker(env: EnvUnowned, _class: JClass, title: JString, dir
             dialog = dialog.set_title(title)
         }
         let fut = dialog.pick_folder();
-        let f = Box::new(|| futures::executor::block_on(fut));
-        let bo = Box::new(FFIClosure { f });
+        let bo = Box::new(FFIClosure { f: Box::new(|| block_on(fut)) });
         Ok(Box::into_raw(bo))
     })
 }
