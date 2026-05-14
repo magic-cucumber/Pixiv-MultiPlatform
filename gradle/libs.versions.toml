@@ -1,31 +1,31 @@
 [versions]
-aboutlibraries = "14.0.1"
+aboutlibraries = "14.2.0"
 agp = "8.13.2"
 #androidx-documentfile = "1.1.0"
-androidx-documentfile = "1.5"
+androidx-documentfile = "1.6"
 androidx-lifecycle = "2.10.0"
 arrow = "2.2.2.1"
-coil = "3.4.0"
 chip-textfield = "0.7.2-alpha01"
-compose-multiplatform = "1.10.3"
+coil = "3.4.0"
+compose-multiplatform = "1.11.0"
 compose-settings = "3.1.0"
 composeWebviewMultiplatform = "1.0.0-beta-02"
-filekitCompose = "0.13.0"
+filekitCompose = "0.14.1"
 kermit = "2.1.0"
 koin = "4.2.1"
 korlibsIo = "6.0.2"
 kotlin = "2.3.21"
-kotlinx-coroutines = "1.10.2"
+kotlinx-coroutines = "1.11.0"
 kotlinxSerialization = "1.11.0"
 ksoup = "0.2.6"
-ksp = "2.3.5"
-ktor = "3.4.3"
+ksp = "2.3.8"
+ktor = "3.5.0"
 multiplatformSettings = "1.3.0"
 okio = "3.17.0"
 orbit = "11.0.0"
-paging = "3.4.2"
-pixko = "2.10"
-room = "3.0.0-alpha03"
+paging = "3.5.0"
+pixko = "2.11"
+room = "3.0.0-alpha04"
 sqliteBundled = "2.6.2"
 telephoto = "0.19.0"
 versionCatalogUpdate = "1.1.0"
@@ -44,6 +44,7 @@ androidx-room-runtime = { module = "androidx.room3:room3-runtime", version.ref =
 androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqliteBundled" }
 arrow-fx-coroutines = { module = "io.arrow-kt:arrow-fx-coroutines" }
 arrow-stack = { module = "io.arrow-kt:arrow-stack", version.ref = "arrow" }
+chip-textfield = { module = "io.github.dokar3:chiptextfield-m3", version.ref = "chip-textfield" }
 coil-bom = { module = "io.coil-kt.coil3:coil-bom", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif" }
@@ -52,7 +53,7 @@ compose-components-resources = { module = "org.jetbrains.compose.components:comp
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
 compose-material-icons-core = "org.jetbrains.compose.material:material-icons-core:1.7.3"
 compose-material3 = "org.jetbrains.compose.material3:material3:1.9.0"
-compose-navigation3-ui = "org.jetbrains.androidx.navigation3:navigation3-ui:1.1.0"
+compose-navigation3-ui = "org.jetbrains.androidx.navigation3:navigation3-ui:1.1.1"
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
 compose-settings-extended = { module = "com.github.alorma.compose-settings:ui-tiles-extended", version.ref = "compose-settings" }
 compose-settings-ui = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "compose-settings" }
@@ -67,7 +68,7 @@ koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", ver
 korlibs-io = { module = "com.soywiz:korlibs-io", version.ref = "korlibsIo" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
-kotlinx-datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.7.1"
+kotlinx-datetime = "org.jetbrains.kotlinx:kotlinx-datetime:0.8.0"
 kotlinx-serialization-cbor = { module = "org.jetbrains.kotlinx:kotlinx-serialization-cbor", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
@@ -85,7 +86,6 @@ okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 orbit-core = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
 pixko = { module = "top.kagg886:pixko", version.ref = "pixko" }
 telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
-chip-textfield = { module = "io.github.dokar3:chiptextfield-m3", version.ref = "chip-textfield" }
 
 [plugins]
 aboutlibrariesPlugin = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
