@@ -1,16 +1,5 @@
-# kcef
--keep class org.cef.** { *; }
-
 # kotlinx serialization
 -keepclasseswithmembers class ** { kotlinx.serialization.KSerializer serializer(...); }
-
-# androidx sqlite
--keep class androidx.sqlite.SQLiteException
-
-# dbus-java
--keep interface org.freedesktop.dbus.spi.transport.ITransportProvider
--keep interface org.freedesktop.dbus.interfaces.Properties { *; }
--keep class androidx.sqlite.driver.bundled.** { *; }
 
 # JNA
 -keep class com.sun.jna.* { *; }
@@ -19,8 +8,9 @@
 
 -ignorewarnings
 
-
-# -printmapping mappings-desktop-currentOS.txt
+-optimizations !method/inlining/unique
+-optimizations !method/specialization/parametertype
+-optimizations !method/specialization/returntype
 
 -printconfiguration build/compose/binaries/main-release/proguard/configuration.txt
 -printmapping build/compose/binaries/main-release/proguard/mapping.txt

@@ -354,12 +354,7 @@ compose.desktop {
         }
 
         jvmArgs += "--enable-native-access=ALL-UNNAMED"
-//        afterEvaluate {
-//            tasks.withType<JavaExec> {
-//                this.jvmArgs?.plusAssign("--enable-native-access=ALL-UNNAMED")
-//            }
-//        }
-        buildTypes.release.proguard { version = "7.8.2" }
+        buildTypes.release.proguard { version = "7.9.1" }
     }
 }
 
@@ -388,7 +383,7 @@ if (proguardEnable) {
 
         compose.desktop.application.buildTypes.release.proguard {
             configurationFiles.from(proguardFile, file("core-rules.pro"), file("desktop-rules.pro"))
-            optimize = false // fixme(tarsin): proguard internal error
+            optimize = true
             obfuscate = true
             joinOutputJars = true
         }
