@@ -12,8 +12,8 @@ fun prop(key: String) = project.findProperty(key) as String
 
 android {
     namespace = "com.russhwolf.settings.serialization"
-
-    compileSdk = prop("TARGET_SDK").toInt()
+    compileSdk = prop("COMPILE_SDK").toInt()
+    buildToolsVersion = "37.0.0"
 
     defaultConfig {
         minSdk = prop("MIN_SDK").toInt()
@@ -43,7 +43,6 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                //zip files
                 api(libs.multiplatform.settings)
                 implementation(libs.kotlinx.serialization.core)
             }
@@ -54,4 +53,3 @@ kotlin {
         }
     }
 }
-

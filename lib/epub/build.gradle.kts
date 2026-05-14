@@ -10,8 +10,8 @@ fun prop(key: String) = project.findProperty(key) as String
 
 android {
     namespace = "top.kagg886.epub"
-
-    compileSdk = prop("TARGET_SDK").toInt()
+    compileSdk = prop("COMPILE_SDK").toInt()
+    buildToolsVersion = "37.0.0"
 
     defaultConfig {
         minSdk = prop("MIN_SDK").toInt()
@@ -52,4 +52,3 @@ kotlin {
         }
     }
 }
-
