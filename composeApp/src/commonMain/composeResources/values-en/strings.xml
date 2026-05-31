@@ -205,6 +205,7 @@
     <string name="multiapp_hint">This file is required to ensure Pixiv-MultiPlatform running correctly. Please do not delete this file!</string>
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform allows only one instance to run. Please close the existing instance</string>
     <string name="my_bookmark">My Bookmarks</string>
+    <string name="my_follow">My Following</string>
     <string name="network_settings">Network</string>
     <string name="custom_share_domain">Custom Share Domain</string>
     <string name="custom_share_domain_description">Telegram and Discord cannot properly display preview cards for artwork links from pixiv.com. If you change this setting, the domain of the shared link will no longer be pixiv.com. \nIt is recommended to change it to </string>

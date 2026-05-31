@@ -143,6 +143,9 @@ import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarScreen
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelSimilarViewModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.download.DownloadScreenSideEffect
+import top.kagg886.pmf.ui.route.main.follow.FollowRoute
+import top.kagg886.pmf.ui.route.main.follow.FollowScreen
+import top.kagg886.pmf.ui.route.main.follow.FollowViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryIllustViewModel
 import top.kagg886.pmf.ui.route.main.history.HistoryNovelViewModel
 import top.kagg886.pmf.ui.route.main.later.ViewLaterModel
@@ -224,6 +227,7 @@ private val config = SavedStateConfiguration {
             subclass(serializer = RankRoute.serializer())
             subclass(serializer = ProfileRoute.serializer())
             subclass(serializer = BookmarkRoute.serializer())
+            subclass(serializer = FollowRoute.serializer())
             subclass(serializer = AboutRoute.serializer())
             subclass(serializer = IllustDetailRoute.serializer())
             subclass(serializer = IllustDetailPreFetchRoute.serializer())
@@ -510,6 +514,9 @@ fun setupEnv() {
                 viewModelOf(::BookmarkIllustViewModel)
                 viewModelOf(::BookmarkNovelViewModel)
                 navigation<BookmarkRoute> { BookmarkScreen() }
+
+                viewModelOf(::FollowViewModel)
+                navigation<FollowRoute> { FollowScreen() }
 
                 navigation<AboutRoute> { AboutScreen() }
 

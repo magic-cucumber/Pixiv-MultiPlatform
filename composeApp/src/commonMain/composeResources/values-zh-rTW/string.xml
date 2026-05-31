@@ -206,6 +206,7 @@
     <string name="multiapp_hint">此檔案用於確保 Pixiv-MultiPlatform 正常運行，請勿刪除此檔案！</string>
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform 只允許一個實例運行，請先關閉已存在的實例</string>
     <string name="my_bookmark">我的收藏</string>
+    <string name="my_follow">我的追蹤</string>
     <string name="network_settings">網路設定</string>
     <string name="next_page">下一章</string>
     <string name="next_step">下一步</string>
