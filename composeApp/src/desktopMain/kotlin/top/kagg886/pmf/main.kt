@@ -7,6 +7,9 @@ import co.touchlab.kermit.Logger
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
+import java.io.PrintStream
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.file.StandardOpenOption
@@ -36,6 +39,8 @@ import top.kagg886.pmf.util.writeString
 
 fun launch(start: () -> NavKey) {
     setupEnv()
+    stdErrToLogger()
+    throw Exception("1")
     System.setProperty("composewebview.wry.log", "true")
     SingletonImageLoader.setSafe {
         ImageLoader.Builder(PlatformContext.INSTANCE).applyCustomConfig().build()
@@ -86,6 +91,37 @@ fun launch(start: () -> NavKey) {
         exitProcess(1)
     }
     exitProcess(0)
+}
+
+private fun stdErrToLogger() {
+    val delegate = System.err
+    val logger = Logger.withTag("stderr")
+    val buffer = ByteArrayOutputStream()
+
+
+    val proxy = object : OutputStream() {
+        override fun write(b: Int) {
+            delegate.write(b)
+            buffer.write(b)
+        }
+
+        override fun flush() {
+            delegate.flush()
+            //exclude \n
+            val string = with(buffer.toString(Charsets.UTF_8)) {
+                if (endsWith("\r\n")) return@with dropLast(2)
+                if (endsWith("\n")) return@with dropLast(1)
+                return@with this
+            }
+            buffer.reset()
+
+            if (string.isBlank()) {
+                return
+            }
+            logger.w(string)
+        }
+    }
+    System.setErr(PrintStream(proxy, true))
 }
 
 @OptIn(DelicateCoroutinesApi::class)
