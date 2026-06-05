@@ -98,7 +98,6 @@ private fun stdErrToLogger() {
     val logger = Logger.withTag("stderr")
     val buffer = ByteArrayOutputStream()
 
-
     val proxy = object : OutputStream() {
         override fun write(b: Int) {
             delegate.write(b)
@@ -107,7 +106,7 @@ private fun stdErrToLogger() {
 
         override fun flush() {
             delegate.flush()
-            //exclude \n
+            // exclude \n
             val string = with(buffer.toString(Charsets.UTF_8)) {
                 if (endsWith("\r\n")) return@with dropLast(2)
                 if (endsWith("\n")) return@with dropLast(1)
