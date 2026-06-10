@@ -21,6 +21,7 @@ android {
     namespace = "top.kagg886.filepicker"
 
     compileSdk = prop("TARGET_SDK").toInt()
+    compileSdkMinor = 0
 
     defaultConfig {
         minSdk = prop("MIN_SDK").toInt()

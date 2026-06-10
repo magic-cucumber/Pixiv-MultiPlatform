@@ -14,6 +14,7 @@ android {
     namespace = "com.russhwolf.settings.serialization"
 
     compileSdk = prop("TARGET_SDK").toInt()
+    compileSdkMinor = 0
 
     defaultConfig {
         minSdk = prop("MIN_SDK").toInt()
