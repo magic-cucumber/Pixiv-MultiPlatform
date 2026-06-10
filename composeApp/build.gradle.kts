@@ -247,6 +247,7 @@ aboutLibraries {
 android {
     namespace = pkgName
     compileSdk = prop("TARGET_SDK").toInt()
+    compileSdkMinor = 0
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 
