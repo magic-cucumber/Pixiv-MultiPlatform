@@ -46,8 +46,7 @@ suspend fun FilePicker.openFolderPicker(
     title: String? = null,
     directory: Path? = null,
 ) = withContext(Dispatchers.Main) {
-    // rfd native folder picker can crash on macOS in JVM desktop runtime.
-    // Use Swing directory chooser as a stable fallback.
+    // rfd's macOS folder picker deadlocks/crashes when called from the JVM/AWT event thread.
     if (isMacOS) {
         val chooser = directory?.toString()?.let(::File)?.let(::JFileChooser) ?: JFileChooser()
         chooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY

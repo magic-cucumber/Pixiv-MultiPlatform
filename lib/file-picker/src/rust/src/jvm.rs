@@ -74,14 +74,27 @@ pub fn openFilePicker(env: EnvUnowned, _class: JClass, ext: JObjectArray<JString
 #[jni_mangle("top.kagg886.filepicker.internal.NativeFilePicker")]
 pub fn openDictionaryPicker(env: EnvUnowned, _class: JClass, title: JString, directory: JString) -> *mut FFIClosure {
     enter_jni(env, |env| {
-        let dir = if directory.is_null() { String::from("~") } else { directory.try_to_string(env)? };
-        let mut dialog = AsyncFileDialog::new().set_directory(dir);
-        if !title.is_null() {
-            let title: String = title.try_to_string(env)?;
-            dialog = dialog.set_title(title)
+        #[cfg(target_os = "macos")]
+        {
+            let _ = env;
+            let _ = title;
+            let _ = directory;
+            eprintln!("[filepicker/rfd] native folder picker disabled on macOS; use JVM Swing fallback");
+            let bo = Box::new(FFIClosure { f: Box::new(|| None) });
+            return Ok(Box::into_raw(bo));
         }
-        let fut = dialog.pick_folder();
-        let bo = Box::new(FFIClosure { f: Box::new(|| block_on(fut)) });
-        Ok(Box::into_raw(bo))
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            let dir = if directory.is_null() { String::from("~") } else { directory.try_to_string(env)? };
+            let mut dialog = AsyncFileDialog::new().set_directory(dir);
+            if !title.is_null() {
+                let title: String = title.try_to_string(env)?;
+                dialog = dialog.set_title(title)
+            }
+            let fut = dialog.pick_folder();
+            let bo = Box::new(FFIClosure { f: Box::new(|| block_on(fut)) });
+            Ok(Box::into_raw(bo))
+        }
     })
 }
