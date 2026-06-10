@@ -1,7 +1,8 @@
 package top.kagg886.filepicker
 
+import java.awt.FileDialog
+import java.awt.Frame
 import java.io.File
-import javax.swing.JFileChooser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.Path
@@ -19,6 +20,21 @@ actual object FilePicker {
 }
 
 private val isMacOS by lazy { System.getProperty("os.name")?.startsWith("Mac") == true }
+private const val MACOS_FILE_DIALOG_FOR_DIRECTORIES = "apple.awt.fileDialogForDirectories"
+
+private inline fun <T> withMacOSDirectoryFileDialog(block: () -> T): T {
+    val previous = System.getProperty(MACOS_FILE_DIALOG_FOR_DIRECTORIES)
+    System.setProperty(MACOS_FILE_DIALOG_FOR_DIRECTORIES, "true")
+    return try {
+        block()
+    } finally {
+        if (previous == null) {
+            System.clearProperty(MACOS_FILE_DIALOG_FOR_DIRECTORIES)
+        } else {
+            System.setProperty(MACOS_FILE_DIALOG_FOR_DIRECTORIES, previous)
+        }
+    }
+}
 
 actual suspend fun FilePicker.openFileSaver(
     suggestedName: String,
@@ -48,17 +64,24 @@ suspend fun FilePicker.openFolderPicker(
 ) = withContext(Dispatchers.Main) {
     // rfd's macOS folder picker deadlocks/crashes when called from the JVM/AWT event thread.
     if (isMacOS) {
-        val chooser = directory?.toString()?.let(::File)?.let(::JFileChooser) ?: JFileChooser()
-        chooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
-        chooser.isAcceptAllFileFilterUsed = false
-        if (!title.isNullOrBlank()) {
-            chooser.dialogTitle = title
-        }
-        val result = chooser.showOpenDialog(null)
-        return@withContext if (result == JFileChooser.APPROVE_OPTION) {
-            chooser.selectedFile?.absolutePath?.toPath()
-        } else {
-            null
+        return@withContext withMacOSDirectoryFileDialog {
+            val dialog = FileDialog(null as Frame?, title ?: "", FileDialog.LOAD)
+            dialog.isMultipleMode = false
+            directory?.toString()?.let { dialog.directory = it }
+            try {
+                dialog.isVisible = true
+                dialog.files?.firstOrNull()?.absolutePath?.toPath()
+                    ?: dialog.file?.let { selected ->
+                        val parent = dialog.directory
+                        if (parent.isNullOrBlank()) {
+                            selected.toPath()
+                        } else {
+                            File(parent, selected).absolutePath.toPath()
+                        }
+                    }
+            } finally {
+                dialog.dispose()
+            }
         }
     }
 
