@@ -27,7 +27,7 @@ fun OkHttpClient.Builder.bypassSNIOnDesktop(
 ) = dns(SNIReplaceDNS(queryUrl, dohTimeout, unsafeSSL, fallback))
     .sslSocketFactory(
         BypassSSLSocketFactory,
-        BypassTrustManager
+        BypassTrustManager,
     )
 
 private data class SNIReplaceDNS(
@@ -43,7 +43,7 @@ private data class SNIReplaceDNS(
                     ignoreSSL()
                 }
                 callTimeout(dohTimeout.seconds.toJavaDuration())
-            }.build()
+            }.build(),
         )
         .systemDns(Dns.SYSTEM)
         .url(queryUrl.toHttpUrl())
