@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.navigation3.runtime.NavKey
-import io.ktor.http.Url
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -185,7 +184,7 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
         logger.i("webview navigate url: $url")
         if (url.startsWith("pixiv://")) {
             state.navigator.stop()
-            model.challengePixivLoginUrl(auth,url)
+            model.challengePixivLoginUrl(auth, url)
         }
     }
 
