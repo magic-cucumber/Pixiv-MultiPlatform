@@ -6,17 +6,15 @@ import java.net.InetAddress
 import java.net.Socket
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import java.util.Base64
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
+import java.util.*
+import javax.net.ssl.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import top.kagg886.pmf.util.logger
+
 
 private fun buildDnsQuery(name: String): ByteArray {
     val out = ByteArrayOutputStream()
@@ -136,12 +134,19 @@ fun OkHttpClient.Builder.ignoreSSL() {
 }
 
 private object BypassSSLSocketFactory : SSLSocketFactory() {
+    private val factory: SSLSocketFactory by lazy {
+        val context = SSLContext.getInstance("TLS")
+        context.init(null,null,null)
+        context.socketFactory
+    }
+
     @Throws(IOException::class)
     override fun createSocket(paramSocket: Socket?, host: String?, port: Int, autoClose: Boolean): Socket {
-        val inetAddress = paramSocket!!.inetAddress
-        val sslSocket =
-            (getDefault().createSocket(inetAddress, port) as SSLSocket).apply { enabledProtocols = supportedProtocols }
-        return sslSocket
+        val socket = factory.createSocket(paramSocket, host, port, autoClose) as SSLSocket
+        val params = socket.getSSLParameters()
+        params.serverNames = listOf(SNIHostName("pixiv.me"))
+        socket.setSSLParameters(params)
+        return socket
     }
 
     override fun createSocket(paramString: String?, paramInt: Int): Socket? = null

@@ -7,6 +7,7 @@ import java.net.Socket
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.Base64
+import javax.net.ssl.SNIHostName
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -137,12 +138,19 @@ fun OkHttpClient.Builder.ignoreSSL() {
 }
 
 private object BypassSSLSocketFactory : SSLSocketFactory() {
+    private val factory: SSLSocketFactory by lazy {
+        val context = SSLContext.getInstance("TLS")
+        context.init(null,null,null)
+        context.socketFactory
+    }
+
     @Throws(IOException::class)
     override fun createSocket(paramSocket: Socket?, host: String?, port: Int, autoClose: Boolean): Socket {
-        val inetAddress = paramSocket!!.inetAddress
-        val sslSocket =
-            (getDefault().createSocket(inetAddress, port) as SSLSocket).apply { enabledProtocols = supportedProtocols }
-        return sslSocket
+        val socket = factory.createSocket(paramSocket, host, port, autoClose) as SSLSocket
+        val params = socket.getSSLParameters()
+        params.serverNames = listOf(SNIHostName("pixiv.me"))
+        socket.setSSLParameters(params)
+        return socket
     }
 
     override fun createSocket(paramString: String?, paramInt: Int): Socket? = null
