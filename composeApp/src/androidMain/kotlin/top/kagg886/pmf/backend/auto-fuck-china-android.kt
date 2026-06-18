@@ -140,7 +140,7 @@ fun OkHttpClient.Builder.ignoreSSL() {
 private object BypassSSLSocketFactory : SSLSocketFactory() {
     private val factory: SSLSocketFactory by lazy {
         val context = SSLContext.getInstance("TLS")
-        context.init(null,null,null)
+        context.init(null, null, null)
         context.socketFactory
     }
 

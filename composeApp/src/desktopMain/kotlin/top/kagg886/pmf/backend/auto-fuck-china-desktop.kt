@@ -15,7 +15,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import top.kagg886.pmf.util.logger
 
-
 private fun buildDnsQuery(name: String): ByteArray {
     val out = ByteArrayOutputStream()
     // Header: ID=0, Flags=RD(0x0100), QDCOUNT=1, AN/NS/AR=0
@@ -136,7 +135,7 @@ fun OkHttpClient.Builder.ignoreSSL() {
 private object BypassSSLSocketFactory : SSLSocketFactory() {
     private val factory: SSLSocketFactory by lazy {
         val context = SSLContext.getInstance("TLS")
-        context.init(null,null,null)
+        context.init(null, null, null)
         context.socketFactory
     }
 

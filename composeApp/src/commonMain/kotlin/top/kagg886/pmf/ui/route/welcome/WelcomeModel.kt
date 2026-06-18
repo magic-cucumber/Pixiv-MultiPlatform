@@ -77,7 +77,6 @@ sealed interface WelcomeViewState {
         LANGUAGE, // 语言
         WELCOME, // 欢迎
         THEME, // 配置主题
-        BYPASS, // SNI绕过
         DOWNLOAD, // 下载设置
         SHIELD, // 屏蔽R18，AI等
         FINISH, // 完成
