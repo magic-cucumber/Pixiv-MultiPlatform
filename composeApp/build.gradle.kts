@@ -210,6 +210,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.okhttp.dnsoverhttps)
             implementation(libs.ktor.client.java)
             implementation(libs.androidx.sqlite.bundled)
         }
@@ -218,6 +219,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.okhttp.dnsoverhttps)
             implementation(libs.coil.gif)
             implementation(libs.androidx.documentfile)
         }

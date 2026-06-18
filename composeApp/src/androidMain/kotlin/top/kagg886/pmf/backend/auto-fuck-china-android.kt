@@ -1,80 +1,34 @@
 package top.kagg886.pmf.backend
 
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Socket
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import java.util.Base64
-import javax.net.ssl.SNIHostName
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocket
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.X509TrustManager
+import javax.net.ssl.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.yield
 import okhttp3.Dns
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.dnsoverhttps.DnsOverHttps
 import top.kagg886.pmf.util.logger
-
-private fun buildDnsQuery(name: String): ByteArray {
-    val out = ByteArrayOutputStream()
-    // Header: ID=0, Flags=RD(0x0100), QDCOUNT=1, AN/NS/AR=0
-    out.write(byteArrayOf(0x00, 0x00, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00))
-    // QNAME
-    for (label in name.split(".")) {
-        out.write(label.length)
-        out.write(label.toByteArray(Charsets.US_ASCII))
-    }
-    out.write(0x00)
-    // QTYPE=A(1), QCLASS=IN(1)
-    out.write(byteArrayOf(0x00, 0x01, 0x00, 0x01))
-    return out.toByteArray()
-}
-
-// compression pointer
-private fun skipName(bytes: ByteArray, pos: Int): Int {
-    var p = pos
-    while (p < bytes.size) {
-        val len = bytes[p].toInt() and 0xFF
-        when {
-            len == 0 -> return p + 1
-            len and 0xC0 == 0xC0 -> return p + 2
-            else -> p += len + 1
-        }
-    }
-    return p
-}
-
-private fun parseDnsARecords(bytes: ByteArray): List<String> {
-    val ancount = ((bytes[6].toInt() and 0xFF) shl 8) or (bytes[7].toInt() and 0xFF)
-    if (ancount == 0) return emptyList()
-
-    // Skip header (12 bytes) and the single question entry
-    var pos = skipName(bytes, 12) + 4 // +4 for QTYPE + QCLASS
-
-    val addresses = mutableListOf<String>()
-    repeat(ancount) {
-        pos = skipName(bytes, pos)
-        val type = ((bytes[pos].toInt() and 0xFF) shl 8) or (bytes[pos + 1].toInt() and 0xFF)
-        val rdlength = ((bytes[pos + 8].toInt() and 0xFF) shl 8) or (bytes[pos + 9].toInt() and 0xFF)
-        pos += 10 // TYPE(2) + CLASS(2) + TTL(4) + RDLENGTH(2)
-        if (type == 1 && rdlength == 4) { // A record
-            addresses.add("${bytes[pos].toInt() and 0xFF}.${bytes[pos + 1].toInt() and 0xFF}.${bytes[pos + 2].toInt() and 0xFF}.${bytes[pos + 3].toInt() and 0xFF}")
-        }
-        pos += rdlength
-    }
-    return addresses
-}
 
 fun OkHttpClient.Builder.bypassSNIOnAndroid(
     queryUrl: String,
     dohTimeout: Int = 5,
     unsafeSSL: Boolean = true,
     fallback: Map<String, List<String>>,
-) = dns(SNIReplaceDNS(queryUrl, dohTimeout, unsafeSSL, fallback)).sslSocketFactory(BypassSSLSocketFactory, BypassTrustManager)
+) = dns(SNIReplaceDNS(queryUrl, dohTimeout, unsafeSSL, fallback))
+    .sslSocketFactory(
+        BypassSSLSocketFactory,
+        BypassTrustManager
+    )
 
 private data class SNIReplaceDNS(
     val queryUrl: String,
@@ -82,37 +36,75 @@ private data class SNIReplaceDNS(
     val unsafeSSL: Boolean = true,
     val fallback: Map<String, List<String>>,
 ) : Dns {
-    private val client = OkHttpClient.Builder().apply {
-        if (unsafeSSL) {
-            ignoreSSL()
-        }
-        callTimeout(dohTimeout.seconds.toJavaDuration())
-    }.build()
-    override fun lookup(hostname: String): List<InetAddress> {
+    private val dnsOverHttps = DnsOverHttps.Builder()
+        .client(
+            client = OkHttpClient.Builder().apply {
+                if (unsafeSSL) {
+                    ignoreSSL()
+                }
+                callTimeout(dohTimeout.seconds.toJavaDuration())
+            }.build()
+        )
+        .systemDns(Dns.SYSTEM)
+        .url(queryUrl.toHttpUrl())
+        .build()
+
+    override fun lookup(hostname: String): List<InetAddress> = runBlocking(Dispatchers.IO) {
         val host = when {
             hostname.endsWith("pixiv.net") -> "pixiv.net"
             else -> hostname
         }
-        val data = try {
-            val dnsQuery = Base64.getUrlEncoder().withoutPadding().encodeToString(buildDnsQuery(host))
-            val resp = client.newCall(
-                Request.Builder()
-                    .url("$queryUrl?dns=$dnsQuery")
-                    .header("Accept", "application/dns-message")
-                    .build(),
-            ).execute()
-            parseDnsARecords(resp.body!!.bytes()).map {
-                InetAddress.getByName(it)
-            }
-        } catch (e: Throwable) {
-            logger.w(e) { "query DoH failed, use system dns" }
 
-            Dns.SYSTEM.lookup("$host" + ".cdn.cloudflare.net") + fallback[hostname]!!.map { InetAddress.getAllByName(it)!!.toList() }.flatten()
+        val result = run {
+            val dohDeferred = async {
+                try {
+                    val result = dnsOverHttps.lookup(host)
+                    yield()
+                    if (result.isEmpty()) {
+                        logger.w("query DoH returned none, use system dns")
+                    }
+                    result
+                } catch (e: Exception) {
+                    yield()
+                    logger.w(e) { "query DoH failed, use system dns" }
+                    emptyList()
+                }
+            }
+
+            val systemDeferred = async {
+                try {
+                    val result = Dns.SYSTEM.lookup("$host.cdn.cloudflare.net")
+                    yield()
+                    if (result.isEmpty()) {
+                        logger.w("query DoH returned none, use system dns")
+                    }
+                    result
+                } catch (e: Exception) {
+                    yield()
+                    logger.w(e) { "query dns failed, use fallback dns" }
+                    emptyList()
+                }
+            }
+
+            select {
+                dohDeferred.onAwait { doh ->
+                    systemDeferred.cancel()
+                    doh
+                }
+
+                systemDeferred.onAwait { system ->
+                    val doh = dohDeferred.await()
+                    doh + system
+                }
+            }
         }
-        logger.d("DNS lookup $hostname result : $data")
-        return data
+
+        val fallback = fallback[hostname]!!.flatMap { InetAddress.getAllByName(it)!!.toList() }
+
+        (result + fallback).distinct()
     }
 }
+
 fun OkHttpClient.Builder.ignoreSSL() {
     val sslContext = SSLContext.getInstance("SSL")
     val trust = object : X509TrustManager {
@@ -149,7 +141,7 @@ private object BypassSSLSocketFactory : SSLSocketFactory() {
         val socket = factory.createSocket(paramSocket, host, port, autoClose) as SSLSocket
         val params = socket.getSSLParameters()
         params.serverNames = listOf(SNIHostName("pixiv.me"))
-        socket.setSSLParameters(params)
+        socket.sslParameters = params
         return socket
     }
 
