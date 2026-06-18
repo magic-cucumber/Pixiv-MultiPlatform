@@ -9,7 +9,6 @@ coil = "3.4.0"
 chip-textfield = "0.7.2-alpha01"
 compose-multiplatform = "1.10.3"
 compose-settings = "3.1.0"
-composeWebviewMultiplatform = "1.0.0-beta-02"
 filekitCompose = "0.13.0"
 kermit = "2.1.0"
 koin = "4.2.1"
@@ -29,6 +28,7 @@ room = "3.0.0-alpha03"
 sqliteBundled = "2.6.2"
 telephoto = "0.19.0"
 versionCatalogUpdate = "1.1.0"
+wvbridge = "0.0.1"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
@@ -58,7 +58,6 @@ compose-settings-extended = { module = "com.github.alorma.compose-settings:ui-ti
 compose-settings-ui = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "compose-settings" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
-compose-webview-multiplatform = { module = "io.github.kdroidfilter:composewebview", version.ref = "composeWebviewMultiplatform" }
 filekit-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
@@ -86,6 +85,10 @@ orbit-core = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
 pixko = { module = "top.kagg886:pixko", version.ref = "pixko" }
 telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
 chip-textfield = { module = "io.github.dokar3:chiptextfield-m3", version.ref = "chip-textfield" }
+wvbridge-core = { module = "top.kagg886.wvbridge:core", version.ref = "wvbridge" }
+wvbridge-platform-linux = { module = "top.kagg886.wvbridge:platform-linux", version.ref = "wvbridge" }
+wvbridge-platform-macos = { module = "top.kagg886.wvbridge:platform-macos", version.ref = "wvbridge" }
+wvbridge-platform-windows = { module = "top.kagg886.wvbridge:platform-windows", version.ref = "wvbridge" }
 
 [plugins]
 aboutlibrariesPlugin = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
