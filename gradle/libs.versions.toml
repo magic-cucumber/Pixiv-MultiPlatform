@@ -28,7 +28,8 @@ room = "3.0.0-alpha03"
 sqliteBundled = "2.6.2"
 telephoto = "0.19.0"
 versionCatalogUpdate = "1.1.0"
-wvbridge = "0.0.1"
+wvbridge-common = "0.0.2"
+wvbridge-platform = "0.0.1"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
@@ -85,10 +86,10 @@ orbit-core = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
 pixko = { module = "top.kagg886:pixko", version.ref = "pixko" }
 telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
 chip-textfield = { module = "io.github.dokar3:chiptextfield-m3", version.ref = "chip-textfield" }
-wvbridge-core = { module = "top.kagg886.wvbridge:core", version.ref = "wvbridge" }
-wvbridge-platform-linux = { module = "top.kagg886.wvbridge:platform-linux", version.ref = "wvbridge" }
-wvbridge-platform-macos = { module = "top.kagg886.wvbridge:platform-macos", version.ref = "wvbridge" }
-wvbridge-platform-windows = { module = "top.kagg886.wvbridge:platform-windows", version.ref = "wvbridge" }
+wvbridge-core = { module = "top.kagg886.wvbridge:core", version.ref = "wvbridge-common" }
+wvbridge-platform-linux = { module = "top.kagg886.wvbridge:platform-linux", version.ref = "wvbridge-platform" }
+wvbridge-platform-macos = { module = "top.kagg886.wvbridge:platform-macos", version.ref = "wvbridge-platform" }
+wvbridge-platform-windows = { module = "top.kagg886.wvbridge:platform-windows", version.ref = "wvbridge-platform" }
 
 [plugins]
 aboutlibrariesPlugin = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
