@@ -955,27 +955,29 @@ fun SettingScreen() {
                 enter = expandVertically(),
                 exit = shrinkVertically(),
             ) {
-                SettingsSwitch(
-                    enabled = checkUpdateOnStart,
-                    state = showCheckSuccessToast,
-                    title = {
-                        Text(stringResource(Res.string.show_toast_when_latest))
-                    },
-                    onCheckedChange = {
-                        showCheckSuccessToast = it
-                    },
-                )
+                Column {
+                    SettingsSwitch(
+                        enabled = checkUpdateOnStart,
+                        state = showCheckSuccessToast,
+                        title = {
+                            Text(stringResource(Res.string.show_toast_when_latest))
+                        },
+                        onCheckedChange = {
+                            showCheckSuccessToast = it
+                        },
+                    )
 
-                SettingsSwitch(
-                    enabled = checkUpdateOnStart,
-                    state = showCheckFailedToast,
-                    title = {
-                        Text(stringResource(Res.string.show_toast_when_failed))
-                    },
-                    onCheckedChange = {
-                        showCheckFailedToast = it
-                    },
-                )
+                    SettingsSwitch(
+                        enabled = checkUpdateOnStart,
+                        state = showCheckFailedToast,
+                        title = {
+                            Text(stringResource(Res.string.show_toast_when_failed))
+                        },
+                        onCheckedChange = {
+                            showCheckFailedToast = it
+                        },
+                    )
+                }
             }
 
             SettingsMenuLink(

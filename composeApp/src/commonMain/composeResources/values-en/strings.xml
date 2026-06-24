@@ -25,9 +25,7 @@
     <string name="bookmark_failed">Bookmark failed...</string>
     <string name="bookmark_settings">Bookmark Settings</string>
     <string name="bookmark_success">Bookmark success!</string>
-    <string name="bypass_intro">        In some regions, Pixiv access may be restricted.\n        We offer SNI Bypass and Proxy solutions.\n        SNI Bypass: Connects directly to Pixiv servers using special methods.\n        Proxy: Forwards requests through a proxy server.</string>
     <string name="bypass_none">Direct</string>
-    <string name="bypass_note">If you use embedded browser with VPN to login to Pixiv, please do not enable SNI bypass, otherwise the program will not be able to login normally.\nRestart required after changes.</string>
     <string name="bypass_proxy">Proxy</string>
     <string name="bypass_sni">SNI Bypass</string>
     <string name="bypass_solution">Connection Method</string>
@@ -214,7 +212,6 @@
     <string name="night_mode">Dark</string>
     <string name="night_mode_not_supported">Theme setting not supported in dark mode</string>
     <string name="no">No</string>
-    <string name="no_bypass">Direct</string>
     <string name="no_description">No description</string>
     <string name="no_description_novel">No description</string>
     <string name="no_file_selected">No file selected</string>
@@ -321,7 +318,6 @@
     <string name="single_column_width">Column Width</string>
     <string name="single_column_width_description">Current: %1$s</string>
     <string name="skip_setup">Skip</string>
-    <string name="sni_bypass">SNI Bypass</string>
     <string name="sort_date_asc">Oldest first</string>
     <string name="sort_date_desc">Newest first</string>
     <string name="sort_mode">Sort by</string>
@@ -362,8 +358,6 @@
     <string name="update_check_failed">Update check failed...</string>
     <string name="updates">Updates</string>
     <string name="use_browser_login">Browser Login</string>
-    <string name="use_proxy">Proxy</string>
-    <string name="use_sni_bypass">SNI Bypass</string>
     <string name="use_token_login">Token Login</string>
     <string name="user">User</string>
     <string name="user_info">User Info</string>
