@@ -11,9 +11,7 @@ import javax.net.ssl.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.yield
 import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -87,7 +85,6 @@ private data class SNIReplaceDNS(
                 }
             },
         ).getOrElse { emptyList() }
-
 
         val fallback = fallback[hostname]!!.flatMap { InetAddress.getAllByName(it)!!.toList() }
 
