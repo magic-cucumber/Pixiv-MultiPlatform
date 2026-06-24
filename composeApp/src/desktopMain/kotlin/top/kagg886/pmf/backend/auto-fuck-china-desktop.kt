@@ -1,5 +1,7 @@
 package top.kagg886.pmf.backend
 
+import arrow.core.getOrElse
+import arrow.fx.coroutines.raceN
 import java.io.IOException
 import java.net.InetAddress
 import java.net.Socket
@@ -55,8 +57,8 @@ private data class SNIReplaceDNS(
             else -> hostname
         }
 
-        val result = run {
-            val dohDeferred = async {
+        val result = raceN(
+            {
                 try {
                     val result = dnsOverHttps.lookup(host)
                     yield()
@@ -69,9 +71,8 @@ private data class SNIReplaceDNS(
                     logger.w(e) { "query DoH failed, use system dns" }
                     emptyList()
                 }
-            }
-
-            val systemDeferred = async {
+            },
+            {
                 try {
                     val result = Dns.SYSTEM.lookup("$host.cdn.cloudflare.net")
                     yield()
@@ -84,20 +85,9 @@ private data class SNIReplaceDNS(
                     logger.w(e) { "query dns failed, use fallback dns" }
                     emptyList()
                 }
-            }
+            },
+        ).getOrElse { emptyList() }
 
-            select {
-                dohDeferred.onAwait { doh ->
-                    systemDeferred.cancel()
-                    doh
-                }
-
-                systemDeferred.onAwait { system ->
-                    val doh = dohDeferred.await()
-                    doh + system
-                }
-            }
-        }
 
         val fallback = fallback[hostname]!!.flatMap { InetAddress.getAllByName(it)!!.toList() }
 
