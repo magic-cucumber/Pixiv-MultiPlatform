@@ -36,7 +36,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.mikepenz.aboutlibraries.Libs
-import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
+import com.mikepenz.aboutlibraries.entity.Library
+import com.mikepenz.aboutlibraries.entity.License
+import com.mikepenz.aboutlibraries.ui.compose.rememberLibraries
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import top.kagg886.pmf.BuildConfig
@@ -53,12 +57,12 @@ data object AboutRoute : NavKey
 
 @Composable
 fun AboutScreen() {
-    val libraries by produceLibraries {
+    val libraries by rememberLibraries {
         Res.readBytes("files/aboutlibraries.json").decodeToString()
     }
 
     val lib = remember(libraries) {
-        libraries ?: Libs(emptyList(), emptySet())
+        libraries ?: Libs(emptyList<Library>().toImmutableList(), emptySet<License>().toImmutableSet())
     }
 
     CollapsableTopAppBarScaffold(
