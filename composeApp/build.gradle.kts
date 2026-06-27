@@ -398,7 +398,9 @@ if (proguardEnable) {
                     val zip = zipTree(jar)
                     zip.matching { include("META-INF/**/proguard/*.pro") }.forEach { file ->
                         proguardFileWriter.appendLine("########   ${jar.name} ${file.name}")
-                        val content = file.readLines().filter { line -> "kotlin.Metadata" !in line }
+                        val content = file.readLines()
+                            .map { line -> line.replace("kotlin.Metadata", "kotlin.AAA") }
+                            .filter { line -> "keepkotlinmetadata" !in line }
                         content.forEach { line -> proguardFileWriter.appendLine(line) }
                     }
                     zip.matching { include("META-INF/services/*") }.forEach {
