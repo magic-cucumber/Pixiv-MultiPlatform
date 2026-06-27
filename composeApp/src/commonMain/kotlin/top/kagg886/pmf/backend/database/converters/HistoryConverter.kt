@@ -1,13 +1,12 @@
 package top.kagg886.pmf.backend.database.converters
 
-import androidx.room3.TypeConverter
-import kotlinx.serialization.encodeToString
+import androidx.room3.ColumnTypeConverter
 import kotlinx.serialization.json.Json
 
 class HistoryConverter {
-    @TypeConverter
+    @ColumnTypeConverter
     fun stringToListString(value: String): List<String> = Json.decodeFromString(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun listStringToString(value: List<String>): String = Json.encodeToString(value)
 }

@@ -1,13 +1,13 @@
 package top.kagg886.pmf.backend.database.dao
 
 import androidx.paging.PagingSource
+import androidx.room3.ColumnTypeConverters
 import androidx.room3.Dao
 import androidx.room3.DaoReturnTypeConverters
 import androidx.room3.Entity
 import androidx.room3.Insert
 import androidx.room3.PrimaryKey
 import androidx.room3.Query
-import androidx.room3.TypeConverters
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import kotlin.time.Clock
 import kotlinx.serialization.Serializable
@@ -49,7 +49,7 @@ interface WatchLaterDao {
 }
 
 @Entity
-@TypeConverters(WatchLaterTypeConverter::class, JsonObjectConverter::class)
+@ColumnTypeConverters(WatchLaterTypeConverter::class, JsonObjectConverter::class)
 data class WatchLaterItem(
     @PrimaryKey(autoGenerate = false)
     val id: Long? = null,
