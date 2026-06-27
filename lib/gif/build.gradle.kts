@@ -58,7 +58,7 @@ val kotlinArchToRustArch = mapOf(
 )
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(25)
     jvm()
 
     listOf(iosArm64(), iosSimulatorArm64()).forEach { t ->

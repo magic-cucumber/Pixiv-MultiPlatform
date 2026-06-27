@@ -1,5 +1,5 @@
 [versions]
-aboutlibraries = "12.2.4"
+aboutlibraries = "15.0.2"
 agp = "9.2.1"
 #androidx-documentfile = "1.1.0"
 androidx-documentfile = "1.6"
