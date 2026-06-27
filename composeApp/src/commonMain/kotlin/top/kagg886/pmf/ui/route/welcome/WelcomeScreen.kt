@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
@@ -77,7 +76,6 @@ import top.kagg886.pmf.ui.component.icon.SystemSuggest
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
 import top.kagg886.pmf.ui.route.main.setting.getDownloadRootPath
-import top.kagg886.pmf.ui.route.welcome.WelcomeViewState.ConfigureSetting.BYPASS
 import top.kagg886.pmf.ui.route.welcome.WelcomeViewState.ConfigureSetting.DOWNLOAD
 import top.kagg886.pmf.ui.route.welcome.WelcomeViewState.ConfigureSetting.FINISH
 import top.kagg886.pmf.ui.route.welcome.WelcomeViewState.ConfigureSetting.LANGUAGE
@@ -136,7 +134,6 @@ private fun WelcomeContent(model: WelcomeModel, state0: WelcomeViewState) {
                                 LANGUAGE -> stringResource(Res.string.app_language)
                                 WELCOME -> stringResource(Res.string.welcome)
                                 THEME -> stringResource(Res.string.theme_setting)
-                                BYPASS -> stringResource(Res.string.sni_bypass)
                                 DOWNLOAD -> stringResource(Res.string.settings_download)
                                 SHIELD -> stringResource(Res.string.shield_config)
                                 FINISH -> stringResource(Res.string.setup_complete)
@@ -196,7 +193,6 @@ private fun WelcomeElementContent(
         LANGUAGE -> LanguageSelectionContent()
         WELCOME -> WelcomeTextContent()
         THEME -> ThemeSelectionContent()
-        BYPASS -> BypassSettingsContent()
         DOWNLOAD -> DownloadSettingsContent()
         SHIELD -> ShieldSettingsContent()
         FINISH -> FinishSetupContent()
@@ -395,87 +391,6 @@ private fun ThemeSelectionContent() {
                 )
                 append(stringResource(Res.string.theme_info_after_url))
             },
-            modifier = Modifier.padding(8.dp),
-        )
-    }
-}
-
-@Composable
-private fun BypassSettingsContent() {
-    Text(
-        stringResource(Res.string.bypass_intro),
-    )
-
-    var bypassSettings by remember {
-        mutableStateOf(AppConfig.bypassSettings)
-    }
-    LaunchedEffect(bypassSettings) {
-        AppConfig.bypassSettings = bypassSettings
-    }
-    Spacer(Modifier.height(16.dp))
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
-    ) {
-        SelectionCard(
-            select = bypassSettings is AppConfig.BypassSetting.None,
-            modifier = Modifier.weight(1f).fillMaxHeight().padding(horizontal = 8.dp),
-            onClick = {
-                bypassSettings = AppConfig.BypassSetting.None
-            },
-        ) {
-            ListItem(
-                leadingContent = {
-                    Icon(Icons.Default.Delete, "")
-                },
-                headlineContent = {
-                    Text(stringResource(Res.string.no_bypass))
-                },
-                modifier = Modifier.fillMaxHeight().weight(1f),
-            )
-        }
-
-        SelectionCard(
-            select = bypassSettings is AppConfig.BypassSetting.SNIReplace,
-            modifier = Modifier.weight(1f).fillMaxHeight().padding(horizontal = 8.dp),
-            onClick = {
-                bypassSettings = AppConfig.BypassSetting.SNIReplace()
-            },
-        ) {
-            ListItem(
-                leadingContent = {
-                    Icon(Icons.Default.Check, "")
-                },
-                headlineContent = {
-                    Text(stringResource(Res.string.use_sni_bypass))
-                },
-                modifier = Modifier.fillMaxHeight().weight(1f),
-            )
-        }
-
-        SelectionCard(
-            select = bypassSettings is AppConfig.BypassSetting.Proxy,
-            modifier = Modifier.weight(1f).fillMaxHeight().padding(horizontal = 8.dp),
-            onClick = {
-                bypassSettings = AppConfig.BypassSetting.Proxy()
-            },
-        ) {
-            ListItem(
-                leadingContent = {
-                    Icon(Icons.Default.Check, "")
-                },
-                headlineContent = {
-                    Text(stringResource(Res.string.use_proxy))
-                },
-                modifier = Modifier.fillMaxHeight().weight(1f),
-            )
-        }
-    }
-    Spacer(Modifier.height(16.dp))
-
-    Card(Modifier.fillMaxWidth()) {
-        Text(
-            stringResource(Res.string.bypass_note),
             modifier = Modifier.padding(8.dp),
         )
     }

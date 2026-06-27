@@ -12,6 +12,7 @@ android {
     namespace = "top.kagg886.pmf.util"
     compileSdk = prop("COMPILE_SDK").toInt()
     buildToolsVersion = "37.0.0"
+    compileSdkMinor = 0
 
     defaultConfig {
         minSdk = prop("MIN_SDK").toInt()
@@ -48,3 +49,4 @@ kotlin {
         }
     }
 }
+

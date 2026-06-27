@@ -25,9 +25,7 @@
     <string name="bookmark_failed">收藏失敗...</string>
     <string name="bookmark_settings">收藏設定</string>
     <string name="bookmark_success">收藏成功！</string>
-    <string name="bypass_intro">在某些地區可能無法正常存取 Pixiv。\n 我們提供了 SNI 繞過和代理兩種連線方案。\n SNI 繞過：透過特殊方式直接連線 Pixiv 伺服器。\n 代理：透過代理伺服器轉發請求。</string>
     <string name="bypass_none">無</string>
-    <string name="bypass_note">如果您使用內嵌瀏覽器搭配 VPN (梯子) 登入 Pixiv，請不要開啟 SNI 繞過功能，否則程式將無法正常登入。\n啟用/停用此功能後，您需要重新啟動客戶端才能生效。</string>
     <string name="bypass_proxy">代理</string>
     <string name="bypass_sni">SNI 替換</string>
     <string name="bypass_solution">直連方案</string>
@@ -206,13 +204,13 @@
     <string name="multiapp_hint">此檔案用於確保 Pixiv-MultiPlatform 正常運行，請勿刪除此檔案！</string>
     <string name="multiapp_not_allowed">Pixiv-MultiPlatform 只允許一個實例運行，請先關閉已存在的實例</string>
     <string name="my_bookmark">我的收藏</string>
+    <string name="my_follow">我的追蹤</string>
     <string name="network_settings">網路設定</string>
     <string name="next_page">下一章</string>
     <string name="next_step">下一步</string>
     <string name="night_mode">夜間模式</string>
     <string name="night_mode_not_supported">夜間模式的主題暫不支援設定</string>
     <string name="no">否</string>
-    <string name="no_bypass">不使用繞過措施</string>
     <string name="no_description">沒有簡介</string>
     <string name="no_description_novel">沒有簡介</string>
     <string name="no_file_selected">未選擇檔案</string>
@@ -319,7 +317,6 @@
     <string name="single_column_width">單欄寬度</string>
     <string name="single_column_width_description">控制作品牆頁面單欄的大小，目前值: %1$s</string>
     <string name="skip_setup">略過設定</string>
-    <string name="sni_bypass">SNI 繞過</string>
     <string name="sort_date_asc">時間遞增</string>
     <string name="sort_date_desc">時間遞減</string>
     <string name="sort_mode">排序方式</string>
@@ -360,8 +357,6 @@
     <string name="update_check_failed">更新檢查失敗...</string>
     <string name="updates">更新</string>
     <string name="use_browser_login">使用內嵌瀏覽器登入</string>
-    <string name="use_proxy">使用代理</string>
-    <string name="use_sni_bypass">使用 SNI 繞過</string>
     <string name="use_token_login">使用 Token 登入</string>
     <string name="user">使用者</string>
     <string name="user_info">個人資訊</string>
