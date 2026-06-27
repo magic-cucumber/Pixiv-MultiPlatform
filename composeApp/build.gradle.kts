@@ -249,6 +249,7 @@ aboutLibraries {
 android {
     namespace = pkgName
     compileSdk = prop("COMPILE_SDK").toInt()
+    compileSdkMinor = 0
     buildToolsVersion = "37.0.0"
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")

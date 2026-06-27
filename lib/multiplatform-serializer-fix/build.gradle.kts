@@ -13,6 +13,7 @@ fun prop(key: String) = project.findProperty(key) as String
 android {
     namespace = "com.russhwolf.settings.serialization"
     compileSdk = prop("COMPILE_SDK").toInt()
+    compileSdkMinor = 0
     buildToolsVersion = "37.0.0"
 
     defaultConfig {
