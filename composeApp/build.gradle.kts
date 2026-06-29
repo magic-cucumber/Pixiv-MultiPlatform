@@ -97,7 +97,7 @@ kotlin {
 
             disableNativeCache(
                 version = DisableCacheInKotlinVersion.`2_4_0`,
-                reason = "workaround to override compose-foundation"
+                reason = "workaround to override compose-foundation",
             )
         }
     }
