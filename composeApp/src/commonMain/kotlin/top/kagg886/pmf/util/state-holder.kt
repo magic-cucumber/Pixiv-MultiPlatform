@@ -49,14 +49,12 @@ internal expect fun decodePlatformSaveableValue(value: JsonObject): Any?
  */
 
 @Composable
-public fun rememberSavableStateHolder(): SaveableStateHolder =
-    rememberSaveable(saver = SaveableStateHolderImpl.Saver) { SaveableStateHolderImpl() }
-        .apply { parentSaveableStateRegistry = LocalSaveableStateRegistry.current }
-
+public fun rememberSavableStateHolder(): SaveableStateHolder = rememberSaveable(saver = SaveableStateHolderImpl.Saver) { SaveableStateHolderImpl() }
+    .apply { parentSaveableStateRegistry = LocalSaveableStateRegistry.current }
 
 private class SaveableStateHolderImpl(
     private val referenceId: String = Uuid.random().toHexString(),
-    private val savedStates: MutableMap<Any, Map<String, List<Any?>>> = mutableMapOf()
+    private val savedStates: MutableMap<Any, Map<String, List<Any?>>> = mutableMapOf(),
 ) : SaveableStateHolder {
     private val registries = mutableScatterMapOf<Any, SaveableStateRegistry>()
     var parentSaveableStateRegistry: SaveableStateRegistry? = null
@@ -70,10 +68,10 @@ private class SaveableStateHolderImpl(
             val registry = remember {
                 require(canBeSaved(key)) {
                     "Type of the key $key is not supported. On Android you can only use types " +
-                            "which can be stored inside the Bundle."
+                        "which can be stored inside the Bundle."
                 }
                 SaveableStateRegistryWrapper(
-                    base = SaveableStateRegistry(restoredValues = savedStates[key], canBeSaved)
+                    base = SaveableStateRegistry(restoredValues = savedStates[key], canBeSaved),
                 )
             }
             CompositionLocalProvider(
@@ -113,9 +111,7 @@ private class SaveableStateHolderImpl(
         return referenceId
     }
 
-    override fun toString(): String {
-        return "top.kagg886.pmf.util.SaveableStateHolderImpl@${hashCode()} - ${saveAll()}"
-    }
+    override fun toString(): String = "top.kagg886.pmf.util.SaveableStateHolderImpl@${hashCode()} - ${saveAll()}"
 
     override fun removeState(key: Any) {
         if (registries.remove(key) == null) {
@@ -184,12 +180,19 @@ private fun Any?.toJsonValue(): JsonElement? {
     logStateHolderValue("save value", this)
     return when (this) {
         null -> JsonObject(mapOf("type" to JsonPrimitive("null")))
+
         is Boolean -> JsonObject(mapOf("type" to JsonPrimitive("boolean"), "value" to JsonPrimitive(this)))
+
         is Int -> JsonObject(mapOf("type" to JsonPrimitive("int"), "value" to JsonPrimitive(this)))
+
         is Long -> JsonObject(mapOf("type" to JsonPrimitive("long"), "value" to JsonPrimitive(this)))
+
         is Float -> JsonObject(mapOf("type" to JsonPrimitive("float"), "value" to JsonPrimitive(this)))
+
         is Double -> JsonObject(mapOf("type" to JsonPrimitive("double"), "value" to JsonPrimitive(this)))
+
         is String -> JsonObject(mapOf("type" to JsonPrimitive("string"), "value" to JsonPrimitive(this)))
+
         is MutableState<*> -> {
             val encodedValue = value.toJsonValue() ?: return null
             JsonObject(
@@ -199,12 +202,14 @@ private fun Any?.toJsonValue(): JsonElement? {
                 ),
             )
         }
+
         is List<*> -> JsonObject(
             mapOf(
                 "type" to JsonPrimitive("list"),
                 "value" to JsonArray(mapNotNull { it.toJsonValue() }),
             ),
         )
+
         is Map<*, *> -> {
             val entries = mapNotNull { (key, value) ->
                 val encodedKey = key.toJsonValue() ?: return@mapNotNull null
@@ -223,6 +228,7 @@ private fun Any?.toJsonValue(): JsonElement? {
                 ),
             )
         }
+
         else -> {
             encodePlatformSaveableValue(this) ?: run {
                 logStateHolderValue("skip unsupported value", this)
@@ -248,21 +254,32 @@ private fun JsonElement.toSavedValue(): Any? {
     val value = obj["value"] ?: JsonNull
     val restored = when (obj["type"]?.jsonPrimitive?.contentOrNull) {
         "null" -> null
+
         "boolean" -> value.jsonPrimitive.boolean
+
         "int" -> value.jsonPrimitive.int
+
         "long" -> value.jsonPrimitive.contentOrNull?.toLong()
+
         "float" -> value.jsonPrimitive.float
+
         "double" -> value.jsonPrimitive.double
+
         "string" -> value.jsonPrimitive.contentOrNull.orEmpty()
+
         "mutable_state" -> mutableStateOf(value.toSavedValue())
+
         "list" -> value.jsonArray.map { it.toSavedValue() }
+
         "map" -> buildMap {
             value.jsonArray.forEach { item ->
                 val pair = item.jsonObject
                 put(pair.getValue("key").toSavedValue(), pair.getValue("value").toSavedValue())
             }
         }
+
         "platform" -> decodePlatformSaveableValue(obj)
+
         else -> null
     }
     logStateHolderValue("restore value", restored)
@@ -271,6 +288,6 @@ private fun JsonElement.toSavedValue(): Any? {
 
 private fun logStateHolderValue(stage: String, value: Any?) {
     stateHolderLogger.i {
-        "$stage: class=${value?.let { it::class.toString() } ?: "null"}, toString=${value.toString()}"
+        "$stage: class=${value?.let { it::class.toString() } ?: "null"}, toString=$value"
     }
 }

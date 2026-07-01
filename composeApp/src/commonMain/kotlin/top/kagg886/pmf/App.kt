@@ -319,7 +319,7 @@ fun App(start: NavKey = WelcomeRoute) {
                             sceneStrategies = listOf(DialogSceneStrategy()),
                             entryDecorators = listOf(
                                 rememberSaveableStateHolderNavEntryDecorator(
-                                    saveableStateHolder = rememberSavableStateHolder()
+                                    saveableStateHolder = rememberSavableStateHolder(),
                                 ),
                                 rememberViewModelStoreNavEntryDecorator(),
                             ),
