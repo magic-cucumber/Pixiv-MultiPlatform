@@ -4,15 +4,22 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,18 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.navigation3.runtime.NavKey
-import co.touchlab.kermit.Severity
-import io.github.kdroidfilter.webview.request.RequestInterceptor
-import io.github.kdroidfilter.webview.request.WebRequest
-import io.github.kdroidfilter.webview.request.WebRequestInterceptResult
-import io.github.kdroidfilter.webview.util.KLogSeverity
-import io.github.kdroidfilter.webview.util.KLogSeverity.*
-import io.github.kdroidfilter.webview.util.KLogger
-import io.github.kdroidfilter.webview.web.LoadingState
-import io.github.kdroidfilter.webview.web.WebViewNavigator
-import io.github.kdroidfilter.webview.web.WebViewState
-import io.github.kdroidfilter.webview.web.rememberWebViewNavigator
-import io.github.kdroidfilter.webview.web.rememberWebViewState
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectAsState
@@ -44,9 +39,13 @@ import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.guide.GuideScaffold
+import top.kagg886.pmf.ui.component.icon.Help
 import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
+import top.kagg886.wvbridge.LoadingState
+import top.kagg886.wvbridge.WebView
+import top.kagg886.wvbridge.rememberWebViewState
 
 @Serializable
 data class LoginRoute(val clearOldSession: Boolean = false) : NavKey {
@@ -125,7 +124,9 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
                             mutableStateOf("")
                         }
                         AlertDialog(
-                            onDismissRequest = {},
+                            onDismissRequest = {
+                                model.clearLoginType()
+                            },
                             confirmButton = {
                                 Button(
                                     onClick = {
@@ -185,89 +186,50 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
 
 @Composable
 private fun WebViewLogin(model: LoginScreenViewModel) {
-    WebviewPlatformInstall()
-
     val auth = remember { PixivAccountFactory.newAccount(PlatformEngine) }
-    val state = rememberWebViewState(auth.url) {
-        customUserAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36 EdgA/135.0.0.0"
-    }
-    val webNav = rememberWebViewNavigator(
-        requestInterceptor = object : RequestInterceptor {
-            override fun onInterceptUrlRequest(
-                request: WebRequest,
-                navigator: WebViewNavigator,
-            ): WebRequestInterceptResult {
-                if (request.url.startsWith("pixiv://")) {
-                    model.challengePixivLoginUrl(auth, request.url)
-                    return WebRequestInterceptResult.Reject
-                }
-                return WebRequestInterceptResult.Allow
-            }
-        },
-    )
-
-    DisposableEffect(Unit) {
-        val log = object : KLogger {
-
-            override fun setMinSeverity(severity: KLogSeverity) = Unit
-
-            override fun log(
-                severity: KLogSeverity,
-                tag: String?,
-                t: Throwable?,
-                msg: () -> String,
-            ) {
-                if (severity == None) return
-                logger.withTag(tag ?: "ComposeNativeWebView").logBlock(
-                    severity = when (severity) {
-                        Verbose -> Severity.Verbose
-                        Debug -> Severity.Debug
-                        Info -> Severity.Info
-                        Warn -> Severity.Warn
-                        Error -> Severity.Error
-                        Assert -> Severity.Assert
-                        None -> error("Unreachable")
-                    },
-                    tag = tag ?: "ComposeNativeWebView",
-                    throwable = t,
-                    message = msg,
-                )
-            }
-        }
-
-        KLogger.addLogger(log)
-        KLogger.setMinSeverity(Verbose)
-
-        onDispose {
-            KLogger.removeLogger(log)
+    val state = rememberWebViewState(auth.url)
+    LaunchedEffect(state.url) {
+        val url = state.url
+        logger.i("webview navigate url: $url")
+        if (url.startsWith("pixiv://")) {
+            state.navigator.stop()
+            model.challengePixivLoginUrl(auth, url)
         }
     }
 
-    val progress = remember(state.loadingState) {
-        when (state.loadingState) {
-            is LoadingState.Loading -> (state.loadingState as LoadingState.Loading).progress
-            else -> -1.0f
+    val progress by remember {
+        derivedStateOf {
+            (state.state as? LoadingState.Loading)?.progress ?: -1f
         }
     }
 
     Column {
+        TopAppBar(
+            title = {
+                Text(stringResource(Res.string.use_browser_login))
+            },
+            navigationIcon = {
+                IconButton(onClick = { model.clearLoginType() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                }
+            },
+            actions = {
+                val uri = LocalUriHandler.current
+                IconButton(
+                    onClick = {
+                        uri.openUri("https://pmf.kagg886.top/docs/main/login.html#%E4%BD%BF%E7%94%A8%E5%B5%8C%E5%85%A5%E5%BC%8F%E6%B5%8F%E8%A7%88%E5%99%A8%E7%99%BB%E5%BD%95")
+                    },
+                ) {
+                    Icon(Help, null)
+                }
+            },
+        )
         if (progress in 0.0f..<1.0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
-        PlatformWebView(
-            modifier = Modifier.fillMaxSize(),
+        WebView(
             state = state,
-            navigator = webNav,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
-
-@Composable
-internal expect fun WebviewPlatformInstall()
-
-@Composable
-internal expect fun PlatformWebView(
-    state: WebViewState,
-    modifier: Modifier = Modifier,
-    navigator: WebViewNavigator = rememberWebViewNavigator(),
-)
