@@ -19,7 +19,7 @@ value class Size(val bytes: Long) : Comparable<Size> {
 
     override fun toString(): String = when {
         bytes < 1024 -> "$bytes B"
-        bytes < 1024 * 1024 -> "${kb.formatToString(2)} MB"
+        bytes < 1024 * 1024 -> "${kb.formatToString(2)} KB"
         else -> "${mb.formatToString(2)} MB"
     }
 
