@@ -194,7 +194,7 @@ import top.kagg886.pmf.util.UgoiraFetcher
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.initFileLogger
 import top.kagg886.pmf.util.logger
-import top.kagg886.pmf.util.rememberSavableStateHolder
+import top.kagg886.pmf.util.rememberReferenceSavableStateHolder
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toColorScheme
 
@@ -319,7 +319,7 @@ fun App(start: NavKey = WelcomeRoute) {
                             sceneStrategies = listOf(DialogSceneStrategy()),
                             entryDecorators = listOf(
                                 rememberSaveableStateHolderNavEntryDecorator(
-                                    saveableStateHolder = rememberSavableStateHolder(),
+                                    saveableStateHolder = rememberReferenceSavableStateHolder(),
                                 ),
                                 rememberViewModelStoreNavEntryDecorator(),
                             ),

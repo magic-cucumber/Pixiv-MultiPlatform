@@ -1,7 +1,8 @@
 package top.kagg886.pmf.util
 
-import kotlinx.serialization.json.JsonObject
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.SaveableStateHolder
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 
-internal actual fun encodePlatformSaveableValue(value: Any?): JsonObject? = null
-
-internal actual fun decodePlatformSaveableValue(value: JsonObject): Any? = null
+@Composable
+actual fun rememberReferenceSavableStateHolder(): SaveableStateHolder = rememberSaveableStateHolder()
