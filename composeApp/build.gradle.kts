@@ -94,11 +94,6 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             linkerOpts += "-lsqlite3"
-
-            disableNativeCache(
-                version = DisableCacheInKotlinVersion.`2_4_0`,
-                reason = "workaround to override compose-foundation",
-            )
         }
     }
 
