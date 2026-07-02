@@ -4,12 +4,18 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +39,7 @@ import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.guide.GuideScaffold
+import top.kagg886.pmf.ui.component.icon.Help
 import top.kagg886.pmf.ui.route.main.recommend.RecommendRoute
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
@@ -117,7 +124,9 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
                             mutableStateOf("")
                         }
                         AlertDialog(
-                            onDismissRequest = {},
+                            onDismissRequest = {
+                                model.clearLoginType()
+                            },
                             confirmButton = {
                                 Button(
                                     onClick = {
@@ -195,6 +204,26 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
     }
 
     Column {
+        TopAppBar(
+            title = {
+                Text(stringResource(Res.string.use_browser_login))
+            },
+            navigationIcon = {
+                IconButton(onClick = { model.clearLoginType() }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                }
+            },
+            actions = {
+                val uri = LocalUriHandler.current
+                IconButton(
+                    onClick = {
+                        uri.openUri("https://pmf.kagg886.top/docs/main/login.html#%E4%BD%BF%E7%94%A8%E5%B5%8C%E5%85%A5%E5%BC%8F%E6%B5%8F%E8%A7%88%E5%99%A8%E7%99%BB%E5%BD%95")
+                    },
+                ) {
+                    Icon(Help, null)
+                }
+            },
+        )
         if (progress in 0.0f..<1.0f) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
