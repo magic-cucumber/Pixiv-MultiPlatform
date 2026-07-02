@@ -67,8 +67,7 @@ kotlin {
         }
 
         iosMain.dependencies {
-            implementation(libs.filekit.compose)
-            implementation(libs.filekit.core)
+            implementation(libs.kotlinx.coroutines.core)
         }
 
         jvmTest.dependencies {
