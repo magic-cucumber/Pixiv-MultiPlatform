@@ -1,4 +1,5 @@
 @file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+@file:OptIn(KotlinNativeCacheApi::class)
 
 import com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
 import com.mikepenz.aboutlibraries.plugin.DuplicateRule.GROUP
@@ -11,6 +12,7 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.compose.desktop.application.tasks.AbstractProguardTask
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi
 
 fun prop(key: String) = (project.findProperty(key) as String?) ?: ""
 
@@ -82,7 +84,7 @@ buildConfig {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(25)
     androidTarget()
     jvm("desktop")
 
@@ -248,8 +250,9 @@ aboutLibraries {
 
 android {
     namespace = pkgName
-    compileSdk = prop("TARGET_SDK").toInt()
+    compileSdk = prop("COMPILE_SDK").toInt()
     compileSdkMinor = 0
+    buildToolsVersion = "37.0.0"
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
 
@@ -395,9 +398,12 @@ if (proguardEnable) {
             proguardFile.bufferedWriter().use { proguardFileWriter ->
                 sourceSets["desktopMain"].runtimeClasspath.filter { it.extension == "jar" }.forEach { jar ->
                     val zip = zipTree(jar)
-                    zip.matching { include("META-INF/**/proguard/*.pro") }.forEach {
-                        proguardFileWriter.appendLine("########   ${jar.name} ${it.name}")
-                        proguardFileWriter.appendLine(it.readText())
+                    zip.matching { include("META-INF/**/proguard/*.pro") }.forEach { file ->
+                        proguardFileWriter.appendLine("########   ${jar.name} ${file.name}")
+                        val content = file.readLines()
+                            .map { line -> line.replace("kotlin.Metadata", "kotlin.AAA") }
+                            .filter { line -> "keepkotlinmetadata" !in line }
+                        content.forEach { line -> proguardFileWriter.appendLine(line) }
                     }
                     zip.matching { include("META-INF/services/*") }.forEach {
                         it.readLines().forEach { cls ->

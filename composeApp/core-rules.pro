@@ -1,6 +1,10 @@
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn androidx.test.platform.app.InstrumentationRegistry
 
+-assumevalues public class androidx.compose.runtime.ComposeRuntimeFlags {
+    static boolean isLinkBufferComposerEnabled return true;
+}
+
 -keepclasseswithmembernames,includedescriptorclasses class * {
     native <methods>;
 }

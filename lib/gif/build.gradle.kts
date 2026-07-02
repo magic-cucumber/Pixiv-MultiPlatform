@@ -18,9 +18,9 @@ fun prop(key: String) = project.findProperty(key) as String
 android {
     ndkVersion = "29.0.14206865"
     namespace = "top.kagg886.gif"
-
-    compileSdk = prop("TARGET_SDK").toInt()
+    compileSdk = prop("COMPILE_SDK").toInt()
     compileSdkMinor = 0
+    buildToolsVersion = "37.0.0"
 
     defaultConfig {
         minSdk = prop("MIN_SDK").toInt()
@@ -58,7 +58,7 @@ val kotlinArchToRustArch = mapOf(
 )
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(25)
     jvm()
 
     listOf(iosArm64(), iosSimulatorArm64()).forEach { t ->

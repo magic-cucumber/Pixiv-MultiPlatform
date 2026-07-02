@@ -1,5 +1,6 @@
 package top.kagg886.pmf.backend.database.dao
 
+import androidx.room3.ColumnTypeConverters
 import androidx.room3.Dao
 import androidx.room3.Delete
 import androidx.room3.Entity
@@ -7,7 +8,6 @@ import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.PrimaryKey
 import androidx.room3.Query
-import androidx.room3.TypeConverters
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import top.kagg886.pixko.module.search.SearchSort
@@ -30,7 +30,7 @@ interface SearchHistoryDAO {
 }
 
 @Entity
-@TypeConverters(HistoryConverter::class)
+@ColumnTypeConverters(HistoryConverter::class)
 data class SearchHistory(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

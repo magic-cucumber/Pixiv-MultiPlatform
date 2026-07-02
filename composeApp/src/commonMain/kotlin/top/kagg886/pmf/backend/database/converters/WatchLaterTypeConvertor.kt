@@ -1,6 +1,6 @@
 package top.kagg886.pmf.backend.database.converters
 
-import androidx.room3.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 
 /**
@@ -10,9 +10,9 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterType
  * ================================================
  */
 class WatchLaterTypeConverter {
-    @TypeConverter
+    @ColumnTypeConverter
     fun toType(value: String): WatchLaterType = WatchLaterType.valueOf(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun fromType(type: WatchLaterType): String = type.name
 }

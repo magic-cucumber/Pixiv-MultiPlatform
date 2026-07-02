@@ -1,6 +1,6 @@
 package top.kagg886.pmf.backend.database.converters
 
-import androidx.room3.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 
@@ -12,9 +12,9 @@ import kotlinx.serialization.json.JsonObject
  */
 
 class JsonObjectConverter {
-    @TypeConverter
+    @ColumnTypeConverter
     fun stringToJsonObject(value: String): JsonObject = Json.decodeFromString(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun jsonObjectToString(value: JsonObject): String = Json.encodeToString(value)
 }
