@@ -23,16 +23,14 @@ import okio.buffer
 import top.kagg886.pmf.PMFApplication
 import top.kagg886.pmf.backend.dataPath
 
-
 internal val state_holder_logger = Logger.withTag("ReferenceSavableStateHolder")
 
 @Composable
-actual fun rememberReferenceSavableStateHolder(): SaveableStateHolder =
-    rememberSaveable(saver = ReferenceSaveableStateHolder.Saver) {
-        ReferenceSaveableStateHolder()
-    }.apply {
-        parentSaveableStateRegistry = LocalSaveableStateRegistry.current
-    }
+actual fun rememberReferenceSavableStateHolder(): SaveableStateHolder = rememberSaveable(saver = ReferenceSaveableStateHolder.Saver) {
+    ReferenceSaveableStateHolder()
+}.apply {
+    parentSaveableStateRegistry = LocalSaveableStateRegistry.current
+}
 
 private class ReferenceSaveableStateHolder(
     private val savedStates: MutableMap<Any, Map<String, List<Any?>>> = mutableMapOf(),
@@ -51,7 +49,7 @@ private class ReferenceSaveableStateHolder(
             val registry = remember {
                 require(canBeSaved(key)) {
                     "Type of the key $key is not supported. On Android you can only use types " +
-                            "which can be stored inside the Bundle."
+                        "which can be stored inside the Bundle."
                 }
                 SaveableStateRegistryWrapper(
                     base = SaveableStateRegistry(
@@ -124,8 +122,7 @@ private class ReferenceStateParcelable(val referenceId: String) : Parcelable {
     override fun describeContents(): Int = 0
 
     companion object CREATOR : Parcelable.Creator<ReferenceStateParcelable> {
-        override fun createFromParcel(parcel: Parcel): ReferenceStateParcelable =
-            ReferenceStateParcelable(parcel)
+        override fun createFromParcel(parcel: Parcel): ReferenceStateParcelable = ReferenceStateParcelable(parcel)
 
         override fun newArray(size: Int): Array<ReferenceStateParcelable?> = arrayOfNulls(size)
     }
@@ -139,7 +136,7 @@ private object ReferenceStateStore {
         val referenceId = UUID.randomUUID().toString()
         val file = dataPath.resolve(DIR_NAME).resolve("$referenceId$FILE_SUFFIX")
 
-        Parcel.obtain().use { parcel->
+        Parcel.obtain().use { parcel ->
             parcel.writeValue(HashMap(savedStates))
             val bytes = parcel.marshall()
 
@@ -176,7 +173,6 @@ private object ReferenceStateStore {
             state_holder_logger.w("savable state reference restore failed: ${parcelable.referenceId}, because api return empty value")
             return emptyMap<Any, Map<String, List<Any?>>>().toMutableMap()
         }
-
 
         state_holder_logger.i("saved state size: ${bytes.size.b}, content = $data")
 
