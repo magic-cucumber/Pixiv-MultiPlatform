@@ -194,6 +194,7 @@ import top.kagg886.pmf.util.UgoiraFetcher
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.initFileLogger
 import top.kagg886.pmf.util.logger
+import top.kagg886.pmf.util.rememberReferenceSavableStateHolder
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toColorScheme
 
@@ -317,7 +318,9 @@ fun App(start: NavKey = WelcomeRoute) {
                             onBack = { stack.removeLastOrNullWorkaround() },
                             sceneStrategies = listOf(DialogSceneStrategy()),
                             entryDecorators = listOf(
-                                rememberSaveableStateHolderNavEntryDecorator(),
+                                rememberSaveableStateHolderNavEntryDecorator(
+                                    saveableStateHolder = rememberReferenceSavableStateHolder(),
+                                ),
                                 rememberViewModelStoreNavEntryDecorator(),
                             ),
                             transitionSpec = { fadeIn() togetherWith fadeOut() },

@@ -20,7 +20,8 @@ plugins {
 
 dependencyResolutionManagement {
     repositories {
-        maven("https://oss.sonatype.org/content/repositories/snapshots/")
+        mavenCentral()
+//        maven("https://oss.sonatype.org/content/repositories/snapshots/")
         mavenLocal()
         google {
             mavenContent {
@@ -29,7 +30,6 @@ dependencyResolutionManagement {
                 includeGroupAndSubgroups("com.google")
             }
         }
-        mavenCentral()
         maven("https://jogamp.org/deployment/maven")
     }
 }

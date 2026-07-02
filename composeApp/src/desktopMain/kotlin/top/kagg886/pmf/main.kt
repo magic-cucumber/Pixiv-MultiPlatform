@@ -82,13 +82,14 @@ fun launch(start: () -> NavKey) {
             }
         }
     }
-    Logger.e("App exit with exception", lastException)
     if (lastException != null) {
+        Logger.e("App exit with exception", lastException)
         singleWindowApplication {
             CrashApp(throwable = lastException!!.stackTraceToString())
         }
         exitProcess(1)
     }
+    Logger.e("App exit with success", lastException)
     exitProcess(0)
 }
 

@@ -76,7 +76,6 @@ import top.kagg886.pmf.ui.route.main.download.DownloadScreenModel
 import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
 import top.kagg886.pmf.ui.util.*
 import top.kagg886.pmf.util.*
-
 class TodoSerializer : KSerializer<List<Illust>> {
     override val descriptor = PrimitiveSerialDescriptor("Todo", PrimitiveKind.STRING)
     override fun serialize(encoder: Encoder, value: List<Illust>) {

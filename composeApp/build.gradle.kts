@@ -49,6 +49,12 @@ println("OS name:      ${System.getProperty("os.name")}")
 println("OS arch:      ${System.getProperty("os.arch")}")
 println("-------------------")
 
+// fixme: workaround agp 8.13x issue
+val gradleProblemsReport = rootProject.layout.buildDirectory.file("reports/problems/problems-report.html").get().asFile
+if (gradleProblemsReport.isFile && !gradleProblemsReport.delete()) {
+    logger.warn("Unable to delete stale Gradle problems report: ${gradleProblemsReport.absolutePath}")
+}
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
