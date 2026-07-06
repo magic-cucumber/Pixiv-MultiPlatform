@@ -18,7 +18,8 @@ class GalleryTest {
         val json = Json {
             ignoreUnknownKeys = true
         }
-        val multi = json.decodeFromString<Illust>("""
+        val multi = json.decodeFromString<Illust>(
+            """
             {
                 "id": 125116835,
                 "title": "\u521d\u97f3\u30df\u30af",
@@ -122,8 +123,10 @@ class GalleryTest {
                 "comment_access_control": 0
               }
 
-        """.trimIndent())
-        val single = json.decodeFromString<Illust>("""
+            """.trimIndent(),
+        )
+        val single = json.decodeFromString<Illust>(
+            """
             {
                 "id": 146691669,
                 "title": "\u30ce\u30be\u30df",
@@ -196,7 +199,8 @@ class GalleryTest {
                 "request": null,
                 "comment_access_control": 0
               }
-        """.trimIndent())
+            """.trimIndent(),
+        )
 
         val single1 = single.toEntity()
         val multi1 = multi.toEntity()
