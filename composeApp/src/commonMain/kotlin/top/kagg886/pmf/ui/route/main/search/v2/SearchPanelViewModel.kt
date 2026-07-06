@@ -29,6 +29,7 @@ import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.BlackListItem
 import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.search.v2.components.TagPropertiesState
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
@@ -268,6 +269,11 @@ class SearchPanelViewModel(
             state.target,
         )
     }
+
+    fun performClick(illust: Illust) = intent {
+        database.illustGalleryDAO().insert(illust)
+        postSideEffect(SearchPanelSideEffect.NavigateIllustDetail(IllustDetailRoute(illust.id)))
+    }
 }
 
 data class SearchPanelViewState(
@@ -281,6 +287,7 @@ data class SearchPanelViewState(
 
 sealed interface SearchPanelSideEffect {
     data class Toast(val message: String) : SearchPanelSideEffect
+    data class NavigateIllustDetail(val route: IllustDetailRoute) : SearchPanelSideEffect
 }
 
 sealed interface SearchPanelState {

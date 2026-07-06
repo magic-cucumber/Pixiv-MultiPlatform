@@ -32,6 +32,7 @@ import org.orbitmvi.orbit.annotation.OrbitExperimental
 import top.kagg886.pixko.Tag
 import top.kagg886.pixko.anno.ExperimentalNovelParserAPI
 import top.kagg886.pixko.module.illust.BookmarkVisibility
+import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.getIllustDetail
 import top.kagg886.pixko.module.novel.Novel
 import top.kagg886.pixko.module.novel.NovelData
@@ -63,6 +64,7 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
@@ -535,6 +537,11 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             postSideEffect(NovelDetailSideEffect.NavigateBack)
         }
     }
+
+    fun performClick(illust: Illust) = intent {
+        database.illustGalleryDAO().insert(illust)
+        postSideEffect(NovelDetailSideEffect.NavigateIllustDetail(IllustDetailRoute(illust.id)))
+    }
 }
 
 sealed class NovelDetailViewState {
@@ -552,6 +559,7 @@ sealed class NovelDetailViewState {
 
 sealed class NovelDetailSideEffect {
     data class Toast(val msg: String) : NovelDetailSideEffect()
+    data class NavigateIllustDetail(val route: IllustDetailRoute) : NovelDetailSideEffect()
     data class NavigateToOtherNovel(val id: Long, val seriesInfo: SeriesInfo?) :
         NovelDetailSideEffect()
 

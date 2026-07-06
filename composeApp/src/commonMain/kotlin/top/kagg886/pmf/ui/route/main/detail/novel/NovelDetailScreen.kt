@@ -157,6 +157,10 @@ fun NovelDetailScreen(route: NovelDetailRoute) {
                 stack += NovelDetailRoute(it.id, it.seriesInfo)
             }
 
+            is NovelDetailSideEffect.NavigateIllustDetail -> {
+                stack += it.route
+            }
+
             NovelDetailSideEffect.NavigateBack -> stack.removeLastOrNullWorkaround()
         }
     }
@@ -701,6 +705,7 @@ private fun NovelDetailContent(
                                         )
                                     }
                                 },
+                            onIllustClick = model::performClick,
                         )
 
                         if (AppConfig.enableFetchSeries) {

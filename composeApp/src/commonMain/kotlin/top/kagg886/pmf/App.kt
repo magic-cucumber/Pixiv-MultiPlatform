@@ -126,8 +126,6 @@ import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorIllustViewModel
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelBookmarkViewModel
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelViewModel
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustCommentViewModel
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchScreen
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewModel
@@ -230,7 +228,6 @@ private val config = SavedStateConfiguration {
             subclass(serializer = FollowRoute.serializer())
             subclass(serializer = AboutRoute.serializer())
             subclass(serializer = IllustDetailRoute.serializer())
-            subclass(serializer = IllustDetailPreFetchRoute.serializer())
             subclass(serializer = IllustSimilarRoute.serializer())
             subclass(serializer = NovelDetailRoute.serializer())
             subclass(serializer = NovelSimilarRoute.serializer())
@@ -307,6 +304,10 @@ fun App(start: NavKey = WelcomeRoute) {
                                     return@collectSideEffect
                                 }
                                 s.showSnackbar(toast.msg, withDismissAction = true)
+                            }
+
+                            is DownloadScreenSideEffect.NavigateIllustDetail -> {
+                                stack += toast.route
                             }
                         }
                     }
@@ -523,7 +524,6 @@ fun setupEnv() {
                 viewModelOf(::IllustDetailViewModel)
                 viewModelOf(::IllustCommentViewModel)
                 navigation<IllustDetailRoute> { key -> IllustDetailScreen(key) }
-                navigation<IllustDetailPreFetchRoute> { key -> IllustDetailPreFetchScreen(key) }
 
                 viewModelOf(::IllustSimilarViewModel)
                 navigation<IllustSimilarRoute> { key -> IllustSimilarScreen(key) }

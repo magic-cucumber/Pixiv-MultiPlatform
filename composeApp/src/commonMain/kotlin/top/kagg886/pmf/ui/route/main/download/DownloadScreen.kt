@@ -70,7 +70,6 @@ import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.icon.Download
 import top.kagg886.pmf.ui.component.icon.Save
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.util.logger
@@ -305,10 +304,9 @@ private fun IllustDownloadItem(
     model: DownloadScreenModel,
     modifier: Modifier = Modifier,
 ) {
-    val stack = LocalNavBackStack.current
     OutlinedCard(
         modifier = modifier,
-        onClick = { stack += IllustDetailRoute(item.illust) },
+        onClick = { model.performClick(item.illust) },
     ) {
         Row(
             modifier = Modifier.padding(5.dp).fillMaxWidth(),
