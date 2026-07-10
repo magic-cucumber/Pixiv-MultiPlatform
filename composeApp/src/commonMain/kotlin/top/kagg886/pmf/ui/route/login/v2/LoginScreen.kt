@@ -6,24 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.navigation3.runtime.NavKey
@@ -36,6 +20,7 @@ import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.backend.PlatformEngine
 import top.kagg886.pmf.backend.pixiv.PixivConfig
+import top.kagg886.pmf.openBrowser
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.guide.GuideScaffold
@@ -45,7 +30,10 @@ import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.wvbridge.LoadingState
 import top.kagg886.wvbridge.WebView
-import top.kagg886.wvbridge.rememberWebViewState
+import top.kagg886.wvbridge.config.WebViewConfig
+import top.kagg886.wvbridge.config.WebViewPlatformConfig
+import top.kagg886.wvbridge.interceptor.InterceptorHandler
+import top.kagg886.wvbridge.rememberWebViewController
 
 @Serializable
 data class LoginRoute(val clearOldSession: Boolean = false) : NavKey {
@@ -184,22 +172,35 @@ private fun WaitLoginContent(a: LoginViewState, model: LoginScreenViewModel) {
     }
 }
 
+expect fun defaultPlatformConfig(): WebViewPlatformConfig
+
 @Composable
 private fun WebViewLogin(model: LoginScreenViewModel) {
     val auth = remember { PixivAccountFactory.newAccount(PlatformEngine) }
-    val state = rememberWebViewState(auth.url)
-    LaunchedEffect(state.url) {
-        val url = state.url
-        logger.i("webview navigate url: $url")
-        if (url.startsWith("pixiv://")) {
-            state.navigator.stop()
-            model.challengePixivLoginUrl(auth, url)
+    val controller = rememberWebViewController(
+        url = auth.url,
+        config = WebViewConfig(
+            userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.56 Safari/537.36",
+            platform = defaultPlatformConfig(),
+        ),
+    )
+    DisposableEffect(controller) {
+        val registry = controller.interceptor.registerNavigationInterceptor auth@{ url ->
+            logger.i("webview intercept url: $url")
+            if (url.startsWith("pixiv://")) {
+                model.challengePixivLoginUrl(auth, url)
+                return@auth InterceptorHandler.Result.Rejected
+            }
+            return@auth InterceptorHandler.Result.Allowed
+        }
+        onDispose {
+            registry.close()
         }
     }
 
     val progress by remember {
         derivedStateOf {
-            (state.state as? LoadingState.Loading)?.progress ?: -1f
+            (controller.loadingState as? LoadingState.Loading)?.progress ?: -1f
         }
     }
 
@@ -214,10 +215,9 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
                 }
             },
             actions = {
-                val uri = LocalUriHandler.current
                 IconButton(
                     onClick = {
-                        uri.openUri("https://pmf.kagg886.top/docs/main/login.html#%E4%BD%BF%E7%94%A8%E5%B5%8C%E5%85%A5%E5%BC%8F%E6%B5%8F%E8%A7%88%E5%99%A8%E7%99%BB%E5%BD%95")
+                        openBrowser("https://pmf.kagg886.top/docs/main/login.html#%E4%BD%BF%E7%94%A8%E5%B5%8C%E5%85%A5%E5%BC%8F%E6%B5%8F%E8%A7%88%E5%99%A8%E7%99%BB%E5%BD%95")
                     },
                 ) {
                     Icon(Help, null)
@@ -228,7 +228,7 @@ private fun WebViewLogin(model: LoginScreenViewModel) {
             LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
         }
         WebView(
-            state = state,
+            controller = controller,
             modifier = Modifier.fillMaxSize(),
         )
     }
