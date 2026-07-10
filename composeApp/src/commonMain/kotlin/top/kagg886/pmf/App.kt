@@ -196,6 +196,7 @@ import top.kagg886.pmf.util.initFileLogger
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toColorScheme
+import top.kagg886.wvbridge.util.LoggerReceiver
 
 val LocalNavBackStack = compositionLocalOf<NavBackStack<NavKey>> {
     error("not provided")
@@ -613,6 +614,39 @@ fun setupEnv() {
             - Platform: $currentPlatform
         """.trimIndent(),
     )
+
+    LoggerReceiver.register { level, tag, message ->
+        // enum class Severity {
+        //    Verbose,
+        //    Debug,
+        //    Info,
+        //    Warn,
+        //    Error,
+        //    Assert,
+        // }
+
+//        public enum class Level {
+//            /** Detailed diagnostic output. */
+//            VERBOSE,
+//
+//            /** Debug information useful during development. */
+//            DEBUG,
+//
+//            /** General informational messages. */
+//            INFO,
+//
+//            /** Potentially problematic state that does not stop execution. */
+//            WARN,
+//
+//            /** Error state reported by the runtime. */
+//            ERROR,
+//
+//            /** Assertion or unrecoverable failure state. */
+//            ASSERT
+//        }
+
+        co.touchlab.kermit.Logger.log(Severity.valueOf(level.name.lowercase().replaceFirstChar { it.uppercase() }), tag, null, message)
+    }
 }
 
 expect fun openBrowser(link: String)
