@@ -161,7 +161,7 @@ kotlin {
 //            implementation(project(":lib:chip-text-field"))
 
             // webview
-            api(libs.compose.webview.multiplatform)
+            implementation(libs.wvbridge.core)
 
             // https://coil-kt.github.io/coil/changelog/
             implementation(dependencies.platform(libs.coil.bom))
@@ -208,6 +208,20 @@ kotlin {
         val desktopMain by getting
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
+            implementation(
+                when {
+                    System.getProperty("os.name").startsWith("Windows") -> libs.wvbridge.platform.windows
+
+                    System.getProperty("os.name").startsWith("Linux") -> libs.wvbridge.platform.linux
+
+                    System.getProperty("os.name").startsWith("Mac") && System.getProperty("os.arch") in setOf("aarch64", "arm64") -> libs.wvbridge.platform.macos
+
+                    else -> error(
+                        "Unsupported desktop runtime for wvbridge: " +
+                            "${System.getProperty("os.name")} ${System.getProperty("os.arch")}",
+                    )
+                },
+            )
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.okhttp.dnsoverhttps)
