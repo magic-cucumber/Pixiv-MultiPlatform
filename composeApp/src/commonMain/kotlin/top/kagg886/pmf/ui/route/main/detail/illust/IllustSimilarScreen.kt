@@ -15,9 +15,12 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.LocalNavBackStack
+import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.util.IllustFetchScreen
+import top.kagg886.pmf.ui.util.IllustFetchSideEffect
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
 
@@ -31,6 +34,18 @@ fun IllustSimilarScreen(route: IllustSimilarRoute) {
         parametersOf(id)
     }
     val stack = LocalNavBackStack.current
+    val snackbarHostState = LocalSnackBarHost.current
+    similarModel.collectSideEffect { effect ->
+        when (effect) {
+            is IllustFetchSideEffect.Toast -> {
+                snackbarHostState.showSnackbar(effect.msg)
+            }
+
+            is IllustFetchSideEffect.NavigateIllustDetail -> {
+                stack += effect.route
+            }
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(

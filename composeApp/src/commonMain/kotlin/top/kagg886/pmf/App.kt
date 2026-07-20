@@ -126,8 +126,6 @@ import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorIllustViewModel
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelBookmarkViewModel
 import top.kagg886.pmf.ui.route.main.detail.author.tabs.AuthorNovelViewModel
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustCommentViewModel
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchScreen
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailScreen
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailViewModel
@@ -196,6 +194,7 @@ import top.kagg886.pmf.util.initFileLogger
 import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.toColorScheme
+import top.kagg886.wvbridge.util.LoggerReceiver
 
 val LocalNavBackStack = compositionLocalOf<NavBackStack<NavKey>> {
     error("not provided")
@@ -230,7 +229,6 @@ private val config = SavedStateConfiguration {
             subclass(serializer = FollowRoute.serializer())
             subclass(serializer = AboutRoute.serializer())
             subclass(serializer = IllustDetailRoute.serializer())
-            subclass(serializer = IllustDetailPreFetchRoute.serializer())
             subclass(serializer = IllustSimilarRoute.serializer())
             subclass(serializer = NovelDetailRoute.serializer())
             subclass(serializer = NovelSimilarRoute.serializer())
@@ -307,6 +305,10 @@ fun App(start: NavKey = WelcomeRoute) {
                                     return@collectSideEffect
                                 }
                                 s.showSnackbar(toast.msg, withDismissAction = true)
+                            }
+
+                            is DownloadScreenSideEffect.NavigateIllustDetail -> {
+                                stack += toast.route
                             }
                         }
                     }
@@ -523,7 +525,6 @@ fun setupEnv() {
                 viewModelOf(::IllustDetailViewModel)
                 viewModelOf(::IllustCommentViewModel)
                 navigation<IllustDetailRoute> { key -> IllustDetailScreen(key) }
-                navigation<IllustDetailPreFetchRoute> { key -> IllustDetailPreFetchScreen(key) }
 
                 viewModelOf(::IllustSimilarViewModel)
                 navigation<IllustSimilarRoute> { key -> IllustSimilarScreen(key) }
@@ -613,6 +614,39 @@ fun setupEnv() {
             - Platform: $currentPlatform
         """.trimIndent(),
     )
+
+    LoggerReceiver.register { level, tag, message ->
+        // enum class Severity {
+        //    Verbose,
+        //    Debug,
+        //    Info,
+        //    Warn,
+        //    Error,
+        //    Assert,
+        // }
+
+//        public enum class Level {
+//            /** Detailed diagnostic output. */
+//            VERBOSE,
+//
+//            /** Debug information useful during development. */
+//            DEBUG,
+//
+//            /** General informational messages. */
+//            INFO,
+//
+//            /** Potentially problematic state that does not stop execution. */
+//            WARN,
+//
+//            /** Error state reported by the runtime. */
+//            ERROR,
+//
+//            /** Assertion or unrecoverable failure state. */
+//            ASSERT
+//        }
+
+        co.touchlab.kermit.Logger.log(Severity.valueOf(level.name.lowercase().replaceFirstChar { it.uppercase() }), tag, null, message)
+    }
 }
 
 expect fun openBrowser(link: String)

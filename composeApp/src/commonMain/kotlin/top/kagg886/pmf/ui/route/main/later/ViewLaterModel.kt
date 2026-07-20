@@ -13,11 +13,13 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.orbitmvi.orbit.Container
 import org.orbitmvi.orbit.ContainerHost
+import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.res.Res
 import top.kagg886.pmf.res.remove_watch_later_success
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
 
@@ -62,6 +64,14 @@ class ViewLaterModel : ContainerHost<ViewLaterState, ViewLaterSideEffect>, ViewM
             )
         }
     }
+
+    fun performClick(illust: Illust, removeItem: WatchLaterItem? = null) = intent {
+        database.illustGalleryDAO().insert(illust)
+        if (removeItem != null) {
+            database.watchLaterDAO().delete(removeItem.type, removeItem.payload)
+        }
+        postSideEffect(ViewLaterSideEffect.NavigateIllustDetail(IllustDetailRoute(illust.id)))
+    }
 }
 
 sealed class ViewLaterState {
@@ -72,4 +82,5 @@ sealed class ViewLaterState {
 
 sealed class ViewLaterSideEffect {
     data class Toast(val message: String) : ViewLaterSideEffect()
+    data class NavigateIllustDetail(val route: IllustDetailRoute) : ViewLaterSideEffect()
 }

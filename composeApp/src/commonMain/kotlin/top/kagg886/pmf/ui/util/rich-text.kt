@@ -31,12 +31,10 @@ import kotlin.time.Clock
 import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.IllustImagesType
 import top.kagg886.pixko.module.illust.get
-import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.Platform
 import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.ui.component.ImagePreviewer
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 
 sealed interface NovelNodeElement {
     data class Plain(val text: String) : NovelNodeElement
@@ -97,6 +95,7 @@ fun AnnotatedString.Builder.withLink(
 fun RichText(
     state: List<NovelNodeElement>,
     modifier: Modifier = Modifier,
+    onIllustClick: (Illust) -> Unit = {},
 ) {
     val previews = remember {
         state.filterIsInstance<NovelNodeElement.UploadImage>().map { it.url }
@@ -118,7 +117,7 @@ fun RichText(
     var screenWidth by remember {
         mutableStateOf(0.sp)
     }
-    val inlineNode = remember(state, screenWidth) {
+    val inlineNode = remember(state, screenWidth, onIllustClick) {
         buildMap {
             for (i in state) {
                 when (i) {
@@ -136,12 +135,11 @@ fun RichText(
                                 ),
                             ) {
                                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    val stack = LocalNavBackStack.current
                                     AsyncImage(
                                         model = i.illust.contentImages[IllustImagesType.LARGE, IllustImagesType.MEDIUM]?.get(0),
                                         modifier = Modifier.fillMaxWidth(0.8f)
                                             .aspectRatio(i.illust.width.toFloat() / i.illust.height)
-                                            .clickable { stack += IllustDetailRoute(i.illust) },
+                                            .clickable { onIllustClick(i.illust) },
                                         contentDescription = null,
                                     )
                                 }

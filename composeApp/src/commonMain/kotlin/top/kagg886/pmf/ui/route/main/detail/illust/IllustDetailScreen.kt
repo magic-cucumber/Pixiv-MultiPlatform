@@ -35,13 +35,7 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.dokar.chiptextfield.util.runIf
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.Json
 import okio.Buffer
 import okio.buffer
 import okio.use
@@ -54,14 +48,12 @@ import top.kagg886.filepicker.openFileSaver
 import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.IllustImagesType
 import top.kagg886.pixko.module.illust.get
-import top.kagg886.pixko.module.illust.getIllustDetail
 import top.kagg886.pixko.module.search.SearchSort
 import top.kagg886.pixko.module.search.SearchTarget
 import top.kagg886.pmf.*
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.Platform
 import top.kagg886.pmf.backend.currentPlatform
-import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.useTempFile
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.*
@@ -77,36 +69,22 @@ import top.kagg886.pmf.ui.route.main.search.v2.SearchResultRoute
 import top.kagg886.pmf.ui.util.*
 import top.kagg886.pmf.util.*
 
-class TodoSerializer : KSerializer<List<Illust>> {
-    override val descriptor = PrimitiveSerialDescriptor("Todo", PrimitiveKind.STRING)
-    override fun serialize(encoder: Encoder, value: List<Illust>) {
-        val json = Json.encodeToString(value)
-        encoder.encodeString(json)
-    }
-
-    override fun deserialize(decoder: Decoder): List<Illust> {
-        val json = decoder.decodeString()
-        return Json.decodeFromString(json)
-    }
-}
-
 @Serializable
 data class IllustDetailRoute(
     val index: Int,
-    @Serializable(with = TodoSerializer::class)
-    val todos: List<Illust>,
+    val todos: List<Int>,
 ) : NavKey
 
-fun IllustDetailRoute(illust: Illust) = IllustDetailRoute(0, listOf(illust))
+fun IllustDetailRoute(id: Int) = IllustDetailRoute(0, listOf(id))
 
 @Composable
 fun IllustDetailScreen(route: IllustDetailRoute) = BoxWithConstraints(Modifier.fillMaxSize()) {
     val current = route.todos[route.index]
     val todos = route.todos
     HorizontalPager(state = rememberPagerState(initialPage = todos.indexOf(current)) { todos.size }) { index ->
-        val illust = todos[index]
-        val model = koinViewModel<IllustDetailViewModel>(key = "${illust.id}") {
-            parametersOf(illust)
+        val illustId = todos[index]
+        val model = koinViewModel<IllustDetailViewModel>(key = "$illustId") {
+            parametersOf(illustId)
         }
         val state by model.collectAsState()
         val host = LocalSnackBarHost.current
@@ -807,35 +785,4 @@ private fun IllustComment(illust: Illust) {
         model = model,
         modifier = Modifier.fillMaxSize(),
     )
-}
-
-@Serializable
-data class IllustDetailPreFetchRoute(val id: Long) : NavKey
-
-@Composable
-fun IllustDetailPreFetchScreen(route: IllustDetailPreFetchRoute) {
-    val id = route.id
-    val client = remember { PixivConfig.newAccountFromConfig() }
-    val stack = LocalNavBackStack.current
-    val snack = LocalSnackBarHost.current
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        scope.launch {
-            runCatching { client.getIllustDetail(id) }.fold(
-                {
-                    stack[stack.size - 1] = IllustDetailRoute(it)
-                },
-                { snack.showSnackbar(getString(Res.string.cant_load_illust, id)) },
-            )
-        }
-    }
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Loading()
-        IconButton(
-            onClick = { stack.removeLastOrNullWorkaround() },
-            modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-        }
-    }
 }

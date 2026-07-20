@@ -31,6 +31,7 @@ import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.dao.BlackListType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.util.logger
 
 abstract class IllustFetchViewModel :
@@ -80,6 +81,16 @@ abstract class IllustFetchViewModel :
 
     fun refresh() = intent { signal.emit(Unit) }
 
+    fun performClick(illust: Illust) = performClick(illust, 0, listOf(illust))
+
+    fun performClick(illust: Illust, index: Int, todos: List<Illust>) = intent {
+        val ids = todos.map { it.id }
+        for (item in todos.distinctBy { it.id }) {
+            database.illustGalleryDAO().insert(item)
+        }
+        postSideEffect(IllustFetchSideEffect.NavigateIllustDetail(IllustDetailRoute(index, ids)))
+    }
+
     @OptIn(OrbitExperimental::class)
     fun likeIllust(
         illust: Illust,
@@ -120,8 +131,9 @@ abstract class IllustFetchViewModel :
 
 data class IllustFetchViewState(val scrollerState: LazyStaggeredGridState = LazyStaggeredGridState())
 
-sealed class IllustFetchSideEffect {
-    data class Toast(val msg: String) : IllustFetchSideEffect()
+interface IllustFetchSideEffect {
+    data class Toast(val msg: String) : IllustFetchSideEffect
+    data class NavigateIllustDetail(val route: IllustDetailRoute) : IllustFetchSideEffect
 }
 
 inline fun <T : Any> PagingData<T>.filterNot(crossinline f: suspend (T) -> Boolean) = filter { v -> !f(v) }

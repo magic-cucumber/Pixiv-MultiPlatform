@@ -28,6 +28,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.TabContainer
 import top.kagg886.pmf.ui.util.AuthorFetchScreen
 import top.kagg886.pmf.ui.util.IllustFetchScreen
+import top.kagg886.pmf.ui.util.IllustFetchSideEffect
 import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
 import top.kagg886.pmf.util.stringResource
@@ -80,8 +81,24 @@ fun SearchResultScreen(route: SearchResultRoute) {
         },
     ) { paddingValues ->
         val data = buildMap<String, (@Composable () -> Unit)> {
-            state.illustRepo?.let {
-                put(stringResource(Res.string.illust), { IllustFetchScreen(it) })
+            state.illustRepo?.let { repo ->
+                put(
+                    stringResource(Res.string.illust),
+                    {
+                        repo.collectSideEffect { effect ->
+                            when (effect) {
+                                is IllustFetchSideEffect.Toast -> {
+                                    snackbarHostState.showSnackbar(effect.msg)
+                                }
+
+                                is IllustFetchSideEffect.NavigateIllustDetail -> {
+                                    stack += effect.route
+                                }
+                            }
+                        }
+                        IllustFetchScreen(repo)
+                    },
+                )
             }
             state.novelRepo?.let {
                 put(stringResource(Res.string.novel), { NovelFetchScreen(it) })

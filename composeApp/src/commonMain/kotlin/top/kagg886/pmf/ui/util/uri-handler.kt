@@ -16,7 +16,7 @@ import androidx.navigation3.runtime.NavKey
 import io.ktor.http.Url
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailPreFetchRoute
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.util.stringResource
 
@@ -65,7 +65,7 @@ fun rememberSupportPixivNavigateUriHandler(stack: NavBackStack<NavKey>): UriHand
                         when {
                             uri.encodedPath.startsWith("/users/") -> stack += AuthorRoute(uri.encodedPath.split("/")[2].toInt())
                             uri.encodedPath.startsWith("/novel/show.php") -> stack += NovelDetailRoute(uri.encodedPath.split("=")[1].toLong())
-                            uri.encodedPath.startsWith("/artworks/") -> stack += IllustDetailPreFetchRoute(uri.encodedPath.split("/")[2].toLong())
+                            uri.encodedPath.startsWith("/artworks/") -> stack += IllustDetailRoute(uri.encodedPath.split("/")[2].toInt())
                         }
                         return@runCatching true
                     }
@@ -73,7 +73,7 @@ fun rememberSupportPixivNavigateUriHandler(stack: NavBackStack<NavKey>): UriHand
                         val uri = Url(url.trim())
                         when (uri.host) {
                             "novels" -> stack += AuthorRoute(uri.encodedPath.substring(1).toInt())
-                            "illusts" -> stack += IllustDetailPreFetchRoute(uri.encodedPath.substring(1).toLong())
+                            "illusts" -> stack += IllustDetailRoute(uri.encodedPath.substring(1).toInt())
                             "users" -> stack += AuthorRoute(uri.encodedPath.substring(1).toInt())
                         }
                         return@runCatching true

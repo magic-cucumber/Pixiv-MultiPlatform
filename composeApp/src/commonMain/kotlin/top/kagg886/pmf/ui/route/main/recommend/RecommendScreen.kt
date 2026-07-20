@@ -12,6 +12,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectSideEffect
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.NavigationItem
 import top.kagg886.pmf.composeWithAppBar
@@ -29,6 +30,7 @@ data object RecommendRoute : NavKey
 @Composable
 fun RecommendScreen() = NavigationItem.RECOMMEND.composeWithAppBar {
     val snackbarHostState = LocalSnackBarHost.current
+    val stack = LocalNavBackStack.current
     var index by rememberSerializable { mutableIntStateOf(0) }
     val tab = listOf(Res.string.illust, Res.string.novel)
     TabContainer(
@@ -45,6 +47,10 @@ fun RecommendScreen() = NavigationItem.RECOMMEND.composeWithAppBar {
                     when (effect) {
                         is IllustFetchSideEffect.Toast -> {
                             snackbarHostState.showSnackbar(effect.msg)
+                        }
+
+                        is IllustFetchSideEffect.NavigateIllustDetail -> {
+                            stack += effect.route
                         }
                     }
                 }

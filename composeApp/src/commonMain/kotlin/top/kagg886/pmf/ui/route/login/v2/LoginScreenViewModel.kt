@@ -40,6 +40,12 @@ class LoginScreenViewModel : ContainerHost<LoginViewState, LoginSideEffect>, Vie
         }
     }
 
+    fun clearLoginType() = intent {
+        reduce {
+            LoginViewState.WaitChooseLogin
+        }
+    }
+
     fun challengeRefreshToken(token: String) = intent {
         val checkingToken = getString(Res.string.checking_token)
         reduce {

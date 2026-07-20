@@ -7,6 +7,7 @@ import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.compose.ui.Modifier
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectSideEffect
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.TabContainer
@@ -24,6 +25,7 @@ fun HistoryScreen() {
         tab = listOf(stringResource(Res.string.illust), stringResource(Res.string.novel)),
     ) {
         val snackbarHostState = LocalSnackBarHost.current
+        val stack = LocalNavBackStack.current
         when (it) {
             0 -> {
                 val model = koinViewModel<HistoryIllustViewModel>()
@@ -31,6 +33,10 @@ fun HistoryScreen() {
                     when (effect) {
                         is IllustFetchSideEffect.Toast -> {
                             snackbarHostState.showSnackbar(effect.msg)
+                        }
+
+                        is IllustFetchSideEffect.NavigateIllustDetail -> {
+                            stack += effect.route
                         }
                     }
                 }

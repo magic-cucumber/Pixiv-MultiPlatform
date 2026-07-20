@@ -33,15 +33,18 @@ import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import org.orbitmvi.orbit.compose.collectAsState
+import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.user.FavoriteTagsType
 import top.kagg886.pixko.module.user.FavoriteTagsType.Illust
 import top.kagg886.pixko.module.user.FavoriteTagsType.Novel
 import top.kagg886.pixko.module.user.UserLikePublicity
 import top.kagg886.pmf.LocalNavBackStack
+import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.component.SupportRTLModalNavigationDrawer
 import top.kagg886.pmf.ui.util.IllustFetchScreen
+import top.kagg886.pmf.ui.util.IllustFetchSideEffect
 import top.kagg886.pmf.ui.util.NovelFetchScreen
 import top.kagg886.pmf.ui.util.TagsFetchDrawerSheetContainer
 import top.kagg886.pmf.ui.util.TagsFetchViewModel
@@ -65,6 +68,8 @@ fun BookmarkScreen() {
 private fun BookmarkContent(model: BookmarkViewModel, state: BookmarkViewState, goBack: () -> Unit) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val stack = LocalNavBackStack.current
+    val snackbarHostState = LocalSnackBarHost.current
     when (state) {
         is BookmarkViewState.Loading -> Loading()
 
@@ -198,6 +203,17 @@ private fun BookmarkContent(model: BookmarkViewModel, state: BookmarkViewState, 
                             Illust -> {
                                 val illustModel = koinViewModel<BookmarkIllustViewModel>(key = "favorite_${state.restrict}_${state.tagFilter}") {
                                     parametersOf(state.restrict, state.tagFilter)
+                                }
+                                illustModel.collectSideEffect { effect ->
+                                    when (effect) {
+                                        is IllustFetchSideEffect.Toast -> {
+                                            snackbarHostState.showSnackbar(effect.msg)
+                                        }
+
+                                        is IllustFetchSideEffect.NavigateIllustDetail -> {
+                                            stack += effect.route
+                                        }
+                                    }
                                 }
                                 IllustFetchScreen(illustModel)
                             }
