@@ -3,6 +3,8 @@
 
 package top.kagg886.pmf.backend.database.dao
 
+import androidx.room3.ColumnTypeConverter
+import androidx.room3.ColumnTypeConverters
 import androidx.room3.Dao
 import androidx.room3.Entity
 import androidx.room3.Ignore
@@ -12,8 +14,6 @@ import androidx.room3.OnConflictStrategy
 import androidx.room3.PrimaryKey
 import androidx.room3.Query
 import androidx.room3.Transaction
-import androidx.room3.TypeConverter
-import androidx.room3.TypeConverters
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.serialization.builtins.ListSerializer
@@ -66,7 +66,7 @@ interface IllustGalleryDao {
 }
 
 @Entity
-@TypeConverters(IllustGalleryConverter::class)
+@ColumnTypeConverters(IllustGalleryConverter::class)
 data class IllustGalleryEntity(
     @PrimaryKey(autoGenerate = false)
     val id: Int,
@@ -126,22 +126,22 @@ data class IllustGalleryContentImages(
 }
 
 class IllustGalleryConverter {
-    @TypeConverter
+    @ColumnTypeConverter
     fun stringToUser(value: String): User = Json.decodeFromString(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun userToString(value: User): String = Json.encodeToString(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun stringToTags(value: String): List<Tag> = Json.decodeFromString(ListSerializer(Tag.serializer()), value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun tagsToString(value: List<Tag>): String = Json.encodeToString(ListSerializer(Tag.serializer()), value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun longToInstant(value: Long): Instant = Instant.fromEpochMilliseconds(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun instantToLong(value: Instant): Long = value.toEpochMilliseconds()
 }
 

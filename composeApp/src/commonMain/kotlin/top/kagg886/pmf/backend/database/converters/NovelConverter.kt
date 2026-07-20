@@ -1,14 +1,13 @@
 package top.kagg886.pmf.backend.database.converters
 
-import androidx.room3.TypeConverter
-import kotlinx.serialization.encodeToString
+import androidx.room3.ColumnTypeConverter
 import kotlinx.serialization.json.Json
 import top.kagg886.pixko.module.novel.Novel
 
 class NovelConverter {
-    @TypeConverter
+    @ColumnTypeConverter
     fun stringToNovel(value: String): Novel = Json.decodeFromString<Novel>(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun novelToString(value: Novel): String = Json.encodeToString(value)
 }

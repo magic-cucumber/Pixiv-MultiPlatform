@@ -1,13 +1,13 @@
 package top.kagg886.pmf.backend.database.converters
 
-import androidx.room3.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import kotlinx.serialization.json.Json
 import top.kagg886.pixko.User
 
 class UserConverter {
-    @TypeConverter
+    @ColumnTypeConverter
     fun stringToUser(value: String): User = Json.decodeFromString<User>(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun userToString(value: User): String = Json.encodeToString(value)
 }

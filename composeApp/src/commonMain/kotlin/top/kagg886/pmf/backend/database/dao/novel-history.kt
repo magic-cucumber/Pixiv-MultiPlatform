@@ -1,7 +1,14 @@
 package top.kagg886.pmf.backend.database.dao
 
 import androidx.paging.PagingSource
-import androidx.room3.*
+import androidx.room3.ColumnTypeConverters
+import androidx.room3.Dao
+import androidx.room3.DaoReturnTypeConverters
+import androidx.room3.Entity
+import androidx.room3.Insert
+import androidx.room3.OnConflictStrategy
+import androidx.room3.PrimaryKey
+import androidx.room3.Query
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import top.kagg886.pixko.module.novel.Novel
 import top.kagg886.pmf.backend.database.converters.NovelConverter
@@ -17,7 +24,7 @@ interface NovelHistoryDAO {
 }
 
 @Entity
-@TypeConverters(NovelConverter::class)
+@ColumnTypeConverters(NovelConverter::class)
 data class NovelHistory(
     @PrimaryKey(autoGenerate = false)
     val id: Long,

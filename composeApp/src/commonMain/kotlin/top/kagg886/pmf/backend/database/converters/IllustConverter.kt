@@ -1,13 +1,13 @@
 package top.kagg886.pmf.backend.database.converters
 
-import androidx.room3.TypeConverter
+import androidx.room3.ColumnTypeConverter
 import kotlinx.serialization.json.Json
 import top.kagg886.pixko.module.illust.Illust
 
 class IllustConverter {
-    @TypeConverter
+    @ColumnTypeConverter
     fun stringToIllust(value: String): Illust = Json.decodeFromString<Illust>(value)
 
-    @TypeConverter
+    @ColumnTypeConverter
     fun illustToString(value: Illust): String = Json.encodeToString(value)
 }
