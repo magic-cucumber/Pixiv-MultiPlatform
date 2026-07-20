@@ -88,7 +88,6 @@ okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 orbit-core = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
 pixko = { module = "top.kagg886:pixko", version.ref = "pixko" }
 telephoto-zoomable = { module = "me.saket.telephoto:zoomable", version.ref = "telephoto" }
-chip-textfield = { module = "io.github.dokar3:chiptextfield-m3", version.ref = "chip-textfield" }
 wvbridge-core = { module = "top.kagg886.wvbridge:core", version.ref = "wvbridge-common" }
 wvbridge-platform-linux = { module = "top.kagg886.wvbridge:platform-linux", version.ref = "wvbridge-platform" }
 wvbridge-platform-macos = { module = "top.kagg886.wvbridge:platform-macos", version.ref = "wvbridge-platform" }
