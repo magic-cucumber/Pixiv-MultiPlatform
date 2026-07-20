@@ -58,6 +58,7 @@ import top.kagg886.pmf.backend.database.dao.illust
 import top.kagg886.pmf.backend.database.dao.novel
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.*
 
@@ -693,6 +694,11 @@ class DownloadScreenModel : ContainerHost<DownloadScreenState, DownloadScreenSid
         )
         reduce { data }
     }
+
+    fun performClick(illust: Illust) = intent {
+        database.illustGalleryDAO().insert(illust)
+        postSideEffect(DownloadScreenSideEffect.NavigateIllustDetail(IllustDetailRoute(illust.id)))
+    }
 }
 
 sealed interface DownloadScreenState {
@@ -716,6 +722,7 @@ sealed interface DownloadScreenState {
 
 sealed class DownloadScreenSideEffect {
     data class Toast(val msg: String, val jump: Boolean = false) : DownloadScreenSideEffect()
+    data class NavigateIllustDetail(val route: IllustDetailRoute) : DownloadScreenSideEffect()
 }
 
 @OptIn(UnsafeIoApi::class)

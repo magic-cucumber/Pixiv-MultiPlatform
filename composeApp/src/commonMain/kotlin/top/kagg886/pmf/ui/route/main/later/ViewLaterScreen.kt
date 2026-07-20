@@ -44,7 +44,6 @@ import top.kagg886.pmf.res.page_is_empty
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.Loading
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
 import top.kagg886.pmf.util.stringResource
@@ -64,11 +63,16 @@ fun ViewLaterScreen() {
     val model = koinViewModel<ViewLaterModel>()
     val state by model.collectAsState()
     val snackbar = LocalSnackBarHost.current
+    val stack = LocalNavBackStack.current
 
     model.collectSideEffect { effect ->
         when (effect) {
             is ViewLaterSideEffect.Toast -> {
                 snackbar.showSnackbar(effect.message)
+            }
+
+            is ViewLaterSideEffect.NavigateIllustDetail -> {
+                stack += effect.route
             }
         }
     }
@@ -242,14 +246,13 @@ private fun IllustWatchLaterItem(
     model: ViewLaterModel,
     modifier: Modifier = Modifier,
 ) {
-    val stack = LocalNavBackStack.current
     OutlinedCard(
         modifier = modifier,
         onClick = {
-            stack += IllustDetailRoute(item.illust)
-            if (AppConfig.watchLaterRemoveWhenClick) {
-                model.deleteItem(item, true)
-            }
+            model.performClick(
+                item.illust,
+                removeItem = item.takeIf { AppConfig.watchLaterRemoveWhenClick },
+            )
         },
     ) {
         Row(

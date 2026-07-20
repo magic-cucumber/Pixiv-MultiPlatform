@@ -12,6 +12,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.orbitmvi.orbit.compose.collectSideEffect
+import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.NavigationItem
 import top.kagg886.pmf.composeWithAppBar
@@ -27,6 +28,7 @@ data object SpaceRoute : NavKey
 @Composable
 fun SpaceScreen() = NavigationItem.SPACE.composeWithAppBar {
     var index by rememberSerializable { mutableIntStateOf(0) }
+    val stack = LocalNavBackStack.current
     val tab = listOf(Res.string.follow, Res.string.latest)
     TabContainer(
         modifier = Modifier.fillMaxSize(),
@@ -44,6 +46,10 @@ fun SpaceScreen() = NavigationItem.SPACE.composeWithAppBar {
                         is IllustFetchSideEffect.Toast -> {
                             snackbarHostState.showSnackbar(effect.msg)
                         }
+
+                        is IllustFetchSideEffect.NavigateIllustDetail -> {
+                            stack += effect.route
+                        }
                     }
                 }
                 IllustFetchScreen(model)
@@ -56,6 +62,10 @@ fun SpaceScreen() = NavigationItem.SPACE.composeWithAppBar {
                     when (effect) {
                         is IllustFetchSideEffect.Toast -> {
                             snackbarHostState.showSnackbar(effect.msg)
+                        }
+
+                        is IllustFetchSideEffect.NavigateIllustDetail -> {
+                            stack += effect.route
                         }
                     }
                 }

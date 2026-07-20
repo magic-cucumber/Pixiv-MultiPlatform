@@ -53,7 +53,6 @@ import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.Loading
-import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.route.main.detail.novel.NovelDetailRoute
 import top.kagg886.pmf.ui.route.main.search.v2.components.SearchPropertiesPanel
 import top.kagg886.pmf.ui.route.main.series.novel.NovelSeriesRoute
@@ -82,6 +81,10 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
         when (sideEffect) {
             is SearchPanelSideEffect.Toast -> {
                 snackbarHostState.showSnackbar(sideEffect.message)
+            }
+
+            is SearchPanelSideEffect.NavigateIllustDetail -> {
+                stack += sideEffect.route
             }
         }
     }
@@ -250,7 +253,7 @@ fun SearchPanelScreen(route: SearchPanelRoute) {
                                             )
                                         },
                                         modifier = Modifier.clickable {
-                                            stack += IllustDetailRoute(currentState.illust)
+                                            model.performClick(currentState.illust)
                                         },
                                     )
                                 }

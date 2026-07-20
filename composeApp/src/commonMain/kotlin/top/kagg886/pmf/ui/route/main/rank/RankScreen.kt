@@ -12,12 +12,16 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pixko.module.illust.RankCategory
+import top.kagg886.pmf.LocalNavBackStack
+import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.NavigationItem
 import top.kagg886.pmf.composeWithAppBar
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.ui.component.TabContainer
 import top.kagg886.pmf.ui.util.IllustFetchScreen
+import top.kagg886.pmf.ui.util.IllustFetchSideEffect
 import top.kagg886.pmf.util.stringResource
 
 @Serializable
@@ -36,6 +40,8 @@ private val tabTitleResources = mapOf(
 @Composable
 fun RankScreen() = NavigationItem.RANK.composeWithAppBar {
     var index by rememberSerializable { mutableIntStateOf(0) }
+    val stack = LocalNavBackStack.current
+    val snackbarHostState = LocalSnackBarHost.current
     TabContainer(
         modifier = Modifier.fillMaxSize(),
         tab = RankCategory.entries,
@@ -57,6 +63,17 @@ fun RankScreen() = NavigationItem.RANK.composeWithAppBar {
     ) { type ->
         val model = koinViewModel<IllustRankScreenModel>(key = "$type") {
             parametersOf(type)
+        }
+        model.collectSideEffect { effect ->
+            when (effect) {
+                is IllustFetchSideEffect.Toast -> {
+                    snackbarHostState.showSnackbar(effect.msg)
+                }
+
+                is IllustFetchSideEffect.NavigateIllustDetail -> {
+                    stack += effect.route
+                }
+            }
         }
         IllustFetchScreen(model)
     }
