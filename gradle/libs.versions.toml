@@ -29,8 +29,8 @@ room = "3.0.0"
 sqliteBundled = "2.6.2"
 telephoto = "0.19.0"
 versionCatalogUpdate = "1.1.0"
-wvbridge-common = "0.0.5"
-wvbridge-platform = "0.0.4"
+wvbridge-common = "0.0.6"
+wvbridge-platform = "0.0.5"
 
 [libraries]
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
