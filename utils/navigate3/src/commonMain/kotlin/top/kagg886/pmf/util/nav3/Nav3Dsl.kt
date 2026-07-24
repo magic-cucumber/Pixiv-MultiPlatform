@@ -1,0 +1,10 @@
+package top.kagg886.pmf.util.nav3
+
+/**
+ * ================================================
+ * Author:     iveou
+ * Created on: 2026/7/24 17:34
+ * ================================================
+ */
+@DslMarker
+public annotation class Nav3Dsl()
