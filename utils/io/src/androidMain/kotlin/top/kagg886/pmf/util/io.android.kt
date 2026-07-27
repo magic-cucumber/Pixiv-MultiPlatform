@@ -5,16 +5,16 @@ import android.app.Application
 import okio.Path
 import okio.Path.Companion.toPath
 
-actual val dataPath: Path by lazy {
+public actual val dataPath: Path by lazy {
     currentApplication().filesDir.absolutePath.toPath()
 }
 
-actual val cachePath: Path by lazy {
+public actual val cachePath: Path by lazy {
     currentApplication().cacheDir.absolutePath.toPath()
 }
 
 @SuppressLint("DiscouragedPrivateApi", "PrivateApi")
-fun currentApplication(): Application {
+public fun currentApplication(): Application {
     val activityThread = runCatching {
         Class.forName("android.app.ActivityThread")
             .getDeclaredMethod("currentApplication")

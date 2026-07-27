@@ -5,7 +5,7 @@ import okio.Path.Companion.toPath
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSTemporaryDirectory
 
-actual val dataPath: Path by lazy {
+public actual val dataPath: Path by lazy {
     // 需要在 Signing & Capabilities 里配置 App Group。
     NSFileManager.defaultManager
         .containerURLForSecurityApplicationGroupIdentifier("group.top.kagg886.pmf.iosApp.shared")!!
@@ -13,6 +13,6 @@ actual val dataPath: Path by lazy {
         .toPath()
 }
 
-actual val cachePath: Path by lazy {
+public actual val cachePath: Path by lazy {
     NSTemporaryDirectory().toPath()
 }

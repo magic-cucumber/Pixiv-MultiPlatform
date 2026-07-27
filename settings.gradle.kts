@@ -38,3 +38,4 @@ include(":iosApp")
 
 include(":utils:navigate3")
 include(":utils:datastore")
+include(":utils:io")

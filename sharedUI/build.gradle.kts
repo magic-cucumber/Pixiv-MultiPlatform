@@ -18,7 +18,6 @@ kotlin {
     )
     sourceSets {
         commonMain.dependencies {
-            api(project(":utils:datastore"))
             api(libs.compose.runtime)
             api(libs.compose.ui)
             api(libs.compose.foundation)
@@ -45,6 +44,9 @@ kotlin {
             implementation(libs.orbit.core)
             implementation(libs.orbit.viewmodel)
             implementation(libs.orbit.compose)
+
+            api(project(":utils:datastore"))
+            api(project(":utils:io"))
         }
 
         commonTest.dependencies {

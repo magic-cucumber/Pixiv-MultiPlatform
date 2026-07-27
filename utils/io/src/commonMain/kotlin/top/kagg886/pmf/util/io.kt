@@ -9,5 +9,5 @@ import okio.Path
  * ================================================
  */
 
-expect val dataPath: Path
-expect val cachePath: Path
+public expect val dataPath: Path
+public expect val cachePath: Path
