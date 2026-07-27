@@ -18,6 +18,7 @@ kotlin {
     )
     sourceSets {
         commonMain.dependencies {
+            api(project(":utils:datastore"))
             api(libs.compose.runtime)
             api(libs.compose.ui)
             api(libs.compose.foundation)
@@ -41,12 +42,16 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.room.runtime)
             implementation(libs.materialKolor)
+            implementation(libs.orbit.core)
+            implementation(libs.orbit.viewmodel)
+            implementation(libs.orbit.compose)
         }
 
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.compose.ui.test)
             implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.orbit.test)
         }
 
         androidMain.dependencies {
