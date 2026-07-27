@@ -5,7 +5,7 @@ plugins {
 }
 
 kotlin {
-    library(project = project)
+    library(project = project, module = "utils.datastore")
     explicitApi()
 
     sourceSets {

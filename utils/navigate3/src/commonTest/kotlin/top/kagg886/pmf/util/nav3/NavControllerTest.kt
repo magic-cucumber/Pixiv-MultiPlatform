@@ -13,6 +13,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation3.runtime.NavBackStack
 import kotlinx.coroutines.test.TestResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,11 +32,20 @@ class ChildViewModel : ViewModel() {
 
 @OptIn(ExperimentalTestApi::class)
 class NavControllerTest {
-    private sealed interface Key
+    private sealed interface Key : SerializableNavKey
     private data object Login : Key
     private data object Main : Key
     private data object Gallery : Key
     private data class Detail(val id: Long) : Key
+
+    @Test
+    fun restoresProvidedBackStack_withoutNavigatingToStartDestination() {
+        val restoredBackStack = NavBackStack(NavChain<Key>(Main, Detail(42)))
+
+        val controller = NavController(graph, Gallery, restoredBackStack)
+
+        assertEquals(listOf(NavChain<Key>(Main, Detail(42))), controller.backStack)
+    }
 
     @Test
     fun display_navigatesToInnermostRoute(): TestResult = runComposeUiTest {

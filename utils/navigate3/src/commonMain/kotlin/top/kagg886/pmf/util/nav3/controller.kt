@@ -1,19 +1,18 @@
 package top.kagg886.pmf.util.nav3
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModelStore
+import androidx.navigation3.runtime.NavBackStack
 
 /** Owns complete history chains and the route-scoped ViewModel stores belonging to each chain. */
-public class NavController<T : Any>(
+public class NavController<T : SerializableNavKey>(
     public val graph: NavGraph<T>,
     startDestination: T,
+    public val backStack: NavBackStack<NavChain<T>> = NavBackStack(),
 ) {
-    public val backStack: SnapshotStateList<NavChain<T>> = mutableStateListOf()
     private val routeStores = mutableMapOf<NavChain<T>, MutableMap<T, ViewModelStore>>()
 
     init {
-        navigate(startDestination)
+        if (backStack.isEmpty()) navigate(startDestination)
     }
 
     /** Replaces the current branch with the graph-derived chain for [key]. */

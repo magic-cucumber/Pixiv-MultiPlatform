@@ -34,8 +34,10 @@ include(":androidApp")
 include(":desktopApp")
 include(":iosApp")
 
+include(":plugins:navigation-serializer-module-creator")
 
 
 include(":utils:navigate3")
 include(":utils:datastore")
+include(":utils:device")
 include(":utils:io")

@@ -6,10 +6,12 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation3.runtime.NavEntry
+import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 
 /** One immutable Navigation 3 history record: every parent route and its visible destination. */
-public data class NavChain<T : Any>(public val keys: List<T>) {
+@Serializable
+public data class NavChain<T : SerializableNavKey>(public val keys: List<T>) : SerializableNavKey {
     init {
         require(keys.isNotEmpty()) { "A navigation chain cannot be empty." }
     }
@@ -23,7 +25,7 @@ public data class NavChain<T : Any>(public val keys: List<T>) {
  * Authoring-time navigation tree. Parent route keys are argument-free values (normally `data object`s),
  * so the graph can always create a complete [NavChain] for an arbitrary destination.
  */
-public class NavGraph<T : Any> internal constructor(
+public class NavGraph<T : SerializableNavKey> internal constructor(
     private val destinations: List<Destination<T>>,
 ) {
     public fun chainFor(key: T): NavChain<T> {
@@ -49,7 +51,7 @@ public class NavGraph<T : Any> internal constructor(
         return NavEntry(
             key = chain,
             metadata = destination.metadata,
-            contentKey = chain,
+            contentKey = chain.keys.joinToString { "," },
         ) {
             destination.content(key, routeStoreFor)
         }
@@ -72,7 +74,7 @@ public class NavGraph<T : Any> internal constructor(
     )
 
     @Nav3Dsl
-    public class Builder<T : Any> internal constructor() {
+    public class Builder<T : SerializableNavKey> internal constructor() {
         @PublishedApi
         internal val destinations: MutableList<Destination<T>> = mutableListOf()
 
@@ -107,7 +109,7 @@ public class NavGraph<T : Any> internal constructor(
     }
 
     @Nav3Dsl
-    public class RouteBuilder<T : Any> @PublishedApi internal constructor(
+    public class RouteBuilder<T : SerializableNavKey> @PublishedApi internal constructor(
         @PublishedApi internal val route: Route<T>,
     ) {
         @PublishedApi
@@ -138,5 +140,5 @@ public class NavGraph<T : Any> internal constructor(
     }
 }
 
-public fun <T : Any> createNavGraph(builder: NavGraph.Builder<T>.() -> Unit): NavGraph<T> =
+public fun <T : SerializableNavKey> createNavGraph(builder: NavGraph.Builder<T>.() -> Unit): NavGraph<T> =
     NavGraph.Builder<T>().apply(builder).build()

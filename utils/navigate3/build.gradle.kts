@@ -10,6 +10,7 @@ plugins {
 kotlin {
     library(
         project = project,
+        module = "utils.navigate3",
     )
     explicitApi()
 

@@ -12,11 +12,16 @@ plugins {
 kotlin {
     library(
         project = project,
+        module = "sharedUI",
         android = {
             androidResources.enable = true
         }
     )
     sourceSets {
+        commonMain {
+            kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+        }
+
         commonMain.dependencies {
             api(libs.compose.runtime)
             api(libs.compose.ui)
@@ -46,6 +51,8 @@ kotlin {
             implementation(libs.orbit.compose)
 
             api(project(":utils:datastore"))
+            api(project(":utils:device"))
+            api(project(":utils:navigate3"))
             api(project(":utils:io"))
         }
 
@@ -89,5 +96,12 @@ dependencies {
         add("kspJvm", this)
         add("kspIosArm64", this)
         add("kspIosSimulatorArm64", this)
+    }
+    add("kspCommonMainMetadata", project(":plugins:navigation-serializer-module-creator"))
+}
+
+tasks.configureEach {
+    if (name.startsWith("compileKotlin") || name.startsWith("kspKotlin")) {
+        dependsOn("kspCommonMainKotlinMetadata")
     }
 }
