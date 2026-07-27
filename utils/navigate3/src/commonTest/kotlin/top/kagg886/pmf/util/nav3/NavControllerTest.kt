@@ -106,6 +106,23 @@ class NavControllerTest {
         onNodeWithTag("login").assertIsDisplayed()
     }
 
+    @Test
+    fun removeBackStack_clearsOnlyRouteViewModelsNoLongerReferenced(): Unit {
+        val galleryChain = NavChain<Key>(Main, Gallery)
+        val controller = NavController(graph, Gallery)
+        val routeViewModel = ChildViewModel()
+        controller.routeStoreFor(galleryChain, Main).put("route", routeViewModel)
+        controller.backStack += galleryChain
+
+        assertTrue(controller.removeBackStack(galleryChain))
+        assertTrue(!routeViewModel.cleared)
+        assertEquals(listOf(galleryChain), controller.backStack)
+
+        assertTrue(controller.removeBackStack(Gallery))
+        assertTrue(routeViewModel.cleared)
+        assertTrue(controller.backStack.isEmpty())
+    }
+
     private companion object {
         private var parentViewModel: ParentViewModel? = null
         private var childViewModel: ChildViewModel? = null

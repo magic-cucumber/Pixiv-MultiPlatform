@@ -1,5 +1,7 @@
 package top.kagg886.pmf.fronted
 
+import top.kagg886.pmf.fronted.login.LoginRoute
+import top.kagg886.pmf.fronted.login.LoginScreen
 import top.kagg886.pmf.fronted.welcome.WelcomeRoute
 import top.kagg886.pmf.fronted.welcome.WelcomeScreen
 import top.kagg886.pmf.util.nav3.createNavGraph
@@ -14,5 +16,6 @@ import top.kagg886.pmf.util.nav3.createNavGraph
 val ApplicationGraph = createNavGraph {
     route(parent = RootRoute, startDestination = WelcomeRoute, content = ::RootScreen) {
         destination<WelcomeRoute> { WelcomeScreen() }
+        destination<LoginRoute> { LoginScreen() }
     }
 }

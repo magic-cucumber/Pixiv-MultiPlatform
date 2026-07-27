@@ -4,13 +4,15 @@ import java.io.File
 import okio.Path
 import okio.Path.Companion.toOkioPath
 
-public actual val dataPath: Path by lazy {
+private val root by lazy {
     File(System.getProperty("user.home"))
         .resolve(".config")
         .resolve("pmf2")
         .toOkioPath()
 }
 
-public actual val cachePath: Path by lazy {
-    dataPath.resolve("cache")
-}
+public actual val dataPath: Path
+    get() = root / "data"
+
+public actual val cachePath: Path
+    get() = root / "cache"

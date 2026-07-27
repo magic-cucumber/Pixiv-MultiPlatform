@@ -40,15 +40,33 @@ public class NavController<T : SerializableNavKey>(
         }
     }
 
-    /** Removes exactly one history record and clears every route store owned by it. */
+    /** Removes exactly one history record from the top of the back stack. */
     public fun popBackStack(): Boolean {
         val removed = backStack.removeLastOrNull() ?: return false
-        routeStores.remove(removed)?.values?.forEach(ViewModelStore::clear)
+        clearUnreferencedRouteStores(removed)
         return true
     }
 
+    /** Removes the first history record equal to [chain], regardless of its position. */
+    public fun removeBackStack(chain: NavChain<T>): Boolean {
+        val index = backStack.indexOf(chain)
+        if (index < 0) return false
+
+        val removed = backStack.removeAt(index)
+        clearUnreferencedRouteStores(removed)
+        return true
+    }
+
+    /** Removes the graph-derived history record for [key], regardless of its position. */
+    public fun removeBackStack(key: T): Boolean = removeBackStack(graph.chainFor(key))
+
     internal fun routeStoreFor(chain: NavChain<T>, routeKey: T): ViewModelStore =
         routeStores.getOrPut(chain) { mutableMapOf() }.getOrPut(routeKey) { ViewModelStore() }
+
+    private fun clearUnreferencedRouteStores(chain: NavChain<T>): Unit {
+        if (chain in backStack) return
+        routeStores.remove(chain)?.values?.forEach(ViewModelStore::clear)
+    }
 
     public fun clear(): Unit {
         routeStores.values.forEach { stores -> stores.values.forEach(ViewModelStore::clear) }

@@ -23,22 +23,23 @@ class WelcomeViewModel : ViewModel(),
     private val initialized = Store.of(dataPath / "welcome.preferences_pb")
 
     override val container: OrbitContainer<WelcomeViewModelState, WelcomeViewModelState, WelcomeViewModelEffect> =
-        orbitContainer(WelcomeViewModelState) {
-            intent {
-                if (initialized.flow(viewModelScope, "initialized") { false }.value) {
-                    confirmInitialized()
-                }
+        orbitContainer(WelcomeViewModelState()) {
+            if (initialized.flow(viewModelScope, "initialized") { false }.value) {
+                confirmInitialized()
+                return@orbitContainer
             }
+            reduce { state.copy(loading = false) }
         }
 
 
     fun confirmInitialized() = intent {
         initialized.set("initialized",true)
+        postSideEffect(WelcomeViewModelEffect.NavigateToLogin)
         //TODO 有凭证前往Main，无凭证前往Login
     }
 }
 
-data object WelcomeViewModelState
+data class WelcomeViewModelState(val loading: Boolean = true)
 
 sealed interface WelcomeViewModelEffect {
     data object NavigateToLogin : WelcomeViewModelEffect

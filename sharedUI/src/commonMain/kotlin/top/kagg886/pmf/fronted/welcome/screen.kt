@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -13,12 +14,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.BuildConfig
 import top.kagg886.pmf.LocalNavController
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.welcome_start
 import top.kagg886.pmf.i18n.welcome_tagline
+import top.kagg886.pmf.fronted.login.LoginRoute
 import top.kagg886.pmf.res.Res
 import top.kagg886.pmf.res.pixiv
 import top.kagg886.pmf.util.nav3.SerializableNavKey
@@ -42,10 +45,17 @@ fun WelcomeScreen() {
     val nav = LocalNavController.current
     model.collectSideEffect {
         when(it) {
-            WelcomeViewModelEffect.NavigateToLogin -> TODO()
+            WelcomeViewModelEffect.NavigateToLogin -> {
+                nav.removeBackStack(WelcomeRoute)
+                nav.navigate(LoginRoute)
+            }
             WelcomeViewModelEffect.NavigateToMain -> TODO()
         }
     }
+
+    val state by model.collectAsState()
+
+    if (state.loading) return
 
     WelcomeScreenContent(
         onStart = model::confirmInitialized
