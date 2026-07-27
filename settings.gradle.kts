@@ -29,6 +29,7 @@ dependencyResolutionManagement {
     }
 }
 include(":sharedUI")
+include(":sharedUI:i18n")
 
 include(":androidApp")
 include(":desktopApp")

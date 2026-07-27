@@ -1,5 +1,6 @@
 plugins {
     `kotlin-dsl`
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
@@ -31,4 +32,6 @@ dependencies {
 
     api(libs.compose.multiplatfrom.gradle.plugin)
     api(libs.kotlin.compose.compiler.gradle.plugin)
+    implementation(libs.yamlkt.jvm)
+    implementation(libs.xmlutil.serialization.jvm)
 }

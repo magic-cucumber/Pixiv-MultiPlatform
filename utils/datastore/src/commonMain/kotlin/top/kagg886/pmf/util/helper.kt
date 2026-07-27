@@ -1,22 +1,10 @@
 package top.kagg886.pmf.util
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.doublePreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.floatPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
-import kotlin.reflect.KClass
+import androidx.datastore.preferences.core.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
+import kotlin.reflect.KClass
 
 /**
  * ================================================
@@ -35,6 +23,12 @@ import kotlinx.coroutines.flow.stateIn
  * Supported [clazz] values are [Boolean], [Int], [Long], [Float], [Double], [String], and
  * [Set] (as a `Set<String>`).
  */
+public suspend inline fun <reified T : Any> DataStore<Preferences>.flow(
+    scope: CoroutineScope,
+    key: String,
+    noinline default: () -> T
+): StateFlow<T> = flow(scope, key, T::class, default)
+
 public suspend fun <T : Any> DataStore<Preferences>.flow(
     scope: CoroutineScope,
     key: String,

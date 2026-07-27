@@ -3,6 +3,7 @@
 
     <application
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="Pixiv-MultiPlatform"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity

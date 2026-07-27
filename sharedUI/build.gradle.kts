@@ -50,6 +50,8 @@ kotlin {
             implementation(libs.orbit.viewmodel)
             implementation(libs.orbit.compose)
 
+            api(project(":sharedUI:i18n"))
+
             api(project(":utils:datastore"))
             api(project(":utils:device"))
             api(project(":utils:navigate3"))
@@ -84,7 +86,18 @@ dependencies {
 buildConfig {
     // BuildConfig configuration here.
     // https://github.com/gmazzo/gradle-buildconfig-plugin#usage-in-kts
+    packageName("top.kagg886.pmf")
+    buildConfigField("APP_NAME","Pixiv-MultiPlatform")
+    buildConfigField("APP_VERSION_NAME",application_version_name)
+    buildConfigField("APP_VERSION_CODE",application_version_code)
 }
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "top.kagg886.pmf.res"
+    generateResClass = auto
+}
+
 
 room {
     schemaDirectory("$projectDir/schemas")

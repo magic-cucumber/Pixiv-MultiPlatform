@@ -25,7 +25,9 @@ data object RootRoute : SerializableNavKey
 
 @Composable
 fun RootScreen(content: @Composable () -> Unit) {
-    val model = viewModel<RootViewModel>()
+    val model = viewModel<RootViewModel> {
+        RootViewModel()
+    }
     val state by model.collectAsState()
 
     when (val state = state) {

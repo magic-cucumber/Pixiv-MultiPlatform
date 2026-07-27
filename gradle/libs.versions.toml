@@ -22,6 +22,8 @@ materialKolor = "4.1.1"
 androidx-datastore = "1.2.1"
 okio = "3.17.0"
 orbit = "12.0.0"
+yamlkt = "0.13.0"
+xmlutil = "1.0.0-rc3"
 
 [libraries]
 
@@ -77,6 +79,8 @@ orbit-core = { module = "org.orbit-mvi:orbit-core", version.ref = "orbit" }
 orbit-viewmodel = { module = "org.orbit-mvi:orbit-viewmodel", version.ref = "orbit" }
 orbit-compose = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" }
 orbit-test = { module = "org.orbit-mvi:orbit-test", version.ref = "orbit" }
+yamlkt-jvm = { module = "net.mamoe.yamlkt:yamlkt-jvm", version.ref = "yamlkt" }
+xmlutil-serialization-jvm = { module = "io.github.pdvrieze.xmlutil:serialization-jvm", version.ref = "xmlutil" }
 
 [plugins]
 
