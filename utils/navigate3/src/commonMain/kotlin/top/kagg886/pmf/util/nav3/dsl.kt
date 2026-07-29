@@ -28,10 +28,24 @@ public data class NavChain<T : SerializableNavKey>(public val keys: List<T>) : S
 public class NavGraph<T : SerializableNavKey> internal constructor(
     private val destinations: List<Destination<T>>,
 ) {
-    public fun chainFor(key: T): NavChain<T> {
-        val route = destinations.firstOrNull { it.route?.key == key }?.route
-        if (route != null) return NavChain(route.key, route.startDestination)
+    public fun chainFor(key: T): NavChain<T> = chainFor(key, emptySet())
 
+    private fun chainFor(key: T, resolvingRoutes: Set<T>): NavChain<T> {
+        val routePath = destinations
+            .asSequence()
+            .map(Destination<T>::parents)
+            .firstOrNull { parents -> parents.any { it.key == key } }
+        if (routePath != null) {
+            check(key !in resolvingRoutes) { "Route start destinations contain a cycle at $key" }
+            val routeIndex = routePath.indexOfFirst { it.key == key }
+            val route = routePath[routeIndex]
+            val expectedPrefix = routePath.take(routeIndex + 1).map(Route<T>::key)
+            val startChain = chainFor(route.startDestination, resolvingRoutes + key)
+            require(startChain.keys.take(expectedPrefix.size) == expectedPrefix) {
+                "Start destination ${route.startDestination} does not belong to route ${route.key}"
+            }
+            return startChain
+        }
         val destination = destinations.firstOrNull { it.type.isInstance(key) }
             ?: error("No destination is registered for ${key::class.qualifiedName}")
         return NavChain(destination.parents.map(Route<T>::key) + key)
@@ -63,7 +77,6 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
         @PublishedApi internal val metadata: Map<String, Any>,
         @PublishedApi internal val parents: List<Route<T>>,
         @PublishedApi internal val content: @Composable (T, (T) -> ViewModelStore) -> Unit,
-        @PublishedApi internal val route: Route<T>? = null,
     )
 
     @PublishedApi
@@ -100,7 +113,7 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
             builder: RouteBuilder<T>.() -> Unit,
         ): Unit {
             val route = Route(parent, startDestination, content)
-            val childBuilder = RouteBuilder<T>(route)
+            val childBuilder = RouteBuilder<T>(listOf(route))
             childBuilder.builder()
             destinations += childBuilder.destinations
         }
@@ -110,7 +123,7 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
 
     @Nav3Dsl
     public class RouteBuilder<T : SerializableNavKey> @PublishedApi internal constructor(
-        @PublishedApi internal val route: Route<T>,
+        @PublishedApi internal val parents: List<Route<T>>,
     ) {
         @PublishedApi
         internal val destinations: MutableList<Destination<T>> = mutableListOf()
@@ -120,22 +133,44 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
             noinline content: @Composable (K) -> Unit,
         ): Unit {
             check(destinations.none { it.type == K::class }) { "Destination ${K::class.qualifiedName} is already registered" }
-            destinations += Destination(K::class, metadata, listOf(route), { key, routeStoreFor ->
+            destinations += Destination(K::class, metadata, parents, { key, routeStoreFor ->
                 val entryOwner = checkNotNull(LocalViewModelStoreOwner.current)
-                val routeOwner = object : ViewModelStoreOwner {
-                    override val viewModelStore: ViewModelStore = routeStoreFor(route.key)
+                var nestedContent: @Composable () -> Unit = {
+                    CompositionLocalProvider(LocalViewModelStoreOwner provides entryOwner) {
+                        content(key as K)
+                    }
                 }
-                CompositionLocalProvider(
-                    LocalViewModelStoreOwner provides routeOwner,
-                    LocalNavRouteViewModelStoreOwner provides routeOwner,
-                ) {
-                    route.content {
-                        CompositionLocalProvider(LocalViewModelStoreOwner provides entryOwner) {
-                            content(key as K)
+                for (route in parents.asReversed()) {
+                    val childContent = nestedContent
+                    nestedContent = {
+                        val routeOwner = object : ViewModelStoreOwner {
+                            override val viewModelStore: ViewModelStore = routeStoreFor(route.key)
+                        }
+                        CompositionLocalProvider(
+                            LocalViewModelStoreOwner provides routeOwner,
+                            LocalNavRouteViewModelStoreOwner provides routeOwner,
+                        ) {
+                            route.content {
+                                childContent()
+                            }
                         }
                     }
                 }
-            }, route)
+                nestedContent()
+            })
+        }
+
+        /** Declares a child route whose destinations inherit this builder's complete route path. */
+        public inline fun <reified K : T> route(
+            parent: K,
+            startDestination: T,
+            noinline content: @Composable (@Composable () -> Unit) -> Unit,
+            builder: RouteBuilder<T>.() -> Unit,
+        ): Unit {
+            val route = Route(parent, startDestination, content)
+            val childBuilder = RouteBuilder<T>(parents + route)
+            childBuilder.builder()
+            destinations += childBuilder.destinations
         }
     }
 }

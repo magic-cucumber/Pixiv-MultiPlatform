@@ -22,6 +22,7 @@ import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.welcome_start
 import top.kagg886.pmf.i18n.welcome_tagline
 import top.kagg886.pmf.fronted.login.LoginRoute
+import top.kagg886.pmf.fronted.main.MainRoute
 import top.kagg886.pmf.res.Res
 import top.kagg886.pmf.res.pixiv
 import top.kagg886.pmf.util.nav3.SerializableNavKey
@@ -49,7 +50,10 @@ fun WelcomeScreen() {
                 nav.removeBackStack(WelcomeRoute)
                 nav.navigate(LoginRoute)
             }
-            WelcomeViewModelEffect.NavigateToMain -> TODO()
+            WelcomeViewModelEffect.NavigateToMain -> {
+                nav.removeBackStack(WelcomeRoute)
+                nav.navigate(MainRoute)
+            }
         }
     }
 

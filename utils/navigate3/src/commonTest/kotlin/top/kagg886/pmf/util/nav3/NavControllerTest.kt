@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -17,7 +18,9 @@ import androidx.navigation3.runtime.NavBackStack
 import kotlinx.coroutines.test.TestResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
 import kotlin.test.assertTrue
 
 class ParentViewModel : ViewModel()
@@ -33,6 +36,7 @@ class ChildViewModel : ViewModel() {
 @OptIn(ExperimentalTestApi::class)
 class NavControllerTest {
     private sealed interface Key : SerializableNavKey
+    private data object Root : Key
     private data object Login : Key
     private data object Main : Key
     private data object Gallery : Key
@@ -40,11 +44,30 @@ class NavControllerTest {
 
     @Test
     fun restoresProvidedBackStack_withoutNavigatingToStartDestination() {
-        val restoredBackStack = NavBackStack(NavChain<Key>(Main, Detail(42)))
+        val restoredBackStack = NavBackStack(NavChain<Key>(Root, Main, Detail(42)))
 
         val controller = NavController(graph, Gallery, restoredBackStack)
 
-        assertEquals(listOf(NavChain<Key>(Main, Detail(42))), controller.backStack)
+        assertEquals(listOf(NavChain<Key>(Root, Main, Detail(42))), controller.backStack)
+    }
+
+    @Test
+    fun nestedRoutes_resolveEveryParentAndRouteStartDestination(): Unit {
+        assertEquals(NavChain<Key>(Root, Main, Gallery), graph.chainFor(Gallery))
+        assertEquals(NavChain<Key>(Root, Main, Gallery), graph.chainFor(Main))
+        assertEquals(NavChain<Key>(Root, Main, Gallery), graph.chainFor(Root))
+        assertEquals(NavChain<Key>(Root, Login), graph.chainFor(Login))
+
+        val controller = NavController(graph, Login)
+        controller.navigate(Main)
+        assertEquals(NavChain<Key>(Root, Main, Gallery), controller.backStack.last())
+    }
+
+    @Test
+    fun nestedRoutes_rejectChainMissingOuterRoute(): Unit {
+        assertFailsWith<IllegalArgumentException> {
+            graph.entryFor(NavChain<Key>(Main, Gallery)) { ViewModelStore() }
+        }
     }
 
     @Test
@@ -52,16 +75,21 @@ class NavControllerTest {
         val controller = NavController(graph, Gallery)
 
         setContent { NavDisplay(controller) }
+        onNodeWithTag("root").assertIsDisplayed()
+        onNodeWithTag("main").assertIsDisplayed()
         onNodeWithTag("gallery").assertIsDisplayed()
 
         controller.navigate(Detail(42))
         waitForIdle()
 
+        onNodeWithTag("root").assertIsDisplayed()
+        onNodeWithTag("main").assertIsDisplayed()
         onNodeWithTag("detail").assertIsDisplayed()
 
         controller.navigate(Login)
         waitForIdle()
 
+        onNodeWithTag("root").assertIsDisplayed()
         onNodeWithTag("login").assertIsDisplayed()
     }
 
@@ -79,13 +107,14 @@ class NavControllerTest {
         controller.navigate(Login)
         waitForIdle()
 
-        assertEquals(NavChain<Key>(Login), controller.backStack.last())
+        assertEquals(NavChain<Key>(Root, Login), controller.backStack.last())
         onNodeWithTag("login").assertIsDisplayed()
     }
 
     @Test
     fun parentChildViewModels_shareParentAndClearChildOnPop(): TestResult = runComposeUiTest {
-        parentViewModel = null
+        rootViewModel = null
+        mainViewModel = null
         childViewModel = null
         parentViewModelFromChild = null
         val controller = NavController(graph, Gallery)
@@ -96,35 +125,44 @@ class NavControllerTest {
         controller.navigate(Detail(42))
         waitForIdle()
 
-        assertEquals(assertNotNull(parentViewModel), assertNotNull(parentViewModelFromChild))
+        val rootRouteViewModel = assertNotNull(rootViewModel)
+        val mainRouteViewModel = assertNotNull(mainViewModel)
+        assertNotSame(rootRouteViewModel, mainRouteViewModel)
+        assertEquals(mainRouteViewModel, assertNotNull(parentViewModelFromChild))
         val detailViewModel = assertNotNull(childViewModel)
 
         controller.navigate(Login)
         waitForIdle()
 
         assertTrue(detailViewModel.cleared)
+        onNodeWithTag("root").assertIsDisplayed()
         onNodeWithTag("login").assertIsDisplayed()
     }
 
     @Test
     fun removeBackStack_clearsOnlyRouteViewModelsNoLongerReferenced(): Unit {
-        val galleryChain = NavChain<Key>(Main, Gallery)
+        val galleryChain = NavChain<Key>(Root, Main, Gallery)
         val controller = NavController(graph, Gallery)
-        val routeViewModel = ChildViewModel()
-        controller.routeStoreFor(galleryChain, Main).put("route", routeViewModel)
+        val rootRouteViewModel = ChildViewModel()
+        val mainRouteViewModel = ChildViewModel()
+        controller.routeStoreFor(galleryChain, Root).put("route", rootRouteViewModel)
+        controller.routeStoreFor(galleryChain, Main).put("route", mainRouteViewModel)
         controller.backStack += galleryChain
 
         assertTrue(controller.removeBackStack(galleryChain))
-        assertTrue(!routeViewModel.cleared)
+        assertTrue(!rootRouteViewModel.cleared)
+        assertTrue(!mainRouteViewModel.cleared)
         assertEquals(listOf(galleryChain), controller.backStack)
 
         assertTrue(controller.removeBackStack(Gallery))
-        assertTrue(routeViewModel.cleared)
+        assertTrue(rootRouteViewModel.cleared)
+        assertTrue(mainRouteViewModel.cleared)
         assertTrue(controller.backStack.isEmpty())
     }
 
     private companion object {
-        private var parentViewModel: ParentViewModel? = null
+        private var rootViewModel: ParentViewModel? = null
+        private var mainViewModel: ParentViewModel? = null
         private var childViewModel: ChildViewModel? = null
         private var parentViewModelFromChild: ParentViewModel? = null
         private val testViewModelFactory = viewModelFactory {
@@ -133,23 +171,32 @@ class NavControllerTest {
         }
 
         private val graph: NavGraph<Key> = createNavGraph {
-            destination<Login> { TestNode("login") }
             route(
-                parent = Main,
-                startDestination = Gallery,
+                parent = Root,
+                startDestination = Main,
                 content = { child ->
-                    parentViewModel = viewModel(factory = testViewModelFactory)
-                    TestNode("main", child)
-                }
+                    rootViewModel = viewModel(factory = testViewModelFactory)
+                    TestNode("root", child)
+                },
             ) {
-                destination<Gallery> { TestNode("gallery") }
-                destination<Detail> {
-                    childViewModel = viewModel(factory = testViewModelFactory)
-                    parentViewModelFromChild = viewModel(
-                        viewModelStoreOwner = checkNotNull(LocalNavRouteViewModelStoreOwner.current),
-                        factory = testViewModelFactory,
-                    )
-                    TestNode("detail")
+                destination<Login> { TestNode("login") }
+                route(
+                    parent = Main,
+                    startDestination = Gallery,
+                    content = { child ->
+                        mainViewModel = viewModel(factory = testViewModelFactory)
+                        TestNode("main", child)
+                    },
+                ) {
+                    destination<Gallery> { TestNode("gallery") }
+                    destination<Detail> {
+                        childViewModel = viewModel(factory = testViewModelFactory)
+                        parentViewModelFromChild = viewModel(
+                            viewModelStoreOwner = checkNotNull(LocalNavRouteViewModelStoreOwner.current),
+                            factory = testViewModelFactory,
+                        )
+                        TestNode("detail")
+                    }
                 }
             }
         }

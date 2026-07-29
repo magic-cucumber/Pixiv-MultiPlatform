@@ -9,6 +9,13 @@ plugins {
     alias(libs.plugins.buildConfig)
 }
 
+val platform_wvbridge = when {
+    System.getProperty("os.name").startsWith("Windows") -> libs.wvbridge.platform.windows
+    System.getProperty("os.name") == "Linux" -> libs.wvbridge.platform.linux
+    System.getProperty("os.name") == "Mac OS X" -> libs.wvbridge.platform.macos
+    else -> error("wvbridge does not support ${System.getProperty("os.name")} on JVM")
+}
+
 kotlin {
     library(
         project = project,
@@ -29,6 +36,7 @@ kotlin {
             api(libs.compose.resources)
             api(libs.compose.ui.tooling.preview)
             api(libs.compose.material3)
+            implementation(libs.compose.material3.icons)
             implementation(libs.kermit)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.ktor.client.core)
@@ -49,6 +57,8 @@ kotlin {
             implementation(libs.orbit.core)
             implementation(libs.orbit.viewmodel)
             implementation(libs.orbit.compose)
+            implementation(libs.pixko)
+            implementation(libs.wvbridge.core)
 
             api(project(":sharedUI:i18n"))
 
@@ -74,6 +84,11 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)
+            runtimeOnly(platform_wvbridge)
+        }
+
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
 
     }

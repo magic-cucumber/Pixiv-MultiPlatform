@@ -24,6 +24,9 @@ okio = "3.17.0"
 orbit = "12.0.0"
 yamlkt = "0.13.0"
 xmlutil = "1.0.0-rc3"
+pixko = "2.12"
+wvbridge = "0.0.6"
+wvbridge-platform = "0.0.5"
 
 [libraries]
 
@@ -44,6 +47,7 @@ compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-pre
 compose-ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "compose-multiplatform" }
 compose-ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "compose-multiplatform" }
 compose-material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
+compose-material3-icons = { module = "org.jetbrains.compose.material:material-icons-extended", version = "1.7.3" }
 androidx-activityCompose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
@@ -81,6 +85,11 @@ orbit-compose = { module = "org.orbit-mvi:orbit-compose", version.ref = "orbit" 
 orbit-test = { module = "org.orbit-mvi:orbit-test", version.ref = "orbit" }
 yamlkt-jvm = { module = "net.mamoe.yamlkt:yamlkt-jvm", version.ref = "yamlkt" }
 xmlutil-serialization-jvm = { module = "io.github.pdvrieze.xmlutil:serialization-jvm", version.ref = "xmlutil" }
+pixko = { module = "top.kagg886:pixko", version.ref = "pixko" }
+wvbridge-core = { module = "top.kagg886.wvbridge:core", version.ref = "wvbridge" }
+wvbridge-platform-linux = { module = "top.kagg886.wvbridge:platform-linux", version.ref = "wvbridge-platform" }
+wvbridge-platform-macos = { module = "top.kagg886.wvbridge:platform-macos", version.ref = "wvbridge-platform" }
+wvbridge-platform-windows = { module = "top.kagg886.wvbridge:platform-windows", version.ref = "wvbridge-platform" }
 
 [plugins]
 

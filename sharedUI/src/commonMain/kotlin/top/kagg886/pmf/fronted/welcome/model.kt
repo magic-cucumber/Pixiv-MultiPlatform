@@ -21,6 +21,7 @@ class WelcomeViewModel : ViewModel(),
     OrbitContainerHost<WelcomeViewModelState, WelcomeViewModelState, WelcomeViewModelEffect> {
 
     private val initialized = Store.of(dataPath / "welcome.preferences_pb")
+    private val login = Store.of(dataPath / "login-properties.preferences_pb")
 
     override val container: OrbitContainer<WelcomeViewModelState, WelcomeViewModelState, WelcomeViewModelEffect> =
         orbitContainer(WelcomeViewModelState()) {
@@ -34,8 +35,11 @@ class WelcomeViewModel : ViewModel(),
 
     fun confirmInitialized() = intent {
         initialized.set("initialized",true)
-        postSideEffect(WelcomeViewModelEffect.NavigateToLogin)
-        //TODO 有凭证前往Main，无凭证前往Login
+        if (login.flow(viewModelScope,"refresh_token") { "" }.value.isBlank()) {
+            postSideEffect(WelcomeViewModelEffect.NavigateToLogin)
+            return@intent
+        }
+        postSideEffect(WelcomeViewModelEffect.NavigateToMain)
     }
 }
 

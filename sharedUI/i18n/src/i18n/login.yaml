@@ -1,0 +1,24 @@
+login_browser_title:
+  en_us: Sign in with Pixiv
+  zh_cn: 使用 Pixiv 登录
+
+login_verifying:
+  en_us: Verifying your Pixiv account…
+  zh_cn: 正在验证 Pixiv 账户…
+
+login_profiling:
+  en_us: Verifying your Pixiv profile…
+  zh_cn: 正在加载用户数据…
+
+login_verification_failed:
+  en_us: Pixiv sign-in failed. Please try again.
+  zh_cn: Pixiv 登录失败，请重试。
+
+login_retry:
+  en_us: Try again
+  zh_cn: 重试
+
+
+login_welcome:
+  en_us: Welcome! %1$s
+  zh_cn: 欢迎回来！ %1$s

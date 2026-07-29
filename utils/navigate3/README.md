@@ -35,8 +35,9 @@ data class Detail(val id: Long) : Screen
 ## Create a graph
 
 Register top-level destinations with `destination`. Use `route` for a nested
-section: its `content` is the route chrome, while destinations declared inside
-the route are its children.
+section: its `content` is the route chrome, while destinations and child routes
+declared inside it inherit its complete route path. Routes may be nested to any
+depth.
 
 ```kotlin
 val graph = createNavGraph<Screen> {
@@ -62,7 +63,9 @@ val graph = createNavGraph<Screen> {
 ```
 
 Each destination type may be registered only once. A route's `startDestination`
-should be one of the destinations declared in that route.
+may be either a destination or a child route declared beneath that route. When
+a route key is used as a navigation target, the graph follows route start
+destinations until it reaches a visible destination.
 
 ## Create and display a controller
 
