@@ -59,6 +59,7 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.androidx.sqlite.async)
             implementation(libs.room.runtime)
+            implementation(libs.room.paging)
             implementation(libs.materialKolor)
             implementation(libs.orbit.core)
             implementation(libs.orbit.viewmodel)

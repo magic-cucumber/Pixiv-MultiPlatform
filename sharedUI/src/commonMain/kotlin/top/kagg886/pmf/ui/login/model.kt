@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.getString
 import org.orbitmvi.orbit.OrbitContainer
 import org.orbitmvi.orbit.OrbitContainerHost
@@ -77,6 +78,8 @@ class LoginViewModel : ViewModel(),
             reduce { LoginViewModelState.VerificationFailed }
             return@intent
         }
+
+        login.set("profile", Json.encodeToString(profile))
 
         progress.emit(false)
         emitter.emit(getString(Lang.string.login_welcome, profile.name))

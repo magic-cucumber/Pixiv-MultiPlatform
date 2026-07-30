@@ -23,7 +23,6 @@ import top.kagg886.pmf.util.set
  */
 class MainViewModel : ViewModel(),
     OrbitContainerHost<MainViewModelState, MainViewModelState, MainViewModelSideEffect> {
-
     private val login = Store.of(preferencePath / "login-properties.preferences_pb")
     override val container: OrbitContainer<MainViewModelState, MainViewModelState, MainViewModelSideEffect> =
         orbitContainer(
