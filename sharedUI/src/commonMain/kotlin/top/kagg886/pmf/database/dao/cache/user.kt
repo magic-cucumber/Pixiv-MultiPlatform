@@ -4,12 +4,12 @@ import androidx.room3.Dao
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.Index
-import androidx.room3.PrimaryKey
 import androidx.room3.Query
 import androidx.room3.Upsert
 
 @Entity(
     tableName = "user_cache",
+    primaryKeys = ["currentUserId", "userId"],
     foreignKeys = [
         ForeignKey(
             entity = ImageUrlsCache::class,
@@ -20,8 +20,9 @@ import androidx.room3.Upsert
     indices = [Index(value = ["profileImageUrlsId"])],
 )
 data class UserCache(
-    @PrimaryKey
-    val id: Long,
+    /** Account whose personalized user state this cache row contains. */
+    val currentUserId: Long,
+    val userId: Long,
     val name: String,
     val account: String,
     val profileImageUrlsId: String,
@@ -34,9 +35,9 @@ interface UserDao {
     @Upsert
     suspend fun upsert(item: UserCache)
 
-    @Query("SELECT * FROM user_cache WHERE id = :id")
-    suspend fun find(id: Long): UserCache?
+    @Query("SELECT * FROM user_cache WHERE currentUserId = :currentUserId AND userId = :userId")
+    suspend fun find(currentUserId: Long, userId: Long): UserCache?
 
-    @Query("DELETE FROM user_cache WHERE id = :id")
-    suspend fun delete(id: Long)
+    @Query("DELETE FROM user_cache WHERE currentUserId = :currentUserId AND userId = :userId")
+    suspend fun delete(currentUserId: Long, userId: Long)
 }

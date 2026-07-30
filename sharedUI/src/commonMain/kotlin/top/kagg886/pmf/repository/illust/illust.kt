@@ -1,4 +1,4 @@
-package top.kagg886.pmf.repository
+package top.kagg886.pmf.repository.illust
 
 import androidx.paging.*
 import top.kagg886.pmf.database.AppDatabase
@@ -14,13 +14,11 @@ import top.kagg886.pmf.database.util.RoomDataBaseLock
  * ================================================
  */
 class IllustRepository internal constructor(
-    val currentUserId: Int,
+    val currentUserId: Long,
     val identifier: String,
     private val database: AppDatabase,
     private val loader: Loader,
 ) {
-    private val flowId: String = "$currentUserId:$identifier"
-
     /** The database is the source of truth consumed by the UI. */
     @OptIn(ExperimentalPagingApi::class)
     fun pager(config: PagingConfig = PagingConfig(pageSize = DEFAULT_PAGE_SIZE)): Pager<Int, IllustCache> =
@@ -28,11 +26,12 @@ class IllustRepository internal constructor(
             config = config,
             remoteMediator = IllustRemoteMediator(
                 database = database,
-                flowId = flowId,
+                currentUserId = currentUserId,
+                identifier = identifier,
                 pageSize = config.pageSize,
                 loader = loader,
             ),
-            pagingSourceFactory = { database.illustFlowDao().pagingSource(flowId) },
+            pagingSourceFactory = { database.illustFlowDao().pagingSource(currentUserId, identifier) },
         )
 
     internal sealed interface Loader {
@@ -75,7 +74,8 @@ class IllustRepository internal constructor(
     @OptIn(ExperimentalPagingApi::class)
     private class IllustRemoteMediator(
         private val database: AppDatabase,
-        private val flowId: String,
+        private val currentUserId: Long,
+        private val identifier: String,
         private val pageSize: Int,
         private val loader: Loader,
     ) : RemoteMediator<Int, IllustCache>() {
@@ -105,7 +105,7 @@ class IllustRepository internal constructor(
 
         private suspend fun loadAppend(): MediatorResult {
             val previous: PageKeyRecord = lock.withReadLock {
-                database.pageKeyRecordDao().findLatest(flowId)
+                database.pageKeyRecordDao().findLatest(currentUserId, identifier)
             } ?: return MediatorResult.Success(endOfPaginationReached = true)
 
             if (previous.endOfPaginationReached) {
@@ -128,24 +128,27 @@ class IllustRepository internal constructor(
             lock.withWriteLock {
                 val flowDao = database.illustFlowDao()
                 if (replace) {
-                    flowDao.delete(flowId)
-                    database.pageKeyRecordDao().delete(flowId)
+                    flowDao.delete(currentUserId, identifier)
+                    database.pageKeyRecordDao().delete(currentUserId, identifier)
                 }
 
-                val firstPosition: Int = flowDao.count(flowId)
-                database.illustDao().upsert(result.items)
+                val items: List<IllustCache> = result.items.map { it.copy(currentUserId = currentUserId) }
+                val firstPosition: Int = flowDao.count(currentUserId, identifier)
+                database.illustDao().upsert(items)
                 flowDao.insert(
-                    result.items.mapIndexed { index, illust ->
+                    items.mapIndexed { index, illust ->
                         IllustFlow(
-                            id = flowId,
+                            currentUserId = currentUserId,
+                            identifier = identifier,
                             position = firstPosition + index,
-                            illustId = illust.id,
+                            illustId = illust.illustId,
                         )
                     },
                 )
                 database.pageKeyRecordDao().upsert(
                     PageKeyRecord(
-                        id = flowId,
+                        currentUserId = currentUserId,
+                        identifier = identifier,
                         page = page,
                         url = result.nextUrl,
                         endOfPaginationReached = endReached,
@@ -165,51 +168,3 @@ data class IllustNetworkPage(
     val items: List<IllustCache>,
     val nextUrl: String? = null,
 )
-
-@DslMarker
-annotation class IllustRepositoryDslMarker
-
-@IllustRepositoryDslMarker
-class IllustRepositoryDsl {
-    private var loader: IllustRepository.Loader? = null
-
-    /** Configures an API whose continuation is expressed by page and page size. */
-    fun pageSize(fetch: suspend (page: Int, pageSize: Int) -> IllustNetworkPage) {
-        setLoader(IllustRepository.PageSizeImpl(fetch))
-    }
-
-    /** Configures an API whose continuation is the opaque next_url supplied by Pixiv. */
-    fun nextUrl(
-        first: suspend (pageSize: Int) -> IllustNetworkPage,
-        next: suspend (nextUrl: String) -> IllustNetworkPage,
-    ) {
-        setLoader(IllustRepository.NextUrlImpl(first, next))
-    }
-
-    internal fun build(
-        database: AppDatabase,
-        currentUserId: Int,
-        id: String,
-    ): IllustRepository {
-        require(currentUserId >= 0) { "currentUserId must be non-negative" }
-        require(id.isNotBlank()) { "id must not be blank" }
-        return IllustRepository(
-            currentUserId = currentUserId,
-            identifier = id,
-            database = database,
-            loader = requireNotNull(loader) { "Configure pageSize { } or nextUrl(first, next)" },
-        )
-    }
-
-    private fun setLoader(value: IllustRepository.Loader) {
-        check(loader == null) { "Only one pagination protocol may be configured" }
-        loader = value
-    }
-}
-
-fun illustRepository(
-    database: AppDatabase,
-    currentUserId: Int,
-    id: String,
-    block: IllustRepositoryDsl.() -> Unit,
-): IllustRepository = IllustRepositoryDsl().apply(block).build(database, currentUserId, id)

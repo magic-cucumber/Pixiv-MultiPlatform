@@ -10,12 +10,12 @@ import androidx.room3.Query
 
 @Entity(
     tableName = "illust_meta_page_cross_ref",
-    primaryKeys = ["illustId", "sortIndex"],
+    primaryKeys = ["currentUserId", "illustId", "sortIndex"],
     foreignKeys = [
         ForeignKey(
             entity = IllustCache::class,
-            parentColumns = ["id"],
-            childColumns = ["illustId"],
+            parentColumns = ["currentUserId", "illustId"],
+            childColumns = ["currentUserId", "illustId"],
         ),
         ForeignKey(
             entity = ImageUrlsCache::class,
@@ -26,6 +26,7 @@ import androidx.room3.Query
     indices = [Index(value = ["imageUrlsId"])],
 )
 data class IllustMetaPageCrossRef(
+    val currentUserId: Long,
     val illustId: Long,
     val imageUrlsId: String,
     val sortIndex: Int,
@@ -38,10 +39,10 @@ interface IllustMetaPageCrossRefDao {
 
     @Query(
         "SELECT * FROM illust_meta_page_cross_ref " +
-            "WHERE illustId = :illustId ORDER BY sortIndex",
+            "WHERE currentUserId = :currentUserId AND illustId = :illustId ORDER BY sortIndex",
     )
-    suspend fun findByIllustId(illustId: Long): List<IllustMetaPageCrossRef>
+    suspend fun findByIllustId(currentUserId: Long, illustId: Long): List<IllustMetaPageCrossRef>
 
-    @Query("DELETE FROM illust_meta_page_cross_ref WHERE illustId = :illustId")
-    suspend fun deleteByIllustId(illustId: Long)
+    @Query("DELETE FROM illust_meta_page_cross_ref WHERE currentUserId = :currentUserId AND illustId = :illustId")
+    suspend fun deleteByIllustId(currentUserId: Long, illustId: Long)
 }

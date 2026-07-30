@@ -16,22 +16,24 @@ import top.kagg886.pmf.database.dao.cache.IllustCache
 /** A caller-defined ordered flow of references to cached illustrations. */
 @Entity(
     tableName = "illust_flow",
-    primaryKeys = ["id", "position"],
+    primaryKeys = ["currentUserId", "identifier", "position"],
     foreignKeys = [
         ForeignKey(
             entity = IllustCache::class,
-            parentColumns = ["id"],
-            childColumns = ["illustId"],
+            parentColumns = ["currentUserId", "illustId"],
+            childColumns = ["currentUserId", "illustId"],
         ),
     ],
-    indices = [Index(value = ["illustId"])],
+    indices = [Index(value = ["currentUserId", "illustId"])],
 )
 data class IllustFlow(
-    /** Caller-defined flow identity. */
-    val id: String,
-    /** Stable display order within [id]. */
+    /** Account whose personalized illustration cache this flow references. */
+    val currentUserId: Long,
+    /** Caller-defined flow identity within [currentUserId]. */
+    val identifier: String,
+    /** Stable display order within [identifier]. */
     val position: Int,
-    /** Account-isolated [IllustCache.id]. */
+    /** Account-isolated [IllustCache.illustId]. */
     val illustId: Long,
 )
 
@@ -40,26 +42,30 @@ data class IllustFlow(
 interface IllustFlowDao {
     @Query(
         "SELECT illust_cache.* FROM illust_flow " +
-            "INNER JOIN illust_cache ON illust_flow.illustId = illust_cache.id " +
-            "WHERE illust_flow.id = :id " +
+            "INNER JOIN illust_cache ON " +
+            "illust_flow.currentUserId = illust_cache.currentUserId AND " +
+            "illust_flow.illustId = illust_cache.illustId " +
+            "WHERE illust_flow.currentUserId = :currentUserId AND illust_flow.identifier = :identifier " +
             "ORDER BY illust_flow.position",
     )
-    fun pagingSource(id: String): PagingSource<Int, IllustCache>
+    fun pagingSource(currentUserId: Long, identifier: String): PagingSource<Int, IllustCache>
 
-    @Query("SELECT COUNT(*) FROM illust_flow WHERE id = :id")
-    suspend fun count(id: String): Int
+    @Query("SELECT COUNT(*) FROM illust_flow WHERE currentUserId = :currentUserId AND identifier = :identifier")
+    suspend fun count(currentUserId: Long, identifier: String): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(items: List<IllustFlow>)
 
     /** Deletes only flow references; cached illustrations remain available to other flows. */
-    @Query("DELETE FROM illust_flow WHERE id = :id")
-    suspend fun delete(id: String)
+    @Query("DELETE FROM illust_flow WHERE currentUserId = :currentUserId AND identifier = :identifier")
+    suspend fun delete(currentUserId: Long, identifier: String)
 
     @Transaction
-    suspend fun replace(id: String, items: List<IllustFlow>) {
-        require(items.all { it.id == id }) { "All items must belong to flow $id" }
-        delete(id)
+    suspend fun replace(currentUserId: Long, identifier: String, items: List<IllustFlow>) {
+        require(items.all { it.currentUserId == currentUserId && it.identifier == identifier }) {
+            "All items must belong to $currentUserId:$identifier"
+        }
+        delete(currentUserId, identifier)
         insert(items)
     }
 }
