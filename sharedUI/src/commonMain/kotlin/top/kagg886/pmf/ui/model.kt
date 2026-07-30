@@ -1,6 +1,5 @@
 package top.kagg886.pmf.ui
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger
 import org.orbitmvi.orbit.OrbitContainer
@@ -9,7 +8,6 @@ import org.orbitmvi.orbit.viewmodel.orbitContainer
 import top.kagg886.pmf.database.AppDatabase
 import top.kagg886.pmf.database.databaseBuilder
 import top.kagg886.pmf.database.util.DatabaseLogWriter
-import top.kagg886.pmf.util.SnackBarAction
 
 /**
  * ================================================
@@ -25,13 +23,9 @@ class RootViewModel : ViewModel(), OrbitContainerHost<RootViewModelState, RootVi
             val logDao = database.logDao()
             Logger.addLogWriter(DatabaseLogWriter(logDao))
             reduce {
-                RootViewModelState.LoadSuccess(database, SnackbarHostState())
+                RootViewModelState.LoadSuccess(database)
             }
         }
-
-    fun toast(action: SnackBarAction.() -> Unit) = intent {
-        postSideEffect(RootViewModelEffect.Toast(SnackBarAction().apply(action)))
-    }
 }
 
 
@@ -39,10 +33,8 @@ sealed interface RootViewModelState {
     data object Loading : RootViewModelState
     data class LoadSuccess(
         val database: AppDatabase,
-        val snack: SnackbarHostState
     ) : RootViewModelState
 }
 
 sealed interface RootViewModelEffect {
-    data class Toast(val action: SnackBarAction) : RootViewModelEffect
 }

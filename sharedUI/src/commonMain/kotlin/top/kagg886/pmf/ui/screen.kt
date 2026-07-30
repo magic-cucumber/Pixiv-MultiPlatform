@@ -29,35 +29,8 @@ fun RootScreen(content: @Composable () -> Unit) {
         RootViewModel()
     }
     val state by model.collectAsState()
+    model.collectSideEffect {
 
-    when (val state = state) {
-        RootViewModelState.Loading -> return
-        is RootViewModelState.LoadSuccess -> {
-
-            model.collectSideEffect {
-                when(it) {
-                    is RootViewModelEffect.Toast -> {
-                        val result = state.snack.showSnackbar(it.action.message,it.action.actionLabel)
-                        if (result == SnackbarResult.ActionPerformed) it.action.onAction?.invoke()
-                    }
-                }
-            }
-
-            Box(Modifier.fillMaxSize()) {
-                content()
-
-                SnackbarHost(
-                    hostState = state.snack,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .align(
-                            alignment = when (Platform.LayoutType) {
-                                LayoutType.Phone -> Alignment.BottomCenter
-                                else -> Alignment.BottomEnd
-                            }
-                        ),
-                )
-            }
-        }
     }
+    content()
 }
