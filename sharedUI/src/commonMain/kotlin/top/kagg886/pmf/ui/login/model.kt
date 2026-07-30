@@ -8,6 +8,7 @@ import org.jetbrains.compose.resources.getString
 import org.orbitmvi.orbit.OrbitContainer
 import org.orbitmvi.orbit.OrbitContainerHost
 import org.orbitmvi.orbit.viewmodel.orbitContainer
+import top.kagg886.pixko.PixivAccountFactory
 import top.kagg886.pixko.PixivVerification
 import top.kagg886.pixko.TokenStorage
 import top.kagg886.pixko.TokenType
@@ -18,6 +19,7 @@ import top.kagg886.pmf.i18n.login_profiling
 import top.kagg886.pmf.i18n.login_verifying
 import top.kagg886.pmf.i18n.login_welcome
 import top.kagg886.pmf.logger.Logger
+import top.kagg886.pmf.ui.main.createPlatformEngine
 import top.kagg886.pmf.util.Store
 import top.kagg886.pmf.util.get
 import top.kagg886.pmf.util.preferencePath
@@ -38,7 +40,7 @@ class LoginViewModel : ViewModel(),
     private val login = Store.of(preferencePath / "login-properties.preferences_pb")
 
     override val container: OrbitContainer<LoginViewModelState, LoginViewModelState, LoginViewModelEffect> =
-        orbitContainer(LoginViewModelState.BrowserLogin(createPixivVerification()))
+        orbitContainer(LoginViewModelState.BrowserLogin(PixivAccountFactory.newAccount(createPlatformEngine())))
 
     fun challenge(url: String) = intent {
         val verification = (state as? LoginViewModelState.BrowserLogin)?.verification ?: return@intent
@@ -79,17 +81,14 @@ class LoginViewModel : ViewModel(),
         progress.emit(false)
         emitter.emit(getString(Lang.string.login_welcome, profile.name))
         delay(3.seconds)
-
         client.close()
         postSideEffect(LoginViewModelEffect.NavigateToMain)
     }
 
     fun retryBrowserLogin() = intent {
-        reduce { LoginViewModelState.BrowserLogin(createPixivVerification()) }
+        reduce { LoginViewModelState.BrowserLogin(PixivAccountFactory.newAccount(createPlatformEngine())) }
     }
 }
-
-expect fun createPixivVerification(): PixivVerification<*>
 
 sealed interface LoginViewModelState {
     data class BrowserLogin(val verification: PixivVerification<*>) : LoginViewModelState

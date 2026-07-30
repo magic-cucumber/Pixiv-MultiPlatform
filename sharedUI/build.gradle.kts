@@ -63,6 +63,9 @@ kotlin {
             implementation(libs.orbit.core)
             implementation(libs.orbit.viewmodel)
             implementation(libs.orbit.compose)
+            implementation(libs.paging.common)
+            implementation(libs.paging.compose)
+            implementation(libs.store)
             implementation(libs.pixko)
             implementation(libs.wvbridge.core)
 
@@ -80,6 +83,7 @@ kotlin {
             implementation(libs.compose.ui.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.orbit.test)
+            implementation(libs.paging.testing)
         }
 
         androidMain.dependencies {

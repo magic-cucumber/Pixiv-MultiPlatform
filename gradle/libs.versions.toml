@@ -7,27 +7,28 @@ agp = "9.0.0"
 androidx-activityCompose = "1.12.0"
 kermit = "2.1.0"
 kotlinx-coroutines = "1.11.0"
-kotlinx-atomicfu = "0.32.1"
-ktor = "3.5.0"
+kotlinx-atomicfu = "0.33.0"
+ktor = "3.5.1"
 androidx-lifecycle = "2.11.0-beta01"
 androidx-nav3 = "1.1.1"
-nav3-browser = "1.1.0"
 kotlinx-serialization = "1.11.0"
-coil = "3.4.0"
+coil = "3.5.0"
 kotlinx-datetime = "0.8.0"
-room = "3.0.0"
+room = "3.0.1"
 androidx-sqlite = "2.7.0"
-ksp = "2.3.9"
-buildConfig = "5.6.5"
-materialKolor = "4.1.1"
+ksp = "2.3.10"
+buildConfig = "6.0.10"
+materialKolor = "5.0.0"
 androidx-datastore = "1.2.1"
-okio = "3.17.0"
+okio = "3.18.0"
 orbit = "12.0.0"
 yamlkt = "0.13.0"
-xmlutil = "1.0.0-rc3"
+xmlutil = "1.0.1"
 pixko = "2.12"
 wvbridge = "0.0.6"
 wvbridge-platform = "0.0.5"
+paging = "3.5.0"
+store = "5.0.0"
 
 [libraries]
 
@@ -69,7 +70,6 @@ androidx-lifecycle-viewmodel = { module = "org.jetbrains.androidx.lifecycle:life
 androidx-lifecycle-runtime = { module = "org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 compose-nav3 = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "androidx-nav3" }
-nav3-browser = { module = "com.github.terrakok:navigation3-browser", version.ref = "nav3-browser" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 coil = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
@@ -93,6 +93,10 @@ wvbridge-core = { module = "top.kagg886.wvbridge:core", version.ref = "wvbridge"
 wvbridge-platform-linux = { module = "top.kagg886.wvbridge:platform-linux", version.ref = "wvbridge-platform" }
 wvbridge-platform-macos = { module = "top.kagg886.wvbridge:platform-macos", version.ref = "wvbridge-platform" }
 wvbridge-platform-windows = { module = "top.kagg886.wvbridge:platform-windows", version.ref = "wvbridge-platform" }
+paging-common = { module = "androidx.paging:paging-common", version.ref = "paging" }
+paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
+paging-testing = { module = "androidx.paging:paging-testing", version.ref = "paging" }
+store = { module = "org.mobilenativefoundation.store:store5", version.ref = "store" }
 
 [plugins]
 
