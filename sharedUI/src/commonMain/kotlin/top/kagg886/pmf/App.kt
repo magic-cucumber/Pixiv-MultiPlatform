@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import top.kagg886.pmf.fronted.ApplicationGraph
-import top.kagg886.pmf.fronted.welcome.WelcomeRoute
+import top.kagg886.pmf.ui.ApplicationGraph
+import top.kagg886.pmf.ui.welcome.WelcomeRoute
 import top.kagg886.pmf.util.nav3.NavController
 import top.kagg886.pmf.util.nav3.NavDisplay
 import top.kagg886.pmf.util.nav3.SerializableNavKey

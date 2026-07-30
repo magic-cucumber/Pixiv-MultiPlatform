@@ -1,13 +1,12 @@
-package top.kagg886.pmf.fronted.welcome
+package top.kagg886.pmf.ui.welcome
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import org.orbitmvi.orbit.OrbitContainer
 import org.orbitmvi.orbit.OrbitContainerHost
 import org.orbitmvi.orbit.viewmodel.orbitContainer
 import top.kagg886.pmf.util.Store
-import top.kagg886.pmf.util.dataPath
-import top.kagg886.pmf.util.flow
+import top.kagg886.pmf.util.get
+import top.kagg886.pmf.util.preferencePath
 import top.kagg886.pmf.util.set
 
 /**
@@ -20,12 +19,12 @@ import top.kagg886.pmf.util.set
 class WelcomeViewModel : ViewModel(),
     OrbitContainerHost<WelcomeViewModelState, WelcomeViewModelState, WelcomeViewModelEffect> {
 
-    private val initialized = Store.of(dataPath / "welcome.preferences_pb")
-    private val login = Store.of(dataPath / "login-properties.preferences_pb")
+    private val initialized = Store.of(preferencePath / "welcome.preferences_pb")
+    private val login = Store.of(preferencePath / "login-properties.preferences_pb")
 
     override val container: OrbitContainer<WelcomeViewModelState, WelcomeViewModelState, WelcomeViewModelEffect> =
         orbitContainer(WelcomeViewModelState()) {
-            if (initialized.flow(viewModelScope, "initialized") { false }.value) {
+            if (initialized.get("initialized") { false }) {
                 confirmInitialized()
                 return@orbitContainer
             }
@@ -34,8 +33,8 @@ class WelcomeViewModel : ViewModel(),
 
 
     fun confirmInitialized() = intent {
-        initialized.set("initialized",true)
-        if (login.flow(viewModelScope,"refresh_token") { "" }.value.isBlank()) {
+        initialized.set("initialized", true)
+        if (login.get("refresh_token") { "" }.isBlank()) {
             postSideEffect(WelcomeViewModelEffect.NavigateToLogin)
             return@intent
         }

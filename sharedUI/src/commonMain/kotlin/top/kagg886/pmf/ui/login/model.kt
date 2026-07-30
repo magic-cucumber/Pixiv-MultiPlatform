@@ -1,7 +1,6 @@
-package top.kagg886.pmf.fronted.login
+package top.kagg886.pmf.ui.login
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,10 +18,9 @@ import top.kagg886.pmf.i18n.login_profiling
 import top.kagg886.pmf.i18n.login_verifying
 import top.kagg886.pmf.i18n.login_welcome
 import top.kagg886.pmf.util.Store
-import top.kagg886.pmf.util.dataPath
-import top.kagg886.pmf.util.flow
+import top.kagg886.pmf.util.get
+import top.kagg886.pmf.util.preferencePath
 import top.kagg886.pmf.util.set
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -35,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 class LoginViewModel : ViewModel(),
     OrbitContainerHost<LoginViewModelState, LoginViewModelState, LoginViewModelEffect> {
 
-    private val login = Store.of(dataPath / "login-properties.preferences_pb")
+    private val login = Store.of(preferencePath / "login-properties.preferences_pb")
 
     override val container: OrbitContainer<LoginViewModelState, LoginViewModelState, LoginViewModelEffect> =
         orbitContainer(LoginViewModelState.BrowserLogin(createPixivVerification()))
@@ -49,9 +47,9 @@ class LoginViewModel : ViewModel(),
 
         val tokens = object : TokenStorage {
             override suspend fun getToken(type: TokenType): String? = when (type) {
-                ACCESS -> login.flow(viewModelScope, "access_token") { "" }.value
-                REFRESH -> login.flow(viewModelScope, "refresh_token") { "" }.value
-                EXPIRE_TIME -> login.flow(viewModelScope, "expire_time") { "" }.value
+                ACCESS -> login.get("access_token") { "" }
+                REFRESH -> login.get("refresh_token") { "" }
+                EXPIRE_TIME -> login.get("expire_time") { "" }
             }
 
             override suspend fun setToken(type: TokenType, token: String) = when (type) {

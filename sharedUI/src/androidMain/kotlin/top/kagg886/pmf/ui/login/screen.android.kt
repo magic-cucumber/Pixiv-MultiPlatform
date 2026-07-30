@@ -1,4 +1,4 @@
-package top.kagg886.pmf.fronted.login
+package top.kagg886.pmf.ui.login
 
 import top.kagg886.wvbridge.config.WebViewPlatformConfig
 

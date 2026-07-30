@@ -1,4 +1,4 @@
-package top.kagg886.pmf.fronted
+package top.kagg886.pmf.ui
 
 import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.ViewModel

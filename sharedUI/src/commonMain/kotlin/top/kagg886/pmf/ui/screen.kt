@@ -1,4 +1,4 @@
-package top.kagg886.pmf.fronted
+package top.kagg886.pmf.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

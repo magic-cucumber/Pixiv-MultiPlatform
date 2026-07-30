@@ -1,8 +1,7 @@
-package top.kagg886.pmf.fronted.main
+package top.kagg886.pmf.ui.main
 
-import kotlinx.serialization.Serializable
-import top.kagg886.pmf.fronted.main.home.HomeRoute
-import top.kagg886.pmf.fronted.main.home.HomeScreen
+import top.kagg886.pmf.ui.main.home.HomeRoute
+import top.kagg886.pmf.ui.main.home.HomeScreen
 import top.kagg886.pmf.util.nav3.NavGraph
 import top.kagg886.pmf.util.nav3.SerializableNavKey
 

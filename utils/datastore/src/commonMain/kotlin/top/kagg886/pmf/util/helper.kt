@@ -3,6 +3,7 @@ package top.kagg886.pmf.util
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlin.reflect.KClass
 
@@ -42,6 +43,12 @@ public suspend fun <T : Any> DataStore<Preferences>.flow(
         .map { preferences -> preferences[preferenceKey] ?: default() }
         .stateIn(scope, SharingStarted.Eagerly, initialValue)
 }
+
+public suspend inline fun <reified T : Any> DataStore<Preferences>.get(name: String, noinline default: () -> T): T =
+    coroutineScope {
+        flow(this, name, default).value
+    }
+
 
 /** Updates one supported preference atomically. */
 public suspend fun <T : Any> DataStore<Preferences>.set(name: String, value: T) {

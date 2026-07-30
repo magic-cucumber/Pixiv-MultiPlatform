@@ -1,4 +1,4 @@
-package top.kagg886.pmf.fronted.welcome
+package top.kagg886.pmf.ui.welcome
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -21,8 +21,8 @@ import top.kagg886.pmf.LocalNavController
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.welcome_start
 import top.kagg886.pmf.i18n.welcome_tagline
-import top.kagg886.pmf.fronted.login.LoginRoute
-import top.kagg886.pmf.fronted.main.MainRoute
+import top.kagg886.pmf.ui.login.LoginRoute
+import top.kagg886.pmf.ui.main.MainRoute
 import top.kagg886.pmf.res.Res
 import top.kagg886.pmf.res.pixiv
 import top.kagg886.pmf.util.nav3.SerializableNavKey

@@ -1,4 +1,4 @@
-package top.kagg886.pmf.fronted.login
+package top.kagg886.pmf.ui.login
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
@@ -19,7 +19,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.LocalNavController
-import top.kagg886.pmf.fronted.main.MainRoute
+import top.kagg886.pmf.ui.main.MainRoute
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.login_browser_title
 import top.kagg886.pmf.i18n.login_retry

@@ -1,13 +1,13 @@
-package top.kagg886.pmf.fronted
+package top.kagg886.pmf.ui
 
-import top.kagg886.pmf.fronted.login.LoginRoute
-import top.kagg886.pmf.fronted.login.LoginScreen
-import top.kagg886.pmf.fronted.main.MainRoute
-import top.kagg886.pmf.fronted.main.MainRouteGraph
-import top.kagg886.pmf.fronted.main.MainScreen
-import top.kagg886.pmf.fronted.main.home.HomeRoute
-import top.kagg886.pmf.fronted.welcome.WelcomeRoute
-import top.kagg886.pmf.fronted.welcome.WelcomeScreen
+import top.kagg886.pmf.ui.login.LoginRoute
+import top.kagg886.pmf.ui.login.LoginScreen
+import top.kagg886.pmf.ui.main.MainRoute
+import top.kagg886.pmf.ui.main.MainRouteGraph
+import top.kagg886.pmf.ui.main.MainScreen
+import top.kagg886.pmf.ui.main.home.HomeRoute
+import top.kagg886.pmf.ui.welcome.WelcomeRoute
+import top.kagg886.pmf.ui.welcome.WelcomeScreen
 import top.kagg886.pmf.util.nav3.createNavGraph
 
 /**

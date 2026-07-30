@@ -1,6 +1,5 @@
-package top.kagg886.pmf.fronted.main.home
+package top.kagg886.pmf.ui.main
 
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import kotlinx.serialization.Serializable
 import top.kagg886.pmf.util.nav3.SerializableNavKey
@@ -8,15 +7,14 @@ import top.kagg886.pmf.util.nav3.SerializableNavKey
 /**
  * ================================================
  * Author:     iveou
- * Created on: 2026/7/29 15:22
+ * Created on: 2026/7/29 15:19
  * ================================================
  */
 
 @Serializable
-data object HomeRoute: SerializableNavKey
-
+data object MainRoute : SerializableNavKey
 
 @Composable
-fun HomeScreen() {
-    Text("login success")
+fun MainScreen(content:@Composable () -> Unit) {
+    content()
 }
