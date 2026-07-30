@@ -22,6 +22,11 @@ kotlin {
         module = "sharedUI",
         android = {
             androidResources.enable = true
+        },
+        ios = {
+            binaries.framework {
+                linkerOpts += "-lsqlite3"
+            }
         }
     )
     sourceSets {
@@ -52,6 +57,7 @@ kotlin {
             implementation(libs.coil)
             implementation(libs.coil.network.ktor)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.androidx.sqlite.async)
             implementation(libs.room.runtime)
             implementation(libs.materialKolor)
             implementation(libs.orbit.core)
@@ -61,6 +67,7 @@ kotlin {
             implementation(libs.wvbridge.core)
 
             api(project(":sharedUI:i18n"))
+            api(project(":plugins:logger:api"))
 
             api(project(":utils:datastore"))
             api(project(":utils:device"))
@@ -84,6 +91,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.sqlite.bundled)
             runtimeOnly(platform_wvbridge)
         }
 
@@ -105,6 +113,7 @@ buildConfig {
     buildConfigField("APP_NAME","Pixiv-MultiPlatform")
     buildConfigField("APP_VERSION_NAME",application_version_name)
     buildConfigField("APP_VERSION_CODE",application_version_code)
+    buildConfigField("APP_DATABASE_VERSION",application_database_version)
 }
 
 compose.resources {
@@ -114,7 +123,7 @@ compose.resources {
 }
 
 
-room {
+room3 {
     schemaDirectory("$projectDir/schemas")
 }
 
@@ -126,6 +135,8 @@ dependencies {
         add("kspIosSimulatorArm64", this)
     }
     add("kspCommonMainMetadata", project(":plugins:navigation-serializer-module-creator"))
+    add("kspCommonMainMetadata", project(":plugins:room-database-generateor"))
+    add("kspCommonMainMetadata", project(":plugins:logger:processor"))
 }
 
 tasks.configureEach {

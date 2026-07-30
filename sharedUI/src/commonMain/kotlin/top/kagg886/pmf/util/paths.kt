@@ -10,3 +10,7 @@ package top.kagg886.pmf.util
 val preferencePath by lazy {
     dataPath / "preferences"
 }
+
+val databasePath by lazy {
+    dataPath / "database"
+}

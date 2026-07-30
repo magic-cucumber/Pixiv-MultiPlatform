@@ -12,6 +12,7 @@ private const val APPLICATION_VERSION_CODE = "application.version.code"
 private const val APPLICATION_ANDROID_COMPILE_SDK = "application.android.compile_sdk"
 private const val APPLICATION_ANDROID_MIN_SDK = "application.android.min_sdk"
 private const val APPLICATION_ANDROID_TARGET_SDK = "application.android.target_sdk"
+private const val APPLICATION_DATABASE_VERSION = "application.database.version"
 
 private fun Project.application(name: String): String? {
     check(name.startsWith("application.")) { "Application properties must start with application.: $name" }
@@ -47,3 +48,6 @@ val Project.android_min_sdk: Int
 /** `application.android.target_sdk` or `APPLICATION_ANDROID_TARGET_SDK`. */
 val Project.android_target_sdk: Int
     get() = applicationInt(APPLICATION_ANDROID_TARGET_SDK, 37)
+
+val Project.application_database_version: Int
+    get() = applicationInt(APPLICATION_DATABASE_VERSION, 1)

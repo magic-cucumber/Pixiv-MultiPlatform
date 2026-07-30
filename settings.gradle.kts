@@ -37,6 +37,9 @@ include(":desktopApp")
 include(":iosApp")
 
 include(":plugins:navigation-serializer-module-creator")
+include(":plugins:room-database-generateor")
+include(":plugins:logger:api")
+include(":plugins:logger:processor")
 
 
 include(":utils:navigate3")

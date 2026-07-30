@@ -3,6 +3,7 @@ package top.kagg886.pmf.util
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlin.reflect.KClass
@@ -46,7 +47,9 @@ public suspend fun <T : Any> DataStore<Preferences>.flow(
 
 public suspend inline fun <reified T : Any> DataStore<Preferences>.get(name: String, noinline default: () -> T): T =
     coroutineScope {
-        flow(this, name, default).value
+        flow(this, name, default).value.also {
+            coroutineContext.cancelChildren()
+        }
     }
 
 

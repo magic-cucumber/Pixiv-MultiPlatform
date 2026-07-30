@@ -17,6 +17,7 @@ import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.login_profiling
 import top.kagg886.pmf.i18n.login_verifying
 import top.kagg886.pmf.i18n.login_welcome
+import top.kagg886.pmf.logger.Logger
 import top.kagg886.pmf.util.Store
 import top.kagg886.pmf.util.get
 import top.kagg886.pmf.util.preferencePath
@@ -30,6 +31,7 @@ import kotlin.time.Duration.Companion.seconds
  * ================================================
  */
 
+@Logger
 class LoginViewModel : ViewModel(),
     OrbitContainerHost<LoginViewModelState, LoginViewModelState, LoginViewModelEffect> {
 
