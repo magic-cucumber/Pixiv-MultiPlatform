@@ -128,6 +128,7 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
         @PublishedApi
         internal val destinations: MutableList<Destination<T>> = mutableListOf()
 
+        @Suppress("DEPRECATION")
         public inline fun <reified K : T> destination(
             metadata: Map<String, Any> = emptyMap(),
             noinline content: @Composable (K) -> Unit,
@@ -136,19 +137,34 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
             destinations += Destination(K::class, metadata, parents, { key, routeStoreFor ->
                 val entryOwner = checkNotNull(LocalViewModelStoreOwner.current)
                 var nestedContent: @Composable () -> Unit = {
-                    CompositionLocalProvider(LocalViewModelStoreOwner provides entryOwner) {
+                    val ancestorRouteOwners = LocalNavRouteViewModelStoreOwners.current
+                    CompositionLocalProvider(
+                        LocalViewModelStoreOwner provides entryOwner,
+                        LocalNavViewModelContext provides NavViewModelContext(
+                            currentOwner = entryOwner,
+                            ancestorRouteOwners = ancestorRouteOwners,
+                        ),
+                    ) {
                         content(key as K)
                     }
                 }
                 for (route in parents.asReversed()) {
                     val childContent = nestedContent
                     nestedContent = {
-                        val routeOwner = object : ViewModelStoreOwner {
-                            override val viewModelStore: ViewModelStore = routeStoreFor(route.key)
+                        val routeStore = routeStoreFor(route.key)
+                        val routeOwner: ViewModelStoreOwner = object : ViewModelStoreOwner {
+                            override val viewModelStore: ViewModelStore = routeStore
                         }
+                        val ancestorRouteOwners = LocalNavRouteViewModelStoreOwners.current
                         CompositionLocalProvider(
                             LocalViewModelStoreOwner provides routeOwner,
                             LocalNavRouteViewModelStoreOwner provides routeOwner,
+                            LocalNavRouteViewModelStoreOwners provides
+                                listOf(routeOwner) + ancestorRouteOwners,
+                            LocalNavViewModelContext provides NavViewModelContext(
+                                currentOwner = routeOwner,
+                                ancestorRouteOwners = ancestorRouteOwners,
+                            ),
                         ) {
                             route.content {
                                 childContent()

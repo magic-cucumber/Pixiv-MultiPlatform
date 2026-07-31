@@ -11,25 +11,45 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation3.runtime.NavBackStack
 import kotlinx.coroutines.test.TestResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertNotSame
 import kotlin.test.assertTrue
 
-class ParentViewModel : ViewModel()
+class RootRouteViewModel : ViewModel() {
+    var cleared: Boolean = false
+
+    override fun onCleared(): Unit {
+        cleared = true
+    }
+}
+
+class MainRouteViewModel : ViewModel() {
+    var cleared: Boolean = false
+
+    override fun onCleared(): Unit {
+        cleared = true
+    }
+}
 
 class ChildViewModel : ViewModel() {
     var cleared: Boolean = false
 
     override fun onCleared(): Unit {
         cleared = true
+    }
+}
+
+class MissingParentViewModel : ViewModel() {
+    init {
+        instances++
+    }
+
+    companion object {
+        var instances: Int = 0
     }
 }
 
@@ -112,31 +132,95 @@ class NavControllerTest {
     }
 
     @Test
-    fun parentChildViewModels_shareParentAndClearChildOnPop(): TestResult = runComposeUiTest {
+    fun destinationViewModel_findsImmediateParentWithOrdinaryViewModelCall(): TestResult = runComposeUiTest {
         rootViewModel = null
         mainViewModel = null
         childViewModel = null
-        parentViewModelFromChild = null
+        mainViewModelFromGallery = null
+        mainViewModelFromDetail = null
+        rootViewModelFromDetail = null
         val controller = NavController(graph, Gallery)
 
         setContent { NavDisplay(controller) }
         onNodeWithTag("gallery").assertIsDisplayed()
 
+        assertEquals(assertNotNull(mainViewModel), assertNotNull(mainViewModelFromGallery))
+    }
+
+    @Test
+    fun destinationViewModel_findsNestedAncestors(): TestResult = runComposeUiTest {
+        rootViewModel = null
+        mainViewModel = null
+        rootViewModelFromMain = null
+        rootViewModelFromDetail = null
+        mainViewModelFromDetail = null
+        val controller = NavController(graph, Detail(42))
+
+        setContent { NavDisplay(controller) }
+        onNodeWithTag("detail").assertIsDisplayed()
+
+        assertEquals(assertNotNull(rootViewModel), assertNotNull(rootViewModelFromDetail))
+        assertEquals(assertNotNull(rootViewModel), assertNotNull(rootViewModelFromMain))
+        assertEquals(assertNotNull(mainViewModel), assertNotNull(mainViewModelFromDetail))
+    }
+
+    @Test
+    fun siblingDestinations_reuseRouteViewModels(): TestResult = runComposeUiTest {
+        rootViewModel = null
+        mainViewModel = null
+        mainViewModelFromGallery = null
+        mainViewModelFromDetail = null
+        val controller = NavController(graph, Gallery)
+
+        setContent { NavDisplay(controller) }
+        onNodeWithTag("gallery").assertIsDisplayed()
+        val initialRootViewModel = assertNotNull(rootViewModel)
+        val initialMainViewModel = assertNotNull(mainViewModel)
+
         controller.navigate(Detail(42))
         waitForIdle()
 
+        assertEquals(initialRootViewModel, assertNotNull(rootViewModel))
+        assertEquals(initialMainViewModel, assertNotNull(mainViewModel))
+        assertEquals(initialMainViewModel, assertNotNull(mainViewModelFromDetail))
+    }
+
+    @Test
+    fun leavingNestedRoute_clearsNestedModelButRetainsOuterModel(): TestResult = runComposeUiTest {
+        rootViewModel = null
+        mainViewModel = null
+        childViewModel = null
+        val controller = NavController(graph, Detail(42))
+
+        setContent { NavDisplay(controller) }
+        onNodeWithTag("detail").assertIsDisplayed()
         val rootRouteViewModel = assertNotNull(rootViewModel)
         val mainRouteViewModel = assertNotNull(mainViewModel)
-        assertNotSame(rootRouteViewModel, mainRouteViewModel)
-        assertEquals(mainRouteViewModel, assertNotNull(parentViewModelFromChild))
         val detailViewModel = assertNotNull(childViewModel)
 
         controller.navigate(Login)
         waitForIdle()
 
         assertTrue(detailViewModel.cleared)
+        assertTrue(mainRouteViewModel.cleared)
+        assertTrue(!rootRouteViewModel.cleared)
         onNodeWithTag("root").assertIsDisplayed()
         onNodeWithTag("login").assertIsDisplayed()
+
+        controller.clear()
+        assertTrue(rootRouteViewModel.cleared)
+    }
+
+    @Test
+    fun missingParentViewModel_failsFastWithoutCreatingIt(): TestResult = runComposeUiTest {
+        MissingParentViewModel.instances = 0
+        val controller = NavController(missingParentGraph, MissingParentDestination)
+
+        assertFailsWith<IllegalStateException> {
+            setContent { NavDisplay(controller) }
+            waitForIdle()
+        }
+        assertEquals(0, MissingParentViewModel.instances)
     }
 
     @Test
@@ -161,21 +245,20 @@ class NavControllerTest {
     }
 
     private companion object {
-        private var rootViewModel: ParentViewModel? = null
-        private var mainViewModel: ParentViewModel? = null
+        private var rootViewModel: RootRouteViewModel? = null
+        private var mainViewModel: MainRouteViewModel? = null
+        private var rootViewModelFromMain: RootRouteViewModel? = null
         private var childViewModel: ChildViewModel? = null
-        private var parentViewModelFromChild: ParentViewModel? = null
-        private val testViewModelFactory = viewModelFactory {
-            initializer { ParentViewModel() }
-            initializer { ChildViewModel() }
-        }
+        private var mainViewModelFromGallery: MainRouteViewModel? = null
+        private var mainViewModelFromDetail: MainRouteViewModel? = null
+        private var rootViewModelFromDetail: RootRouteViewModel? = null
 
         private val graph: NavGraph<Key> = createNavGraph {
             route(
                 parent = Root,
                 startDestination = Main,
                 content = { child ->
-                    rootViewModel = viewModel(factory = testViewModelFactory)
+                    rootViewModel = viewModel { RootRouteViewModel() }
                     TestNode("root", child)
                 },
             ) {
@@ -184,19 +267,38 @@ class NavControllerTest {
                     parent = Main,
                     startDestination = Gallery,
                     content = { child ->
-                        mainViewModel = viewModel(factory = testViewModelFactory)
+                        mainViewModel = viewModel { MainRouteViewModel() }
+                        rootViewModelFromMain = viewModel()
                         TestNode("main", child)
                     },
                 ) {
-                    destination<Gallery> { TestNode("gallery") }
+                    destination<Gallery> {
+                        mainViewModelFromGallery = viewModel()
+                        TestNode("gallery")
+                    }
                     destination<Detail> {
-                        childViewModel = viewModel(factory = testViewModelFactory)
-                        parentViewModelFromChild = viewModel(
-                            viewModelStoreOwner = checkNotNull(LocalNavRouteViewModelStoreOwner.current),
-                            factory = testViewModelFactory,
-                        )
+                        childViewModel = viewModel { ChildViewModel() }
+                        mainViewModelFromDetail = viewModel()
+                        rootViewModelFromDetail = viewModel()
                         TestNode("detail")
                     }
+                }
+            }
+        }
+
+        private sealed interface MissingParentKey : SerializableNavKey
+        private data object MissingParentRoute : MissingParentKey
+        private data object MissingParentDestination : MissingParentKey
+
+        private val missingParentGraph: NavGraph<MissingParentKey> = createNavGraph {
+            route(
+                parent = MissingParentRoute,
+                startDestination = MissingParentDestination,
+                content = { child -> TestNode("missing-parent-route", child) },
+            ) {
+                destination<MissingParentDestination> {
+                    viewModel<MissingParentViewModel>()
+                    TestNode("missing-parent-destination")
                 }
             }
         }

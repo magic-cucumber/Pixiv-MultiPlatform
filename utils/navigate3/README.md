@@ -107,27 +107,37 @@ fast when Navigation 3 creates their entry.
 
 ## ViewModel ownership
 
-Each history record owns a `ViewModelStore` for every route in its chain.
+Each active route prefix owns one `ViewModelStore`. Destinations under the same route prefix share
+that store, so switching between sibling destinations preserves the route model.
 
-- A `ViewModel` requested in route chrome uses the route's store and is shared
-  by that route's children.
-- A `ViewModel` requested inside a destination uses the destination entry's
-  normal store.
-- When a history record is popped, every route store owned by that record is
-  cleared. Call `controller.clear()` when the controller itself is no longer
-  needed to clear all route stores and the back stack.
+- Import `top.kagg886.pmf.util.nav3.viewModel` in route and destination Composables.
+- A route creates its model with an initializer or factory. It can also retrieve an already-created
+  model from any ancestor route.
+- A child route or destination retrieves a parent model with a factory-free `viewModel<Model>()`
+  call. Lookup proceeds from the current scope through the nearest route to the outermost route.
+- A destination can create an entry-scoped model by supplying an initializer or factory.
+- A factory-free lookup fails immediately when no matching model exists. It never silently creates
+  a replacement parent model in the child scope.
+- Leaving a route clears its store after its last descendant leaves the back stack. Shared outer
+  route stores remain alive. Call `controller.clear()` when the controller itself is no longer
+  needed.
 
-While route chrome is composing, `LocalNavRouteViewModelStoreOwner` exposes the
-route owner. A child destination can use it to access the same route-scoped
-`ViewModel`:
+Create a model in route chrome, then retrieve exactly that instance in its child:
 
 ```kotlin
-val routeOwner = checkNotNull(LocalNavRouteViewModelStoreOwner.current)
-val sharedViewModel: MainViewModel = viewModel(viewModelStoreOwner = routeOwner)
+import top.kagg886.pmf.util.nav3.viewModel
+
+// Main route Composable
+val mainModel = viewModel<MainViewModel> {
+    MainViewModel(repository)
+}
+
+// Child route or destination Composable
+val parentModel = viewModel<MainViewModel>()
 ```
 
-Use the normal `viewModel()` call in a destination when the model should belong
-only to that destination.
+Do not pass a factory when retrieving a parent model from a child. Supplying one means that the
+child is intentionally creating a model in its own current scope.
 
 ## Public API
 
@@ -138,4 +148,4 @@ only to that destination.
 | `NavChain`                         | An immutable list of route keys plus its visible destination.            |
 | `NavController`                    | Owns the observable back stack and route `ViewModel` stores.             |
 | `NavDisplay`                       | Renders a `NavController` through Navigation 3.                          |
-| `LocalNavRouteViewModelStoreOwner` | Provides the current route-scoped `ViewModelStoreOwner`.                 |
+| `viewModel`                        | Creates a model in the current scope or finds an existing ancestor model. |

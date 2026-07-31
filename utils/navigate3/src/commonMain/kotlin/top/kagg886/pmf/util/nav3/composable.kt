@@ -34,6 +34,9 @@ import kotlinx.serialization.modules.SerializersModule
  */
 
 /** The owner made available while a [NavGraph.Route] is composing its chrome. */
+@Deprecated(
+    message = "Use navigate3.viewModel() to resolve parent route models without reading a CompositionLocal.",
+)
 public val LocalNavRouteViewModelStoreOwner: ProvidableCompositionLocal<ViewModelStoreOwner?> =
     compositionLocalOf { null }
 
