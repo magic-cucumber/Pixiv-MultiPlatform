@@ -2,6 +2,8 @@ package top.kagg886.pmf.ui.screen
 
 import top.kagg886.pmf.ui.screen.login.LoginRoute
 import top.kagg886.pmf.ui.screen.login.LoginScreen
+import top.kagg886.pmf.ui.screen.logger.LoggerRoute
+import top.kagg886.pmf.ui.screen.logger.LoggerScreen
 import top.kagg886.pmf.ui.screen.main.MainRoute
 import top.kagg886.pmf.ui.screen.main.MainRouteGraph
 import top.kagg886.pmf.ui.screen.main.MainScreen
@@ -21,6 +23,7 @@ val ApplicationGraph = createNavGraph {
     route(parent = RootRoute, startDestination = WelcomeRoute, content = ::RootScreen) {
         destination<WelcomeRoute> { WelcomeScreen() }
         destination<LoginRoute> { LoginScreen() }
+        destination<LoggerRoute> { LoggerScreen() }
 
         route<MainRoute>(MainRoute, HomeRoute,::MainScreen,MainRouteGraph)
     }
