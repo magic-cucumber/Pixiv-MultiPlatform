@@ -5,7 +5,7 @@
 ## 国际化文本
 
 - 所有用户可见文本都必须使用国际化资源；不要在界面代码中直接写文本。
-- 按页面在 `sharedUI/i18n/src/i18n/` 中新增或维护 YAML 文件：每个页面使用独立文件，文件名应体现页面职责（如 `login.yaml`）；
+- 按页面在 `sharedUI/i18n/src/i18n/` 中新增或维护 YAML 文件：目录树参照 `sharedUI/src/commonMain/kotlin/top/kagg886/pmf/ui/screen/` 的页面层级组织，每个页面使用独立文件，YAML 文件名必须与对应的 screen 名称一致。例如 `ui/screen/login/screen.kt` 对应 `i18n/login.yaml`，`ui/screen/main/home/screen.kt` 对应 `i18n/main/home.yaml`；新增或移动页面时，必须同步新增或移动对应的 YAML 文件；
 - 不要将多个页面的文案集中到巨型国际化文件中。
 - 仅在确实由多个页面共享时，才放入按共享功能命名的文件。
 - 每个文本使用稳定且语义明确的标识，并同时提供英文与简体中文。
@@ -67,6 +67,8 @@
 ### `screen.kt`：界面与交互
 
 - 声明页面路由标识和页面入口，负责绘制界面、读取状态，并将用户操作交给 `model.kt`。
+- 每个 `screen.kt` 只能声明一个 route class，并且只能有一个与该 route class 绑定的公开 screen 入口；文件中其他用于拆分状态、布局或预览的 screen/content composable 必须使用 `private` 修饰，不得再绑定路由。
+- 必要时可以为页面添加 `@Preview` 注解，便于在 IDE 中复现页面状态；Preview 仅用于预览或复现，不新增 route class，也不作为额外的路由入口。
 - 在此处接收一次性效果并完成跳转。若离开的是临时页面且不应返回，先移除该页面，再进入下一页。
 
   ```kotlin
@@ -90,11 +92,12 @@ import top.kagg886.pmf.logger.Logger
 @Logger // 默认 tag 为类的完整限定名
 class FeatureViewModel : ViewModel() {
     fun load() {
-        logger.i { "开始加载功能数据" }
+        logger.i { "Starting feature data load" }
     }
 }
 ```
 
+- All business log messages must be written in English. Do not mix Chinese or other natural-language text into log messages; keep code identifiers and state names when they improve traceability.
 - `@Logger` 只能标注类；processor 会在同包生成该类的 `logger: co.touchlab.kermit.Logger` 扩展属性。需要更短且稳定的 tag 时使用 `@Logger("FeatureViewModel")`；不要将注解放在 `private` 或 `protected` 类及其嵌套类上。
 - 日志应描述实际控制流、关键输入的安全摘要、执行结果和状态变化，以便根据日志重建一次业务路径。不得记录 access token、refresh token、密码、Cookie、完整授权 URL、用户隐私数据或其他敏感原文；必要时只记录是否存在、长度、ID 的脱敏形式或错误类型。
 - 不为简单的赋值、纯转发、显而易见的空值判断等无诊断价值的代码增加日志。循环、轮询和高频回调须只记录聚合结果、首次/末次事件或状态变化，避免刷屏。
@@ -104,8 +107,8 @@ class FeatureViewModel : ViewModel() {
 - `logger.v`：用于较复杂函数和有诊断价值的控制流，记录函数 enter/exit、重要 `if` / `else`、`when` 分支及提前返回的选择。目标是控制流可追踪，而非每一行都打 verbose：某个控制流已经有 `d`、`i`、`w` 或 `e` 日志时，不再重复打 `v`；过于简单的分支也不打 `v`。
 - `logger.d`：按函数内可独立判断的功能段分组记录，输出该段的预期、实际结果和是否符合预期。例如请求发起后的响应摘要、缓存读写是否命中、转换后的条目数量与有效性；不要只打印“执行到这里”。
 - `logger.i`：记录重要运行状态和可观察的业务决策，尤其是 ViewModel 将要设置的 state、发送的 effect、Repository 选择的数据源或最终采用的结果。
-- `logger.w`：仅在发现非预期状态、但准备继续执行 fallback 时使用。必须说明异常原因、受影响的原路径以及即将采用的 fallback，例如“缓存解析失败（类型：…），丢弃缓存并改为网络请求”。
-- `logger.e`：用于非预期退出且会改变/中断程序流程的情况。说明操作、原因和退出结果；有异常时传入 throwable，例如 `logger.e(throwable) { "加载失败，状态将设为 Error" }`。被捕获后继续走 fallback 的异常使用 `w`，最终无法继续才使用 `e`。
+- `logger.w`：仅在发现非预期状态、但准备继续执行 fallback 时使用。必须说明异常原因、受影响的原路径以及即将采用的 fallback，例如 `"Cache parsing failed (type: ...); dropping the cache and falling back to a network request."`。
+- `logger.e`：用于非预期退出且会改变/中断程序流程的情况。说明操作、原因和退出结果；有异常时传入 throwable，例如 `logger.e(throwable) { "Loading failed; setting state to Error" }`。被捕获后继续走 fallback 的异常使用 `w`，最终无法继续才使用 `e`。
 - `logger.a`：保留作为 silent 级别；除既有基础设施约定外，不在新的 ViewModel 或 Repository 业务路径中使用。
 
 ### ViewModel 与 Repository 要求

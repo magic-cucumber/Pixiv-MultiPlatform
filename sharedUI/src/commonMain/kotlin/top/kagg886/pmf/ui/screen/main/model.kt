@@ -19,6 +19,7 @@ import top.kagg886.pixko.module.user.SimpleMeProfile
 import top.kagg886.pixko.module.user.getCurrentUserSimpleProfile
 import top.kagg886.pmf.database.account.AppAccountDatabase
 import top.kagg886.pmf.database.account.create
+import top.kagg886.pmf.logger.Logger
 import top.kagg886.pmf.util.*
 
 /**
@@ -27,11 +28,13 @@ import top.kagg886.pmf.util.*
  * Created on: 2026/7/30 11:55
  * ================================================
  */
+@Logger
 class MainViewModel : ViewModel(),
     OrbitContainerHost<MainViewModelState, MainViewModelState, MainViewModelSideEffect> {
     private val login = Store.of(preferencePath / "login-properties.preferences_pb")
     override val container: OrbitContainer<MainViewModelState, MainViewModelState, MainViewModelSideEffect> =
         orbitContainer(MainViewModelState.Loading) {
+            logger.i { "Starting main page model initialization" }
             val info = login.flow(viewModelScope, "profile") { "" }.map { Json.decodeFromString<SimpleMeProfile>(it) }
                 .stateIn(viewModelScope)
 
@@ -52,17 +55,29 @@ class MainViewModel : ViewModel(),
             }
 
             intent {
-                login.set("profile", Json.encodeToString(factory.getCurrentUserSimpleProfile()))
+                logger.d { "Reading the current user profile and saving it to local preferences" }
+                val profile = factory.getCurrentUserSimpleProfile()
+                login.set("profile", Json.encodeToString(profile))
+                logger.i { "Current user profile saved successfully" }
             }
 
-            val database = AppAccountDatabase.create(databasePath / "account-${info.value.userId}.db")
+            try {
+                logger.d { "Preparing to create the account database" }
+                val database = AppAccountDatabase.create(databasePath / "account-${info.value.userId}.db")
 
-            reduce {
-                MainViewModelState.LoadSuccess(
-                    client = factory,
-                    profile = info,
-                    database = database,
-                )
+                logger.i { "Account database initialized successfully; setting state to LoadSuccess" }
+                reduce {
+                    MainViewModelState.LoadSuccess(
+                        client = factory,
+                        profile = info,
+                        database = database,
+                    )
+                }
+            } catch (e: Exception) {
+                logger.e(e) { "Account database initialization failed; setting state to LoadError" }
+                reduce {
+                    MainViewModelState.LoadError
+                }
             }
         }
 }
@@ -77,7 +92,7 @@ sealed interface MainViewModelState {
     ) :
         MainViewModelState
 
-    data class LoadError(val error: String) : MainViewModelState
+    data object LoadError : MainViewModelState
 }
 
 sealed interface MainViewModelSideEffect {

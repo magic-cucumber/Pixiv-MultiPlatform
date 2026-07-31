@@ -44,10 +44,15 @@ class LoginViewModel : ViewModel(),
         orbitContainer(LoginViewModelState.BrowserLogin(PixivAccountFactory.newAccount(createPlatformEngine())))
 
     fun challenge(url: String) = intent {
-        val verification = (state as? LoginViewModelState.BrowserLogin)?.verification ?: return@intent
+        logger.i { "Received browser login verification request; authorization URL length=${url.length}" }
+        val verification = (state as? LoginViewModelState.BrowserLogin)?.verification ?: run {
+            logger.w { "Current page state is not BrowserLogin; ignoring the login verification request" }
+            return@intent
+        }
 
         val progress = MutableStateFlow(true)
         val emitter = MutableStateFlow(getString(Lang.string.login_verifying))
+        logger.i { "Setting state to Verifying and starting browser login verification" }
         reduce { LoginViewModelState.Verifying(progress, emitter) }
 
         val tokens = object : TokenStorage {
@@ -64,31 +69,40 @@ class LoginViewModel : ViewModel(),
             }
         }
         val client = try {
+            logger.d { "Calling the Pixiv browser login verification API" }
             verification.verify(url) { storage = tokens }
         } catch (e: Exception) {
+            logger.e(e) { "Browser login verification failed; setting state to VerificationFailed" }
             reduce { LoginViewModelState.VerificationFailed }
             return@intent
         }
 
+        logger.i { "Browser login verification succeeded; fetching the current user profile" }
         emitter.emit(getString(Lang.string.login_profiling))
 
         val profile = try {
+            logger.d { "Calling the current-user profile API" }
             client.getCurrentUserSimpleProfile()
         } catch (e: Exception) {
+            logger.e(e) { "Fetching the current user profile failed; setting state to VerificationFailed" }
             reduce { LoginViewModelState.VerificationFailed }
             return@intent
         }
 
+        logger.i { "Current user profile fetched successfully; saving the login profile" }
         login.set("profile", Json.encodeToString(profile))
 
         progress.emit(false)
         emitter.emit(getString(Lang.string.login_welcome, profile.name))
+        logger.i { "Login profile saved successfully; waiting for the welcome message to finish" }
         delay(3.seconds)
         client.close()
+        logger.i { "Login flow completed; posting NavigateToMain effect" }
         postSideEffect(LoginViewModelEffect.NavigateToMain)
     }
 
     fun retryBrowserLogin() = intent {
+        logger.i { "Retrying browser login; setting state to BrowserLogin" }
         reduce { LoginViewModelState.BrowserLogin(PixivAccountFactory.newAccount(createPlatformEngine())) }
     }
 }

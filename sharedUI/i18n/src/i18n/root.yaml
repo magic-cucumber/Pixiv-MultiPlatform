@@ -1,0 +1,7 @@
+root_error_title:
+  en_us: Something went wrong
+  zh_cn: 出错了
+
+root_error_summary:
+  en_us: An unknown error occurred during initialization. Please try again later.
+  zh_cn: 初始化时发生未知错误，请稍后重试。

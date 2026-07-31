@@ -39,7 +39,7 @@ val Project.application_version_code: Int
 
 /** `application.android.compile_sdk` or `APPLICATION_ANDROID_COMPILE_SDK`. */
 val Project.android_compile_sdk: Int
-    get() = applicationInt(APPLICATION_ANDROID_COMPILE_SDK, 37)
+    get() = applicationInt(APPLICATION_ANDROID_COMPILE_SDK, 36)
 
 /** `application.android.min_sdk` or `APPLICATION_ANDROID_MIN_SDK`. */
 val Project.android_min_sdk: Int
@@ -47,7 +47,7 @@ val Project.android_min_sdk: Int
 
 /** `application.android.target_sdk` or `APPLICATION_ANDROID_TARGET_SDK`. */
 val Project.android_target_sdk: Int
-    get() = applicationInt(APPLICATION_ANDROID_TARGET_SDK, 37)
+    get() = applicationInt(APPLICATION_ANDROID_TARGET_SDK, 36)
 
 val Project.application_database_version: Int
     get() = applicationInt(APPLICATION_DATABASE_VERSION, 1)

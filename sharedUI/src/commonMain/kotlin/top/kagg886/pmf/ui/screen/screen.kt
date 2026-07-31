@@ -1,11 +1,23 @@
 package top.kagg886.pmf.ui.screen
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
+import top.kagg886.pmf.i18n.Lang
+import top.kagg886.pmf.i18n.root_error_summary
+import top.kagg886.pmf.i18n.root_error_title
+import top.kagg886.pmf.ui.component.EmptyScreen
 import top.kagg886.pmf.util.nav3.SerializableNavKey
 
 
@@ -22,5 +34,20 @@ fun RootScreen(content: @Composable () -> Unit) {
     model.collectSideEffect {
 
     }
-    content()
+    when (state) {
+        RootViewModelState.Loading -> Unit
+        RootViewModelState.Error -> EmptyScreen(
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.ErrorOutline,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp)
+                )
+            },
+            title = { Text(stringResource(Lang.string.root_error_title)) },
+            summary = { Text(stringResource(Lang.string.root_error_summary)) }
+        )
+
+        RootViewModelState.LoadSuccess -> content()
+    }
 }

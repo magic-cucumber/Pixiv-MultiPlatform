@@ -1,0 +1,7 @@
+main_error_title:
+  en_us: Something went wrong
+  zh_cn: 出错了
+
+main_error_summary:
+  en_us: An unknown error occurred while loading. Please try again later.
+  zh_cn: 加载内容时发生未知错误，请稍后重试。
