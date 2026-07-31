@@ -139,6 +139,12 @@ dependencies {
         add("kspIosArm64", this)
         add("kspIosSimulatorArm64", this)
     }
+    with(project(":plugins:room-database-generateor")) {
+        add("kspAndroid", this)
+        add("kspJvm", this)
+        add("kspIosArm64", this)
+        add("kspIosSimulatorArm64", this)
+    }
     add("kspCommonMainMetadata", project(":plugins:navigation-serializer-module-creator"))
     add("kspCommonMainMetadata", project(":plugins:room-database-generateor"))
     add("kspCommonMainMetadata", project(":plugins:logger:processor"))

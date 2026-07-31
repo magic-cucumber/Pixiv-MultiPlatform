@@ -1,0 +1,444 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "8abffb2efc93a090162f97d47a4558ea",
+    "entities": [
+      {
+        "tableName": "illust_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`illustId` INTEGER NOT NULL, `title` TEXT NOT NULL, `caption` TEXT NOT NULL, `type` TEXT NOT NULL, `authorId` INTEGER NOT NULL, `createTime` INTEGER NOT NULL, `pageCount` INTEGER NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `sanityLevel` INTEGER NOT NULL, `xRestrict` INTEGER NOT NULL, `totalView` INTEGER NOT NULL, `totalBookmarks` INTEGER NOT NULL, `isBookmarked` INTEGER NOT NULL, `illustAiType` INTEGER NOT NULL, `imageUrlsId` TEXT NOT NULL, `singlePageMetaJson` TEXT, PRIMARY KEY(`illustId`), FOREIGN KEY(`authorId`) REFERENCES `user_cache`(`userId`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`imageUrlsId`) REFERENCES `image_urls_cache`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "illustId",
+            "columnName": "illustId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caption",
+            "columnName": "caption",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorId",
+            "columnName": "authorId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createTime",
+            "columnName": "createTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pageCount",
+            "columnName": "pageCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sanityLevel",
+            "columnName": "sanityLevel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "xRestrict",
+            "columnName": "xRestrict",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalView",
+            "columnName": "totalView",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalBookmarks",
+            "columnName": "totalBookmarks",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isBookmarked",
+            "columnName": "isBookmarked",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "illustAiType",
+            "columnName": "illustAiType",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imageUrlsId",
+            "columnName": "imageUrlsId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "singlePageMetaJson",
+            "columnName": "singlePageMetaJson",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "illustId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_illust_cache_authorId",
+            "unique": false,
+            "columnNames": [
+              "authorId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_illust_cache_authorId` ON `${TABLE_NAME}` (`authorId`)"
+          },
+          {
+            "name": "index_illust_cache_imageUrlsId",
+            "unique": false,
+            "columnNames": [
+              "imageUrlsId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_illust_cache_imageUrlsId` ON `${TABLE_NAME}` (`imageUrlsId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "user_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "authorId"
+            ],
+            "referencedColumns": [
+              "userId"
+            ]
+          },
+          {
+            "table": "image_urls_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "imageUrlsId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "illust_meta_page_cross_ref",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`illustId` INTEGER NOT NULL, `imageUrlsId` TEXT NOT NULL, `sortIndex` INTEGER NOT NULL, PRIMARY KEY(`illustId`, `sortIndex`), FOREIGN KEY(`illustId`) REFERENCES `illust_cache`(`illustId`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`imageUrlsId`) REFERENCES `image_urls_cache`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "illustId",
+            "columnName": "illustId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "imageUrlsId",
+            "columnName": "imageUrlsId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sortIndex",
+            "columnName": "sortIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "illustId",
+            "sortIndex"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_illust_meta_page_cross_ref_imageUrlsId",
+            "unique": false,
+            "columnNames": [
+              "imageUrlsId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_illust_meta_page_cross_ref_imageUrlsId` ON `${TABLE_NAME}` (`imageUrlsId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "illust_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "illustId"
+            ],
+            "referencedColumns": [
+              "illustId"
+            ]
+          },
+          {
+            "table": "image_urls_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "imageUrlsId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "illust_tag_cross_ref",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`illustId` INTEGER NOT NULL, `tagId` TEXT NOT NULL, PRIMARY KEY(`illustId`, `tagId`), FOREIGN KEY(`illustId`) REFERENCES `illust_cache`(`illustId`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`tagId`) REFERENCES `tag_cache`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "illustId",
+            "columnName": "illustId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagId",
+            "columnName": "tagId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "illustId",
+            "tagId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_illust_tag_cross_ref_tagId",
+            "unique": false,
+            "columnNames": [
+              "tagId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_illust_tag_cross_ref_tagId` ON `${TABLE_NAME}` (`tagId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "illust_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "illustId"
+            ],
+            "referencedColumns": [
+              "illustId"
+            ]
+          },
+          {
+            "table": "tag_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tagId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "image_urls_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `squareMedium` TEXT, `medium` TEXT, `large` TEXT, `original` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "squareMedium",
+            "columnName": "squareMedium",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "medium",
+            "columnName": "medium",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "large",
+            "columnName": "large",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "original",
+            "columnName": "original",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "tag_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `translatedName` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "translatedName",
+            "columnName": "translatedName",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_tag_cache_name",
+            "unique": true,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_tag_cache_name` ON `${TABLE_NAME}` (`name`)"
+          }
+        ]
+      },
+      {
+        "tableName": "user_cache",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`userId` INTEGER NOT NULL, `name` TEXT NOT NULL, `account` TEXT NOT NULL, `profileImageUrlsId` TEXT NOT NULL, `isFollowed` INTEGER, `comment` TEXT, PRIMARY KEY(`userId`), FOREIGN KEY(`profileImageUrlsId`) REFERENCES `image_urls_cache`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "userId",
+            "columnName": "userId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "account",
+            "columnName": "account",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileImageUrlsId",
+            "columnName": "profileImageUrlsId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFollowed",
+            "columnName": "isFollowed",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "comment",
+            "columnName": "comment",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "userId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_user_cache_profileImageUrlsId",
+            "unique": false,
+            "columnNames": [
+              "profileImageUrlsId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_user_cache_profileImageUrlsId` ON `${TABLE_NAME}` (`profileImageUrlsId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "image_urls_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "profileImageUrlsId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8abffb2efc93a090162f97d47a4558ea')"
+    ]
+  }
+}
