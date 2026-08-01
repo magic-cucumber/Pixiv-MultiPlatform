@@ -60,6 +60,8 @@ class NavControllerTest {
     private data object Login : Key
     private data object Main : Key
     private data object Gallery : Key
+    private data object RootDialog : Key
+    private data object MainDialog : Key
     private data class Detail(val id: Long) : Key
 
     @Test
@@ -129,6 +131,23 @@ class NavControllerTest {
 
         assertEquals(NavChain<Key>(Root, Login), controller.backStack.last())
         onNodeWithTag("login").assertIsDisplayed()
+    }
+
+    @Test
+    fun navigatingBetweenDialogsWithDifferentParents_clearsPreviousDialog(): Unit {
+        val controller = NavController(graph, Gallery)
+        val rootDialogChain = NavChain<Key>(Root, RootDialog)
+        val mainDialogChain = NavChain<Key>(Root, Main, MainDialog)
+
+        controller.navigate(RootDialog)
+        assertEquals(listOf(rootDialogChain), controller.backStack.toList())
+
+        controller.navigate(MainDialog)
+        assertEquals(listOf(mainDialogChain), controller.backStack.toList())
+
+        assertTrue(controller.popBackStack())
+        assertTrue(controller.backStack.isEmpty())
+        assertTrue(!controller.popBackStack())
     }
 
     @Test
@@ -263,6 +282,7 @@ class NavControllerTest {
                 },
             ) {
                 destination<Login> { TestNode("login") }
+                dialog<RootDialog> { TestNode("root-dialog") }
                 route(
                     parent = Main,
                     startDestination = Gallery,
@@ -282,6 +302,7 @@ class NavControllerTest {
                         rootViewModelFromDetail = viewModel()
                         TestNode("detail")
                     }
+                    dialog<MainDialog> { TestNode("main-dialog") }
                 }
             }
         }

@@ -2,10 +2,12 @@ package top.kagg886.pmf.util.nav3
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.scene.DialogSceneStrategy
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 
@@ -105,6 +107,15 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
             destinations += Destination(type, metadata, emptyList(), { key, _ -> content(key as K) })
         }
 
+        /** Registers a destination rendered by Navigation 3 inside a Compose [Dialog]. */
+        public inline fun <reified K : T> dialog(
+            dialogProperties: DialogProperties = DialogProperties(),
+            noinline content: @Composable (K) -> Unit,
+        ): Unit = destination(
+            metadata = DialogSceneStrategy.dialog(dialogProperties),
+            content = content,
+        )
+
         /** `parent` must be an argument-free route key, e.g. a `data object Main`. */
         public inline fun <reified K : T> route(
             parent: K,
@@ -175,6 +186,15 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
                 nestedContent()
             })
         }
+
+        /** Registers a child destination rendered inside a Compose [Dialog]. */
+        public inline fun <reified K : T> dialog(
+            dialogProperties: DialogProperties = DialogProperties(),
+            noinline content: @Composable (K) -> Unit,
+        ): Unit = destination(
+            metadata = DialogSceneStrategy.dialog(dialogProperties),
+            content = content,
+        )
 
         /** Declares a child route whose destinations inherit this builder's complete route path. */
         public inline fun <reified K : T> route(

@@ -15,6 +15,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.defaultPopTransitionSpec
@@ -72,6 +73,9 @@ public fun rememberNavController(
 public fun <T : SerializableNavKey> NavDisplay(
     controller: NavController<T>,
     modifier: Modifier = Modifier,
+    sceneStrategies: List<androidx.navigation3.scene.SceneStrategy<NavChain<T>>> = listOf(
+        DialogSceneStrategy(),
+    ),
     entryDecorators: List<NavEntryDecorator<NavChain<T>>> = listOf(
         rememberSaveableStateHolderNavEntryDecorator<NavChain<T>>(),
         rememberViewModelStoreNavEntryDecorator<NavChain<T>>(),
@@ -89,8 +93,10 @@ public fun <T : SerializableNavKey> NavDisplay(
 ): Unit {
     NavDisplay(
         backStack = controller.backStack,
+        onBack = { controller.popBackStack() },
         modifier = modifier,
         entryDecorators = entryDecorators,
+        sceneStrategies = sceneStrategies,
         entryProvider = { chain ->
             controller.graph.entryFor(chain) { routeKey -> controller.routeStoreFor(chain, routeKey) }
         },

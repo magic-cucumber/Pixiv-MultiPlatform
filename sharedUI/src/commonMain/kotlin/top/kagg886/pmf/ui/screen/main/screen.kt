@@ -3,6 +3,7 @@ package top.kagg886.pmf.ui.screen.main
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +21,9 @@ import top.kagg886.pmf.LocalNavController
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.main_error_summary
 import top.kagg886.pmf.i18n.main_error_title
+import top.kagg886.pmf.i18n.logger_open
 import top.kagg886.pmf.ui.component.EmptyScreen
+import top.kagg886.pmf.ui.screen.logger.list.LoggerListRoute
 import top.kagg886.pmf.ui.screen.login.LoginRoute
 import top.kagg886.pmf.util.nav3.SerializableNavKey
 
@@ -61,7 +64,12 @@ fun MainScreen(content: @Composable () -> Unit) {
                 )
             },
             title = { Text(stringResource(Lang.string.main_error_title)) },
-            summary = { Text(stringResource(Lang.string.main_error_summary)) }
+            summary = { Text(stringResource(Lang.string.main_error_summary)) },
+            actions = {
+                Button(onClick = { nav.navigate(LoggerListRoute) }) {
+                    Text(stringResource(Lang.string.logger_open))
+                }
+            },
         )
 
         is MainViewModelState.LoadSuccess -> content()

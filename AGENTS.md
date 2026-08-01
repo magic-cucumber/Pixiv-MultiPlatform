@@ -69,6 +69,7 @@
 - 声明页面路由标识和页面入口，负责绘制界面、读取状态，并将用户操作交给 `model.kt`。
 - 每个 `screen.kt` 只能声明一个 route class，并且只能有一个与该 route class 绑定的公开 screen 入口；文件中其他用于拆分状态、布局或预览的 screen/content composable 必须使用 `private` 修饰，不得再绑定路由。
 - 必要时可以为页面添加 `@Preview` 注解，便于在 IDE 中复现页面状态；Preview 仅用于预览或复现，不新增 route class，也不作为额外的路由入口。
+- 所有对话框都必须声明独立的 route，并通过 `navigate3` 的 `dialog` 接口注册；对话框应使用独立的 `screen.kt`、route class 和页面入口，不得在普通页面的 screen/content composable 中直接创建 `Dialog` 或 `AlertDialog` 作为临时 UI。
 - 在此处接收一次性效果并完成跳转。若离开的是临时页面且不应返回，先移除该页面，再进入下一页。
 
   ```kotlin

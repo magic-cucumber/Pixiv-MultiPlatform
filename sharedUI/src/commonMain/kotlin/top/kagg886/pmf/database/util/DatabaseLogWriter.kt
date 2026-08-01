@@ -28,7 +28,7 @@ class DatabaseLogWriter(
                     tag = tag,
                     severity = severity.ordinal,
                     message = message,
-                    timestamp = Clock.System.now().toEpochMilliseconds(),
+                    timestamp = Clock.System.now(),
                     stacktrace = throwable?.stackTraceToString(),
                 )
             )

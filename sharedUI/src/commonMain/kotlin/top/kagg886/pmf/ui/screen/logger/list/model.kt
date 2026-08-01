@@ -1,4 +1,4 @@
-package top.kagg886.pmf.ui.screen.logger
+package top.kagg886.pmf.ui.screen.logger.list
 
 import androidx.lifecycle.ViewModel
 import androidx.paging.Pager
@@ -15,7 +15,7 @@ import top.kagg886.pmf.database.common.entity.LogEntity
 import top.kagg886.pmf.logger.Logger
 
 @Logger
-class LoggerModel(
+class LoggerListModel(
     database: AppCommonDatabase,
 ) : ViewModel(), OrbitContainerHost<LoggerState, LoggerState, LoggerEffect> {
     private val logDao = database.logDao()

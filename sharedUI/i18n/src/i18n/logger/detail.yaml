@@ -1,0 +1,35 @@
+logger_detail_title:
+  en_us: Log details
+  zh_cn: 日志详情
+
+logger_detail_id:
+  en_us: ID
+  zh_cn: ID
+
+logger_detail_tag:
+  en_us: Tag
+  zh_cn: 标签
+
+logger_detail_severity:
+  en_us: Severity
+  zh_cn: 级别
+
+logger_detail_time:
+  en_us: Time
+  zh_cn: 时间
+
+logger_detail_message:
+  en_us: Message
+  zh_cn: 消息
+
+logger_detail_stacktrace:
+  en_us: Stack trace
+  zh_cn: 堆栈跟踪
+
+logger_detail_no_stacktrace:
+  en_us: No stack trace
+  zh_cn: 无堆栈跟踪
+
+logger_detail_close:
+  en_us: Close
+  zh_cn: 关闭
