@@ -37,6 +37,7 @@ kotlin {
         commonMain.dependencies {
             api(libs.compose.runtime)
             api(libs.compose.ui)
+            implementation(libs.compose.ui.backhandler)
             api(libs.compose.foundation)
             api(libs.compose.resources)
             api(libs.compose.ui.tooling.preview)

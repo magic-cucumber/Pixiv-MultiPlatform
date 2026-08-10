@@ -12,6 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import top.kagg886.pmf.ui.component.SnackBarProvider
 import top.kagg886.pmf.ui.screen.ApplicationGraph
 import top.kagg886.pmf.ui.screen.welcome.WelcomeRoute
 import top.kagg886.pmf.util.nav3.NavController
@@ -45,13 +46,15 @@ fun App(onThemeChanged: @Composable (isDark: Boolean) -> Unit = {}) {
 
     CompositionLocalProvider(LocalNavController provides controller) {
         MaterialTheme {
-            NavDisplay(
-                controller = controller,
-                config = config,
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surface)
-                    .fillMaxSize(),
-            )
+            SnackBarProvider(Modifier.fillMaxSize()) {
+                NavDisplay(
+                    controller = controller,
+                    config = config,
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.surface)
+                        .fillMaxSize(),
+                )
+            }
         }
     }
 }

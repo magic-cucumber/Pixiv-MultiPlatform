@@ -153,7 +153,7 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
         }
 
         public inline fun <reified K : T> dialog(
-            dialogProperties: DialogProperties = DialogProperties(),
+            dialogProperties: DialogProperties = DialogProperties(usePlatformDefaultWidth = false),
             noinline content: @Composable (K) -> Unit,
         ): Unit = destination(
             metadata = DialogSceneStrategy.dialog(dialogProperties),
@@ -191,7 +191,7 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
         }
 
         public inline fun <reified K : T> dialog(
-            dialogProperties: DialogProperties = DialogProperties(),
+            dialogProperties: DialogProperties = DialogProperties(usePlatformDefaultWidth = false),
             noinline content: @Composable (K) -> Unit,
         ): Unit = destination(
             metadata = DialogSceneStrategy.dialog(dialogProperties),

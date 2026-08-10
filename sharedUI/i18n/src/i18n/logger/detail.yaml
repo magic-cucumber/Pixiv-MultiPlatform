@@ -33,3 +33,11 @@ logger_detail_no_stacktrace:
 logger_detail_close:
   en_us: Close
   zh_cn: 关闭
+
+logger_detail_menu:
+  en_us: More options
+  zh_cn: 更多选项
+
+logger_detail_copy:
+  en_us: Copy log
+  zh_cn: 复制日志
