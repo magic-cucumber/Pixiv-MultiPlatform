@@ -2,6 +2,17 @@ package top.kagg886.pmf.ui.screen
 
 import androidx.lifecycle.ViewModel
 import co.touchlab.kermit.Logger as KermitLogger
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.network.ktor3.KtorNetworkFetcherFactory
+import coil3.serviceLoaderEnabled
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import org.orbitmvi.orbit.OrbitContainer
 import org.orbitmvi.orbit.OrbitContainerHost
 import org.orbitmvi.orbit.viewmodel.orbitContainer
@@ -9,6 +20,8 @@ import top.kagg886.pmf.database.common.AppCommonDatabase
 import top.kagg886.pmf.database.common.create
 import top.kagg886.pmf.database.util.DatabaseLogWriter
 import top.kagg886.pmf.logger.Logger
+import top.kagg886.pmf.util.cachePath
+import top.kagg886.pmf.util.createPlatformEngine
 import top.kagg886.pmf.util.databasePath
 
 /**
@@ -19,7 +32,9 @@ import top.kagg886.pmf.util.databasePath
  */
 
 @Logger
-class RootViewModel : ViewModel(), OrbitContainerHost<RootViewModelState, RootViewModelState, RootViewModelEffect> {
+class RootViewModel(
+    platformContext: PlatformContext,
+) : ViewModel(), OrbitContainerHost<RootViewModelState, RootViewModelState, RootViewModelEffect> {
     override val container: OrbitContainer<RootViewModelState, RootViewModelState, RootViewModelEffect> =
         orbitContainer(RootViewModelState.Loading) {
             logger.i { "Starting root page model initialization" }
@@ -28,7 +43,9 @@ class RootViewModel : ViewModel(), OrbitContainerHost<RootViewModelState, RootVi
                 val database = AppCommonDatabase.create(databasePath / "common.db")
                 val logDao = database.logDao()
                 KermitLogger.addLogWriter(DatabaseLogWriter(logDao))
-                logger.i { "Persistent log writer installed successfully; setting state to LoadSuccess" }
+                logger.d { "Common database initialized; preparing the shared image loader" }
+                initializeImageLoader(platformContext)
+                logger.i { "Persistent log writer and image loader initialized successfully; setting state to LoadSuccess" }
                 reduce {
                     RootViewModelState.LoadSuccess
                 }
@@ -39,6 +56,37 @@ class RootViewModel : ViewModel(), OrbitContainerHost<RootViewModelState, RootVi
                 }
             }
         }
+}
+
+private fun initializeImageLoader(context: PlatformContext) {
+    SingletonImageLoader.setSafe {
+        ImageLoader.Builder(context)
+            .serviceLoaderEnabled(false)
+            .memoryCache {
+                MemoryCache.Builder()
+                    .maxSizePercent(context)
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory(cachePath.resolve("image"))
+                    .build()
+            }
+            .components {
+                add(
+                    KtorNetworkFetcherFactory(
+                        httpClient = {
+                            HttpClient(createPlatformEngine()) {
+                                defaultRequest {
+                                    header(HttpHeaders.Referrer, "https://www.pixiv.net/")
+                                }
+                            }
+                        },
+                    ),
+                )
+            }
+            .build()
+    }
 }
 
 

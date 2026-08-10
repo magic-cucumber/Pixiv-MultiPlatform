@@ -20,6 +20,7 @@ import top.kagg886.pmf.i18n.root_error_summary
 import top.kagg886.pmf.i18n.root_error_title
 import top.kagg886.pmf.i18n.logger_open
 import top.kagg886.pmf.LocalNavController
+import top.kagg886.pmf.LocalAppPlatformContext
 import top.kagg886.pmf.ui.component.EmptyScreen
 import top.kagg886.pmf.ui.screen.logger.list.LoggerListRoute
 import top.kagg886.pmf.util.nav3.SerializableNavKey
@@ -31,8 +32,9 @@ data object RootRoute : SerializableNavKey
 
 @Composable
 fun RootScreen(content: @Composable () -> Unit) {
+    val platformContext = LocalAppPlatformContext.current
     val model = viewModel<RootViewModel> {
-        RootViewModel()
+        RootViewModel(platformContext)
     }
     val state by model.collectAsState()
     val nav = LocalNavController.current

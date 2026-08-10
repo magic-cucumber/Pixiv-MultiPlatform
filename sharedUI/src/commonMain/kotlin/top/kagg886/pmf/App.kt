@@ -12,6 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import coil3.PlatformContext
 import top.kagg886.pmf.ui.component.SnackBarProvider
 import top.kagg886.pmf.ui.screen.ApplicationGraph
 import top.kagg886.pmf.ui.screen.welcome.WelcomeRoute
@@ -26,8 +27,15 @@ val LocalNavController = staticCompositionLocalOf<NavController<SerializableNavK
     error("LocalNavController not provided")
 }
 
+val LocalAppPlatformContext = staticCompositionLocalOf<PlatformContext> {
+    error("LocalAppPlatformContext not provided")
+}
+
 @Composable
-fun App(onThemeChanged: @Composable (isDark: Boolean) -> Unit = {}) {
+fun App(
+    platformContext: PlatformContext,
+    onThemeChanged: @Composable (isDark: Boolean) -> Unit = {},
+) {
     onThemeChanged(isSystemInDarkTheme())
 
     val config = remember {
@@ -44,7 +52,10 @@ fun App(onThemeChanged: @Composable (isDark: Boolean) -> Unit = {}) {
         config = config,
     )
 
-    CompositionLocalProvider(LocalNavController provides controller) {
+    CompositionLocalProvider(
+        LocalAppPlatformContext provides platformContext,
+        LocalNavController provides controller,
+    ) {
         MaterialTheme {
             SnackBarProvider(Modifier.fillMaxSize()) {
                 NavDisplay(

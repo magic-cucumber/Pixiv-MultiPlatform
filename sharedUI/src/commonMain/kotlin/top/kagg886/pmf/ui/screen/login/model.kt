@@ -20,7 +20,7 @@ import top.kagg886.pmf.i18n.login_profiling
 import top.kagg886.pmf.i18n.login_verifying
 import top.kagg886.pmf.i18n.login_welcome
 import top.kagg886.pmf.logger.Logger
-import top.kagg886.pmf.ui.screen.main.createPlatformEngine
+import top.kagg886.pmf.util.createPlatformEngine
 import top.kagg886.pmf.util.Store
 import top.kagg886.pmf.util.get
 import top.kagg886.pmf.util.preferencePath

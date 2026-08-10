@@ -13,6 +13,7 @@ androidx-lifecycle = "2.11.0-beta01"
 androidx-nav3 = "1.1.1"
 kotlinx-serialization = "1.11.0"
 coil = "3.5.0"
+composePlaceholderMaterial3 = "1.0.12"
 kotlinx-datetime = "0.8.0"
 room = "3.0.1"
 androidx-sqlite = "2.7.0"
@@ -74,6 +75,7 @@ compose-nav3 = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", v
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 coil = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+compose-placeholder-material3 = { module = "com.eygraber:compose-placeholder-material3", version.ref = "composePlaceholderMaterial3" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "room" }
 room-paging = { module = "androidx.room3:room3-paging", version.ref = "room" }

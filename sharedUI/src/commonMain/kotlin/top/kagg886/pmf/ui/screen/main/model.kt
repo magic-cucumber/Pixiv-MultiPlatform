@@ -2,7 +2,6 @@ package top.kagg886.pmf.ui.screen.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.ktor.client.engine.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -98,6 +97,3 @@ sealed interface MainViewModelState {
 sealed interface MainViewModelSideEffect {
     data object NavigateToLogin : MainViewModelSideEffect
 }
-
-
-expect fun createPlatformEngine(): HttpClientEngineFactory<*>

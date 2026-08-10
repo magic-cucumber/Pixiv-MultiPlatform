@@ -16,6 +16,7 @@ import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.IllustResult
 import top.kagg886.pmf.database.account.AppAccountDatabase
 import top.kagg886.pmf.database.account.entity.IllustCache
+import top.kagg886.pmf.database.account.entity.IllustCacheDisplayed
 import top.kagg886.pmf.database.account.entity.IllustFlow
 import top.kagg886.pmf.database.account.entity.IllustMetaPageCrossRef
 import top.kagg886.pmf.database.account.entity.IllustTagCrossRef
@@ -64,13 +65,13 @@ sealed class IllustRepo<Request : Any> protected constructor(
     protected abstract fun deserializeRequest(payload: String): Request
 
     @OptIn(ExperimentalPagingApi::class)
-    val pager: Pager<Int, IllustCache> = Pager(
+    val pager: Pager<Int, IllustCacheDisplayed> = Pager(
         config = PagingConfig(
             pageSize = pageSize,
             initialLoadSize = pageSize,
             enablePlaceholders = false,
         ),
-        remoteMediator = object : RemoteMediator<Int, IllustCache>() {
+        remoteMediator = object : RemoteMediator<Int, IllustCacheDisplayed>() {
             override suspend fun initialize(): InitializeAction {
                 val savedState = database.pageKeyDao().last(tag)
                 val action = if (savedState == null) {
@@ -86,7 +87,7 @@ sealed class IllustRepo<Request : Any> protected constructor(
 
             override suspend fun load(
                 loadType: LoadType,
-                state: PagingState<Int, IllustCache>,
+                state: PagingState<Int, IllustCacheDisplayed>,
             ): MediatorResult {
                 if (loadType == LoadType.PREPEND) {
                     logger.v { "Skipping illustration prepend because this repository only loads forward" }

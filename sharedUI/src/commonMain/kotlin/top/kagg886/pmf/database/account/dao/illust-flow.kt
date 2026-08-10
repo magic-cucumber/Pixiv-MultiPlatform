@@ -5,8 +5,9 @@ import androidx.room3.Dao
 import androidx.room3.DaoReturnTypeConverters
 import androidx.room3.Insert
 import androidx.room3.Query
+import androidx.room3.Transaction
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
-import top.kagg886.pmf.database.account.entity.IllustCache
+import top.kagg886.pmf.database.account.entity.IllustCacheDisplayed
 import top.kagg886.pmf.database.account.entity.IllustFlow
 
 /**
@@ -30,7 +31,8 @@ interface IllustFlowDao {
         ORDER BY illust_flow.id
         """,
     )
-    fun query(tag: String): PagingSource<Int, IllustCache>
+    @Transaction
+    fun query(tag: String): PagingSource<Int, IllustCacheDisplayed>
 
     @Insert
     suspend fun insert(flow: List<IllustFlow>)

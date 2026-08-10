@@ -1,4 +1,4 @@
-package top.kagg886.pmf.ui.screen.main
+package top.kagg886.pmf.util
 
 import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.engine.darwin.Darwin
