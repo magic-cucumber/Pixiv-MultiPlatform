@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8abffb2efc93a090162f97d47a4558ea",
+    "identityHash": "3727cd904a19c42ed5fdf9af8df101b7",
     "entities": [
       {
         "tableName": "illust_cache",
@@ -157,6 +157,69 @@
             ],
             "referencedColumns": [
               "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "illust_flow",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tag` TEXT NOT NULL, `illustCacheId` INTEGER NOT NULL, FOREIGN KEY(`illustCacheId`) REFERENCES `illust_cache`(`illustId`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tag",
+            "columnName": "tag",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "illustCacheId",
+            "columnName": "illustCacheId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_illust_flow_tag",
+            "unique": false,
+            "columnNames": [
+              "tag"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_illust_flow_tag` ON `${TABLE_NAME}` (`tag`)"
+          },
+          {
+            "name": "index_illust_flow_illustCacheId",
+            "unique": false,
+            "columnNames": [
+              "illustCacheId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_illust_flow_illustCacheId` ON `${TABLE_NAME}` (`illustCacheId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "illust_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "illustCacheId"
+            ],
+            "referencedColumns": [
+              "illustId"
             ]
           }
         ]
@@ -326,6 +389,36 @@
         }
       },
       {
+        "tableName": "page_key",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`tag` TEXT NOT NULL, `page` INTEGER NOT NULL, `nextPayload` TEXT, PRIMARY KEY(`tag`, `page`))",
+        "fields": [
+          {
+            "fieldPath": "tag",
+            "columnName": "tag",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "page",
+            "columnName": "page",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextPayload",
+            "columnName": "nextPayload",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "tag",
+            "page"
+          ]
+        }
+      },
+      {
         "tableName": "tag_cache",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `translatedName` TEXT, PRIMARY KEY(`id`))",
         "fields": [
@@ -438,7 +531,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8abffb2efc93a090162f97d47a4558ea')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3727cd904a19c42ed5fdf9af8df101b7')"
     ]
   }
 }

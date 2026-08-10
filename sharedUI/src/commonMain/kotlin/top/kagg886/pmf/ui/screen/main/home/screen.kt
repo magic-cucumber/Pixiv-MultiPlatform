@@ -24,5 +24,4 @@ data object HomeRoute: SerializableNavKey
 @Composable
 fun HomeScreen() {
     Text(stringResource(Lang.string.home_login_success))
-    LocalNavController.current.navigate(LoggerRoute)
 }
