@@ -1,5 +1,8 @@
 package top.kagg886.pmf.ui.screen.logger.list
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
@@ -29,7 +33,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
@@ -62,6 +69,8 @@ import top.kagg886.pmf.i18n.logger_loading
 import top.kagg886.pmf.i18n.logger_retry
 import top.kagg886.pmf.i18n.logger_title
 import top.kagg886.pmf.i18n.logger_entry_summary
+import top.kagg886.pmf.i18n.logger_list_collapse
+import top.kagg886.pmf.i18n.logger_list_expand
 import top.kagg886.pmf.i18n.logger_severity_assert
 import top.kagg886.pmf.i18n.logger_severity_debug
 import top.kagg886.pmf.i18n.logger_severity_error
@@ -69,9 +78,10 @@ import top.kagg886.pmf.i18n.logger_severity_info
 import top.kagg886.pmf.i18n.logger_severity_unknown
 import top.kagg886.pmf.i18n.logger_severity_verbose
 import top.kagg886.pmf.i18n.logger_severity_warn
+import top.kagg886.pmf.ui.component.ExpandableText
+import top.kagg886.pmf.ui.screen.logger.detail.LoggerDetailRoute
 import top.kagg886.pmf.util.databasePath
 import top.kagg886.pmf.util.nav3.SerializableNavKey
-import top.kagg886.pmf.ui.screen.logger.detail.LoggerDetailRoute
 import kotlin.time.Instant
 
 @Serializable
@@ -184,12 +194,32 @@ private fun LoggerListContent(
 @Composable
 private fun LogListItem(log: LogEntity, onClick: () -> Unit) {
     val state = loggerItemState(log)
+    var isExpanded by rememberSaveable(log.id) { mutableStateOf(false) }
+    val content = remember(log.message, log.stacktrace) {
+        buildString {
+            append(log.message)
+            log.stacktrace
+                ?.takeIf(String::isNotBlank)
+                ?.let { stacktrace ->
+                    appendLine()
+                    append(stacktrace)
+                }
+        }
+    }
+
     ListItem(
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow,
+                ),
+            )
             .clickable(onClick = onClick),
         leadingContent = {
             Icon(
+                modifier = Modifier.size(20.dp),
                 imageVector = state.icon,
                 contentDescription = null,
                 tint = state.iconColor,
@@ -198,19 +228,33 @@ private fun LogListItem(log: LogEntity, onClick: () -> Unit) {
         headlineContent = {
             Text(
                 text = state.identifier,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        overlineContent = {
+            Text(
+                text = stringResource(
+                    Lang.string.logger_entry_summary,
+                    severityLabel(log.severity),
+                    formatTimestamp(log.timestamp),
+                ),
+                style = MaterialTheme.typography.labelSmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         },
         supportingContent = {
-            Text(
-                stringResource(
-                    Lang.string.logger_entry_summary,
-                    severityLabel(log.severity),
-                    formatTimestamp(log.timestamp),
-                ),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            ExpandableText(
+                text = content,
+                expandText = stringResource(Lang.string.logger_list_expand),
+                collapseText = stringResource(Lang.string.logger_list_collapse),
+                collapsedMaxLines = 2,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                isExpanded = isExpanded,
+                onExpandChange = { isExpanded = it },
             )
         },
     )
@@ -226,6 +270,7 @@ private fun LogListItemPreview() {
                 severity = Severity.Error.ordinal,
                 message = "Loading failed; setting state to Error",
                 timestamp = Instant.parse("2026-08-01T12:00:00Z"),
+                stacktrace = "IllegalStateException: response body was empty\n\tat Repository.load(Repository.kt:42)",
             ),
             onClick = {},
         )

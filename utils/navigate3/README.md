@@ -1,151 +1,132 @@
 # Navigate3
 
-`navigate3` is a small Kotlin Multiplatform wrapper around AndroidX Navigation 3 for Compose. It provides:
+`navigate3` is a Kotlin Multiplatform wrapper around AndroidX Navigation 3. It provides a typed
+tree DSL while persisting one leaf-only back stack. Every parent route renders the flat stack of
+its direct children with its own `NavDisplay`.
 
-- a type-safe navigation graph DSL;
-- immutable navigation chains for nested routes;
-- a `NavController` with a Compose-observable back stack; and
-- route-scoped and destination-scoped `ViewModel` stores.
+## Keys and state scopes
 
-The module is located at `utils/navigate3` and exposes its API from
-`top.kagg886.pmf.util.nav3`.
-
-## Add the dependency
+All keys implement `SerializableNavKey` and must be serializable by the application's generated
+`SerializersModule`.
 
 ```kotlin
-dependencies {
-    implementation(project(":utils:navigate3"))
-}
+@Serializable
+data class Detail(val id: Long) : SerializableNavKey
 ```
 
-## Define navigation keys
+`SerializableNavKey.contentKey()` identifies the shared ViewModel scope. Navigation never uses it
+to deduplicate records. Two retained entries with the same value share their ViewModels, and the
+store is cleared only after the final back-stack reference and final exit-animation composition
+have both disappeared.
 
-Use one sealed type for all navigation keys. A route key should be an
-argument-free value, normally a `data object`. Destinations may carry arguments.
+Navigation 3 content instances use a separate internal occurrence key. This allows two different
+screens to share a ViewModel content key without reusing each other's Composable content.
 
-```kotlin
-sealed interface Screen
-
-data object Login : Screen
-data object Main : Screen
-data object Gallery : Screen
-data class Detail(val id: Long) : Screen
-```
-
-## Create a graph
-
-Register top-level destinations with `destination`. Use `route` for a nested
-section: its `content` is the route chrome, while destinations and child routes
-declared inside it inherit its complete route path. Routes may be nested to any
-depth.
+## Graph DSL
 
 ```kotlin
-val graph = createNavGraph<Screen> {
-    destination<Login> {
-        LoginScreen()
-    }
-
+val graph = createNavGraph<SerializableNavKey> {
     route(
-        parent = Main,
-        startDestination = Gallery,
-        content = { child ->
-            MainScaffold(content = child)
-        },
+        parent = Root,
+        startDestination = Welcome,
+        content = ::RootScreen,
     ) {
-        destination<Gallery> {
-            GalleryScreen()
-        }
-        destination<Detail> { screen ->
-            DetailScreen(id = screen.id)
+        destination<Welcome> { WelcomeScreen() }
+        destination<Login> { LoginScreen() }
+
+        route(
+            parent = Main,
+            startDestination = Home,
+            content = ::MainScreen,
+        ) {
+            destination<Home> { HomeScreen() }
+            destination<Detail> { DetailScreen(it.id) }
+            dialog<SettingsDialog> { SettingsDialogScreen() }
         }
     }
 }
 ```
 
-Each destination type may be registered only once. A route's `startDestination`
-may be either a destination or a child route declared beneath that route. When
-a route key is used as a navigation target, the graph follows route start
-destinations until it reaches a visible destination.
+Routes may be nested to any depth. A route target recursively resolves through its start
+destination until it reaches a visible leaf. Start destinations must be direct children.
 
-## Create and display a controller
-
-`NavController` needs a graph and an initial destination. It immediately adds
-the initial destination to its back stack.
+Each route's content receives a slot containing its own child `NavDisplay`:
 
 ```kotlin
-val controller = remember { NavController(graph, Gallery) }
-
-NavDisplay(controller)
-```
-
-`NavDisplay` connects the controller to Navigation 3. By default it installs
-state-saving and `ViewModel`-store entry decorators. Pass `modifier` or
-`entryDecorators` when custom display behaviour is needed.
-
-## Navigate and go back
-
-Navigate with a destination key. The graph derives the complete chain for
-nested destinations automatically.
-
-```kotlin
-controller.navigate(Detail(id = 42)) // Chain: Main -> Detail(42)
-controller.navigate(Login)
-
-if (!controller.popBackStack()) {
-    // There was no history entry to remove.
+@Composable
+fun MainScreen(content: @Composable () -> Unit) {
+    MainScaffold { content() }
 }
 ```
 
-When navigating, the controller retains the shared part of the current and
-target chains, pops the remaining records, and appends the target chain. This
-means switching from `Detail(42)` to `Login` removes the `Main` branch before
-showing `Login`.
+Dialogs are ordinary leaf entries carrying `DialogSceneStrategy` metadata. Because they are stored
+in the direct parent's flat stack, the underlying sibling remains available to the dialog scene.
 
-You can also navigate with an explicit `NavChain`, but it must contain exactly
-the registered parent keys followed by the destination key. Invalid chains fail
-fast when Navigation 3 creates their entry.
+## Configuration and restoration
 
-## ViewModel ownership
-
-Each active route prefix owns one `ViewModelStore`. Destinations under the same route prefix share
-that store, so switching between sibling destinations preserves the route model.
-
-- Import `top.kagg886.pmf.util.nav3.viewModel` in route and destination Composables.
-- A route creates its model with an initializer or factory. It can also retrieve an already-created
-  model from any ancestor route.
-- A child route or destination retrieves a parent model with a factory-free `viewModel<Model>()`
-  call. Lookup proceeds from the current scope through the nearest route to the outermost route.
-- A destination can create an entry-scoped model by supplying an initializer or factory.
-- A factory-free lookup fails immediately when no matching model exists. It never silently creates
-  a replacement parent model in the child scope.
-- Leaving a route clears its store after its last descendant leaves the back stack. Shared outer
-  route stores remain alive. Call `controller.clear()` when the controller itself is no longer
-  needed.
-
-Create a model in route chrome, then retrieve exactly that instance in its child:
+The generated application serializer module is mandatory. Do not replace it with an empty module
+or an Android-only saver.
 
 ```kotlin
-import top.kagg886.pmf.util.nav3.viewModel
+val config = NavConfig<SerializableNavKey>(
+    serializersModule = ApplicationNavSerializerModule,
+)
 
-// Main route Composable
-val mainModel = viewModel<MainViewModel> {
-    MainViewModel(repository)
+val controller = rememberNavController(
+    graph = graph,
+    startDestination = Welcome,
+    config = config,
+)
+
+NavDisplay(controller = controller, config = config)
+```
+
+Display settings propagate to nested routes. A route can override scene strategies and transitions
+with `NavConfigOverride`; serialization always uses the root module.
+
+## Back stack and navigation
+
+`controller.backStack` is a `List<T>` of retained visible leaves in back-navigation order. Parent
+routes are structural and never persisted in it. `controller.currentPath` is the unique graph path
+from the root route to the current leaf.
+
+`navigate` always appends one resolved leaf, including duplicate keys and duplicate content keys:
+
+```kotlin
+controller.navigate(Detail(42))
+controller.navigate(Detail(42))
+```
+
+`popBackStack()` removes exactly one top record and refuses to remove the final record.
+
+Use `update` for atomic pop-and-push transitions:
+
+```kotlin
+controller.update {
+    pop()
+    push(Login)
 }
+```
 
-// Child route or destination Composable
+The update scope only exposes top operations. It validates the completed candidate and publishes it
+with one Compose snapshot commit, so observers never see the temporary empty state.
+
+## ViewModels
+
+Route content can create a model with the normal Compose API because its route entry is the current
+`ViewModelStoreOwner`:
+
+```kotlin
+val mainModel = androidx.lifecycle.viewmodel.compose.viewModel<MainViewModel> {
+    MainViewModel()
+}
+```
+
+Destinations use `top.kagg886.pmf.util.nav3.viewModel`. Supplying a factory creates an entry-scope
+model; omitting it searches the current scope followed by every ancestor route and fails if no
+existing instance is found.
+
+```kotlin
 val parentModel = viewModel<MainViewModel>()
+val pageModel = viewModel<DetailViewModel> { DetailViewModel() }
 ```
-
-Do not pass a factory when retrieving a parent model from a child. Supplying one means that the
-child is intentionally creating a model in its own current scope.
-
-## Public API
-
-| Type or function                   | Purpose                                                                  |
-|------------------------------------|--------------------------------------------------------------------------|
-| `createNavGraph`                   | Creates a `NavGraph` with the navigation DSL.                            |
-| `NavGraph`                         | Resolves destination keys to navigation chains and Navigation 3 entries. |
-| `NavChain`                         | An immutable list of route keys plus its visible destination.            |
-| `NavController`                    | Owns the observable back stack and route `ViewModel` stores.             |
-| `NavDisplay`                       | Renders a `NavController` through Navigation 3.                          |
-| `viewModel`                        | Creates a model in the current scope or finds an existing ancestor model. |

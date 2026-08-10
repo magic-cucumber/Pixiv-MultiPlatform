@@ -47,8 +47,10 @@ fun MainScreen(content: @Composable () -> Unit) {
     model.collectSideEffect {
         when (it) {
             MainViewModelSideEffect.NavigateToLogin -> {
-                nav.removeBackStack(MainRoute)
-                nav.navigate(LoginRoute)
+                nav.update {
+                    pop()
+                    push(LoginRoute)
+                }
             }
         }
     }

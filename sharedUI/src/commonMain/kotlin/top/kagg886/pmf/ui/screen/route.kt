@@ -33,6 +33,11 @@ val ApplicationGraph = createNavGraph {
             builder = LoggerRouteGraph,
         )
 
-        route<MainRoute>(MainRoute, HomeRoute,::MainScreen,MainRouteGraph)
+        route<MainRoute>(
+            parent = MainRoute,
+            startDestination = HomeRoute,
+            content = ::MainScreen,
+            builder = MainRouteGraph,
+        )
     }
 }

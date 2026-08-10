@@ -1,0 +1,7 @@
+logger_list_expand:
+  en_us: "Expand"
+  zh_cn: "展开"
+
+logger_list_collapse:
+  en_us: "Collapse"
+  zh_cn: "收起"

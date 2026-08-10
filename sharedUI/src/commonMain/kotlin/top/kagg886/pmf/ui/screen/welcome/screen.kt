@@ -47,12 +47,16 @@ fun WelcomeScreen() {
     model.collectSideEffect {
         when(it) {
             WelcomeViewModelEffect.NavigateToLogin -> {
-                nav.removeBackStack(WelcomeRoute)
-                nav.navigate(LoginRoute)
+                nav.update {
+                    pop()
+                    push(LoginRoute)
+                }
             }
             WelcomeViewModelEffect.NavigateToMain -> {
-                nav.removeBackStack(WelcomeRoute)
-                nav.navigate(MainRoute)
+                nav.update {
+                    pop()
+                    push(MainRoute)
+                }
             }
         }
     }

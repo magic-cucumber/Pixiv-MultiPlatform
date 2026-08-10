@@ -51,8 +51,10 @@ fun LoginScreen() {
     model.collectSideEffect {
         when (it) {
             LoginViewModelEffect.NavigateToMain -> {
-                nav.removeBackStack(LoginRoute)
-                nav.navigate(MainRoute)
+                nav.update {
+                    pop()
+                    push(MainRoute)
+                }
             }
         }
     }
