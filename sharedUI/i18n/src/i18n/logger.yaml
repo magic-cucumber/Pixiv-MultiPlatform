@@ -1,34 +1,6 @@
-logger_title:
-  en_us: Logs
-  zh_cn: 日志
-
 logger_open:
   en_us: Open logs
   zh_cn: 查看日志
-
-logger_clear:
-  en_us: Clear
-  zh_cn: 清空
-
-logger_loading:
-  en_us: Loading logs…
-  zh_cn: 正在加载日志…
-
-logger_empty:
-  en_us: No logs yet
-  zh_cn: 暂无日志
-
-logger_load_failed:
-  en_us: Failed to load logs
-  zh_cn: 日志加载失败
-
-logger_retry:
-  en_us: Retry
-  zh_cn: 重试
-
-logger_entry_summary:
-  en_us: "%1$s · %2$s"
-  zh_cn: "%1$s · %2$s"
 
 logger_severity_verbose:
   en_us: Verbose
@@ -57,11 +29,3 @@ logger_severity_assert:
 logger_severity_unknown:
   en_us: Unknown
   zh_cn: 未知
-
-logger_clear_success:
-  en_us: Logs cleared
-  zh_cn: 日志已清空
-
-logger_clear_failed:
-  en_us: Failed to clear logs
-  zh_cn: 清空日志失败

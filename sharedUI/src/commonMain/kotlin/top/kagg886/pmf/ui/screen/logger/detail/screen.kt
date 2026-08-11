@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -27,13 +30,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import co.touchlab.kermit.Severity
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
@@ -41,8 +48,11 @@ import top.kagg886.pmf.database.common.entity.LogEntity
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.logger_detail_close
 import top.kagg886.pmf.i18n.logger_detail_copy
+import top.kagg886.pmf.i18n.logger_detail_copy_failed
+import top.kagg886.pmf.i18n.logger_detail_copy_success
 import top.kagg886.pmf.i18n.logger_detail_id
 import top.kagg886.pmf.i18n.logger_detail_menu
+import top.kagg886.pmf.i18n.logger_detail_menu_close
 import top.kagg886.pmf.i18n.logger_detail_message
 import top.kagg886.pmf.i18n.logger_detail_no_stacktrace
 import top.kagg886.pmf.i18n.logger_detail_severity
@@ -51,10 +61,13 @@ import top.kagg886.pmf.i18n.logger_detail_tag
 import top.kagg886.pmf.i18n.logger_detail_time
 import top.kagg886.pmf.i18n.logger_detail_title
 import top.kagg886.pmf.ui.component.LocalSnackBarHostState
+import top.kagg886.pmf.ui.component.SnackBarLevel
 import top.kagg886.pmf.ui.component.bottomsheet.BottomSheetPageScaffold
+import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
+import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.component.showSnackBar
-import top.kagg886.pmf.ui.screen.logger.list.formatTimestamp
-import top.kagg886.pmf.ui.screen.logger.list.severityLabel
+import top.kagg886.pmf.ui.screen.logger.formatTimestamp
+import top.kagg886.pmf.ui.screen.logger.severityLabel
 import top.kagg886.pmf.ui.util.createMenuButtonAnim
 import top.kagg886.pmf.util.nav3.SerializableNavKey
 import kotlin.time.Instant
@@ -80,70 +93,118 @@ data class LoggerDetailRoute(
 
 @Composable
 fun LoggerDetailScreen(route: LoggerDetailRoute) {
-    val log = LogEntity(
-        id = route.id,
-        tag = route.tag,
-        severity = route.severity,
-        message = route.message,
-        timestamp = Instant.fromEpochMilliseconds(route.timestamp),
-        stacktrace = route.stacktrace,
-    )
+    val log = remember(route) { route.toLogEntity() }
+    val logText = log.toCopyText()
+    val copySuccessMessage = stringResource(Lang.string.logger_detail_copy_success)
+    val copyFailedMessage = stringResource(Lang.string.logger_detail_copy_failed)
 
     BottomSheetPageScaffold {
-        Column(modifier = Modifier.matchContent()) {
-            val clipboard = LocalClipboardManager.current
-            val logText = log.toCopyText()
-            var menuExpanded by remember { mutableStateOf(false) }
+        @Suppress("DEPRECATION")
+        val clipboard = LocalClipboardManager.current
+        val snackbarHostState = LocalSnackBarHostState.current
+        val coroutineScope = rememberCoroutineScope()
 
-            TopAppBar(
-                windowInsets = WindowInsets(),
-                navigationIcon = {
-                    IconButton(onClick = { close() }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(Lang.string.logger_detail_close),
-                        )
+        LoggerDetailContent(
+            modifier = Modifier.matchContent(),
+            log = log,
+            onClose = ::close,
+            onCopy = {
+                coroutineScope.launch {
+                    val copied = try {
+                        clipboard.setText(AnnotatedString(logText))
+                        true
+                    } catch (_: Exception) {
+                        false
                     }
-                },
-                title = {
-                    Text(text = stringResource(Lang.string.logger_detail_title))
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { menuExpanded = !menuExpanded }) {
-                            AnimatedContent(
-                                targetState = menuExpanded,
-                                transitionSpec = createMenuButtonAnim { targetState },
-                                label = "logger detail menu icon",
-                            ) { expanded ->
-                                Icon(
-                                    imageVector = if (expanded) Icons.Default.Close else Icons.Default.MoreVert,
-                                    contentDescription = stringResource(Lang.string.logger_detail_menu),
-                                )
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Lang.string.logger_detail_copy)) },
-                                onClick = {
-                                    clipboard.setText(AnnotatedString(logText))
-                                    menuExpanded = false
-                                },
+                    snackbarHostState.showSnackBar {
+                        message(if (copied) copySuccessMessage else copyFailedMessage)
+                        level(if (copied) SnackBarLevel.SUCCESS else SnackBarLevel.ERROR)
+                    }
+                }
+            },
+        )
+    }
+}
+
+private fun LoggerDetailRoute.toLogEntity() = LogEntity(
+    id = id,
+    tag = tag,
+    severity = severity,
+    message = message,
+    timestamp = Instant.fromEpochMilliseconds(timestamp),
+    stacktrace = stacktrace,
+)
+
+@Composable
+private fun LoggerDetailContent(
+    log: LogEntity,
+    onClose: () -> Unit,
+    onCopy: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menuExpanded by rememberSaveable(log.id) { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+
+    Column(modifier = modifier) {
+        TopAppBar(
+            windowInsets = WindowInsets(),
+            navigationIcon = {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = stringResource(Lang.string.logger_detail_close),
+                    )
+                }
+            },
+            title = {
+                Text(text = stringResource(Lang.string.logger_detail_title))
+            },
+            actions = {
+                Box {
+                    IconButton(onClick = { menuExpanded = !menuExpanded }) {
+                        AnimatedContent(
+                            targetState = menuExpanded,
+                            transitionSpec = createMenuButtonAnim { targetState },
+                            label = "logger detail menu icon",
+                        ) { expanded ->
+                            Icon(
+                                imageVector = if (expanded) Icons.Default.Close else Icons.Default.MoreVert,
+                                contentDescription = stringResource(
+                                    if (expanded) {
+                                        Lang.string.logger_detail_menu_close
+                                    } else {
+                                        Lang.string.logger_detail_menu
+                                    },
+                                ),
                             )
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
-            )
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(Lang.string.logger_detail_copy)) },
+                            onClick = {
+                                menuExpanded = false
+                                onCopy()
+                            },
+                        )
+                    }
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+        )
 
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+        ) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -180,6 +241,13 @@ fun LoggerDetailScreen(route: LoggerDetailRoute) {
                     )
                 }
             }
+
+            VerticalScrollbar(
+                adapter = rememberScrollbarAdapter(scrollState),
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .align(Alignment.CenterEnd),
+            )
         }
     }
 }
@@ -196,8 +264,16 @@ private fun LogEntity.toCopyText(): String {
     val severityText = severityLabel(severity)
     val timeText = formatTimestamp(timestamp)
     return remember(
-        idLabel, tagLabel, severityLabelText, timeLabel, messageLabel,
-        stacktraceLabel, noStacktrace, severityText, timeText, this,
+        idLabel,
+        tagLabel,
+        severityLabelText,
+        timeLabel,
+        messageLabel,
+        stacktraceLabel,
+        noStacktrace,
+        severityText,
+        timeText,
+        this,
     ) {
         buildString {
             appendLine("$idLabel: $id")
@@ -229,3 +305,42 @@ private fun DetailRow(label: String, value: String) {
         }
     }
 }
+
+@Preview(name = "With stack trace", widthDp = 600, heightDp = 500)
+@Composable
+private fun LoggerDetailWithStacktracePreview() {
+    MaterialTheme {
+        Card {
+            LoggerDetailContent(
+                modifier = Modifier.fillMaxSize(),
+                log = previewLog(),
+                onClose = {},
+                onCopy = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Without stack trace", widthDp = 600, heightDp = 500)
+@Composable
+private fun LoggerDetailWithoutStacktracePreview() {
+    MaterialTheme {
+        Card {
+            LoggerDetailContent(
+                modifier = Modifier.fillMaxSize(),
+                log = previewLog().copy(stacktrace = null),
+                onClose = {},
+                onCopy = {},
+            )
+        }
+    }
+}
+
+private fun previewLog() = LogEntity(
+    id = 42,
+    tag = "top.kagg886.pmf.data.Repository",
+    severity = Severity.Error.ordinal,
+    message = "Loading failed; setting state to Error",
+    timestamp = Instant.parse("2026-08-01T12:00:00Z"),
+    stacktrace = "IllegalStateException: response body was empty\n\tat Repository.load(Repository.kt:42)",
+)

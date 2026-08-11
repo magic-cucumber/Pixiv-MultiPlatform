@@ -38,6 +38,18 @@ logger_detail_menu:
   en_us: More options
   zh_cn: 更多选项
 
+logger_detail_menu_close:
+  en_us: Close menu
+  zh_cn: 关闭菜单
+
 logger_detail_copy:
   en_us: Copy log
   zh_cn: 复制日志
+
+logger_detail_copy_success:
+  en_us: Log copied
+  zh_cn: 日志已复制
+
+logger_detail_copy_failed:
+  en_us: Failed to copy log
+  zh_cn: 复制日志失败
