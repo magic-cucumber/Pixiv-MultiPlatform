@@ -2,6 +2,9 @@ package top.kagg886.pmf.ui.screen.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -49,6 +52,19 @@ class MainViewModel : ViewModel(),
                         ACCESS -> login.set("access_token", token)
                         REFRESH -> login.set("refresh_token", token)
                         EXPIRE_TIME -> login.set("expire_time", token)
+                    }
+                }
+
+                config = {
+                    install(Logging) {
+                        logger = object : io.ktor.client.plugins.logging.Logger {
+                            override fun log(message: String) {
+                                co.touchlab.kermit.Logger.withTag("Ktor").d(message)
+                            }
+
+                        }
+                        level = LogLevel.BODY
+                        sanitizeHeader { it == HttpHeaders.Authorization }
                     }
                 }
             }

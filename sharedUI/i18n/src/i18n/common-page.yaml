@@ -1,0 +1,12 @@
+common_page_refresh:
+  en_us: Refresh
+  zh_cn: 刷新
+
+
+common_page_empty_title:
+  en_us: Oh, No!
+  zh_cn: Oh, No!
+
+common_page_empty_summary:
+  en_us: Page is Empty
+  zh_cn: 页面无任何内容

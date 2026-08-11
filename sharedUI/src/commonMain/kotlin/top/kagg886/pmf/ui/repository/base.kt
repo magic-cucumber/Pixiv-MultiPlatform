@@ -28,8 +28,8 @@ abstract class BaseRepo<Request : Any, Cache : Any> protected constructor(
     /** A fetched page whose persistence callback is executed inside the repository transaction. */
     protected class LoadedPage<Request : Any> internal constructor(
         internal val nextRequest: Request?,
-        internal val itemCount: Int,
-        internal val persist: suspend () -> Unit,
+        internal val itemCount: Int = 0,
+        internal val persist: suspend () -> Unit = {},
     )
 
     /** Builds a page while keeping API-specific beans outside the base repository. */

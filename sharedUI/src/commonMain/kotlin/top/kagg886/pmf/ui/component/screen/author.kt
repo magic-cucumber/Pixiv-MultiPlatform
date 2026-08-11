@@ -7,13 +7,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,17 +23,16 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.PersonAdd
+import androidx.compose.material.icons.outlined.PersonRemove
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,8 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,15 +60,12 @@ import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
 import top.kagg886.pmf.database.account.entity.AuthorDisplayed
 import top.kagg886.pmf.database.account.entity.ImageUrlsCache
-import top.kagg886.pmf.database.account.entity.NovelCacheDisplayed
-import top.kagg886.pmf.database.account.entity.NovelSeriesCache
-import top.kagg886.pmf.database.account.entity.TagCache
 import top.kagg886.pmf.i18n.Lang
-import top.kagg886.pmf.i18n.novel_fetch_like
-import top.kagg886.pmf.i18n.novel_fetch_load_failed_summary
-import top.kagg886.pmf.i18n.novel_fetch_load_failed_title
-import top.kagg886.pmf.i18n.novel_fetch_retry
-import top.kagg886.pmf.i18n.novel_fetch_unlike
+import top.kagg886.pmf.i18n.author_fetch_follow
+import top.kagg886.pmf.i18n.author_fetch_load_failed_summary
+import top.kagg886.pmf.i18n.author_fetch_load_failed_title
+import top.kagg886.pmf.i18n.author_fetch_retry
+import top.kagg886.pmf.i18n.author_fetch_unfollow
 import top.kagg886.pmf.ui.component.LoadingIconButton
 import top.kagg886.pmf.ui.component.LoadingIconButtonState
 import top.kagg886.pmf.ui.component.ProgressableImage
@@ -81,9 +74,9 @@ import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.screen.logger.LoggerRoute
 import top.kagg886.pmf.ui.util.placeholder
 
-private val NovelItemHeight = 152.dp
+private val AuthorItemHeight = 112.dp
 
-private enum class NovelFetchScreenState {
+private enum class AuthorFetchScreenState {
     Loading,
     Empty,
     Success,
@@ -91,49 +84,46 @@ private enum class NovelFetchScreenState {
 }
 
 @Composable
-fun NovelFetchScreen(
-    pager: Pager<Int, NovelCacheDisplayed>,
+fun AuthorFetchScreen(
+    pager: Pager<Int, AuthorDisplayed>,
     columns: StaggeredGridCells,
     modifier: Modifier = Modifier,
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     itemPadding: PaddingValues = PaddingValues(4.dp),
-    onNovelItemClicked: suspend (NovelCacheDisplayed) -> Unit = {},
-    onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit = { _, _ -> },
-    onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit = {},
+    onAuthorItemClicked: suspend (AuthorDisplayed) -> Unit = {},
+    onFollowItemClicked: suspend (AuthorDisplayed, Boolean) -> Unit = { _, _ -> },
 ) {
     val items = pager.flow.collectAsLazyPagingItems()
     val screenState = when (items.itemCount) {
-        0 if items.loadState.refresh is LoadState.Loading -> NovelFetchScreenState.Loading
-        0 if items.loadState.refresh is LoadState.Error -> NovelFetchScreenState.Error
-        0 -> NovelFetchScreenState.Empty
-        else -> NovelFetchScreenState.Success
+        0 if items.loadState.refresh is LoadState.Loading -> AuthorFetchScreenState.Loading
+        0 if items.loadState.refresh is LoadState.Error -> AuthorFetchScreenState.Error
+        0 -> AuthorFetchScreenState.Empty
+        else -> AuthorFetchScreenState.Success
     }
     val nav = LocalNavController.current
-    NovelFetchContent(
+    AuthorFetchContent(
         screenState = screenState,
         items = items,
         columns = columns,
         state = state,
         itemPadding = itemPadding,
         modifier = modifier,
-        onNovelItemClicked = onNovelItemClicked,
-        onLikeItemClicked = onLikeItemClicked,
-        onLikeItemLongClicked = onLikeItemLongClicked,
+        onAuthorItemClicked = onAuthorItemClicked,
+        onFollowItemClicked = onFollowItemClicked,
         onViewLogClicked = { nav.navigate(LoggerRoute) },
     )
 }
 
 @Composable
-private fun NovelFetchContent(
-    screenState: NovelFetchScreenState,
-    items: LazyPagingItems<NovelCacheDisplayed>,
+private fun AuthorFetchContent(
+    screenState: AuthorFetchScreenState,
+    items: LazyPagingItems<AuthorDisplayed>,
     columns: StaggeredGridCells,
     state: LazyStaggeredGridState,
     itemPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    onNovelItemClicked: suspend (NovelCacheDisplayed) -> Unit = {},
-    onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit = { _, _ -> },
-    onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit = {},
+    onAuthorItemClicked: suspend (AuthorDisplayed) -> Unit = {},
+    onFollowItemClicked: suspend (AuthorDisplayed, Boolean) -> Unit = { _, _ -> },
     onViewLogClicked: () -> Unit = {},
 ) {
     AnimatedContent(
@@ -141,7 +131,7 @@ private fun NovelFetchContent(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
         transitionSpec = {
-            if (initialState == NovelFetchScreenState.Loading && targetState == NovelFetchScreenState.Success) {
+            if (initialState == AuthorFetchScreenState.Loading && targetState == AuthorFetchScreenState.Success) {
                 (fadeIn() + expandIn(expandFrom = Alignment.Center)) togetherWith
                     (fadeOut() + shrinkOut(shrinkTowards = Alignment.Center))
             } else {
@@ -150,41 +140,39 @@ private fun NovelFetchContent(
         },
     ) { currentState ->
         when (currentState) {
-            NovelFetchScreenState.Loading -> LoadingContent()
-            NovelFetchScreenState.Error -> ErrorContent(
+            AuthorFetchScreenState.Loading -> LoadingContent()
+            AuthorFetchScreenState.Error -> ErrorContent(
                 onRetry = items::retry,
                 onViewLogClicked = onViewLogClicked,
-                title = { Text(stringResource(Lang.string.novel_fetch_load_failed_title)) },
-                summary = { Text(stringResource(Lang.string.novel_fetch_load_failed_summary)) },
-                retryText = { Text(stringResource(Lang.string.novel_fetch_retry)) },
+                title = { Text(stringResource(Lang.string.author_fetch_load_failed_title)) },
+                summary = { Text(stringResource(Lang.string.author_fetch_load_failed_summary)) },
+                retryText = { Text(stringResource(Lang.string.author_fetch_retry)) },
             )
-            NovelFetchScreenState.Empty -> EmptyContent(items::refresh)
-            NovelFetchScreenState.Success -> NovelListContent(
+            AuthorFetchScreenState.Empty -> EmptyContent(items::refresh)
+            AuthorFetchScreenState.Success -> AuthorListContent(
                 items = items,
                 columns = columns,
                 state = state,
                 itemPadding = itemPadding,
-                onNovelItemClicked = onNovelItemClicked,
-                onLikeItemClicked = onLikeItemClicked,
-                onLikeItemLongClicked = onLikeItemLongClicked,
+                onAuthorItemClicked = onAuthorItemClicked,
+                onFollowItemClicked = onFollowItemClicked,
             )
         }
     }
 }
 
 @Composable
-private fun NovelListContent(
-    items: LazyPagingItems<NovelCacheDisplayed>,
+private fun AuthorListContent(
+    items: LazyPagingItems<AuthorDisplayed>,
     columns: StaggeredGridCells,
     state: LazyStaggeredGridState,
     itemPadding: PaddingValues,
-    onNovelItemClicked: suspend (NovelCacheDisplayed) -> Unit,
-    onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit,
-    onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit,
+    onAuthorItemClicked: suspend (AuthorDisplayed) -> Unit,
+    onFollowItemClicked: suspend (AuthorDisplayed, Boolean) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val horizontalSpacing =
-        (itemPadding.calculateLeftPadding(layoutDirection) + itemPadding.calculateRightPadding(layoutDirection)) / 2
+        (itemPadding.calculateStartPadding(layoutDirection) + itemPadding.calculateEndPadding(layoutDirection)) / 2
     val verticalSpacing = (itemPadding.calculateTopPadding() + itemPadding.calculateBottomPadding()) / 2
 
     Column(Modifier.fillMaxSize()) {
@@ -200,23 +188,22 @@ private fun NovelListContent(
                 items(
                     count = items.itemCount,
                     key = { index ->
-                        items.peek(index)?.let { "novel-${it.novelId}" } ?: "novel-placeholder-$index"
+                        items.peek(index)?.let { "author-${it.userId}" } ?: "author-placeholder-$index"
                     },
                 ) { index ->
-                    val novel = items[index]
-                    if (novel == null) {
+                    val author = items[index]
+                    if (author == null) {
                         Box(
                             Modifier
                                 .fillMaxWidth()
-                                .height(NovelItemHeight)
+                                .height(AuthorItemHeight)
                                 .placeholder(visible = true, shape = CardDefaults.shape),
                         )
                     } else {
-                        NovelListItem(
-                            novel = novel,
-                            onClick = onNovelItemClicked,
-                            onLikeClicked = onLikeItemClicked,
-                            onLikeLongClicked = onLikeItemLongClicked,
+                        AuthorListItem(
+                            author = author,
+                            onClick = onAuthorItemClicked,
+                            onFollowClicked = onFollowItemClicked,
                         )
                     }
                 }
@@ -226,108 +213,92 @@ private fun NovelListContent(
                 modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
             )
         }
-        AnimatedVisibility(visible = items.loadState.refresh is LoadState.Loading) {
+        AnimatedVisibility(visible = items.itemCount > 0 && items.loadState.refresh is LoadState.Loading) {
             LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun NovelListItem(
-    novel: NovelCacheDisplayed,
-    onClick: suspend (NovelCacheDisplayed) -> Unit,
-    onLikeClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit,
-    onLikeLongClicked: suspend (NovelCacheDisplayed) -> Unit,
+private fun AuthorListItem(
+    author: AuthorDisplayed,
+    onClick: suspend (AuthorDisplayed) -> Unit,
+    onFollowClicked: suspend (AuthorDisplayed, Boolean) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var likeLoading by remember(novel.novelId) { mutableStateOf(false) }
+    var followLoading by remember(author.userId) { mutableStateOf(false) }
+    val followed = author.isFollowed == true
 
     Card(
-        onClick = { scope.launch { onClick(novel) } },
-        modifier = Modifier.fillMaxWidth().height(NovelItemHeight),
+        onClick = { scope.launch { onClick(author) } },
+        modifier = Modifier.fillMaxWidth().height(AuthorItemHeight),
     ) {
         ListItem(
             modifier = Modifier.fillMaxSize(),
             headlineContent = {
                 Text(
-                    text = novel.title,
-                    maxLines = 2,
+                    text = author.name,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.titleMedium,
                 )
             },
             supportingContent = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = listOfNotNull(
-                            novel.author.name,
-                            novel.series?.title?.takeIf(String::isNotBlank),
-                        ).joinToString(" · "),
+                        text = "@${author.account}",
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth().clipToBounds(),
-                        maxLines = 1,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        novel.tags.forEach { tag ->
-                            Text(
-                                text = tag.translatedName ?: tag.name,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.labelSmall,
-                            )
-                        }
+                    author.comment?.takeIf(String::isNotBlank)?.let { comment ->
+                        Text(
+                            text = comment,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
                 }
             },
             leadingContent = {
                 ProgressableImage(
-                    model = novel.imageUrls.content,
-                    contentDescription = novel.title,
-                    modifier = Modifier.size(width = 84.dp, height = 124.dp),
+                    model = author.profileImageUrls.content,
+                    contentDescription = author.name,
+                    modifier = Modifier.size(64.dp).clip(CircleShape),
                     contentScale = ContentScale.Crop,
                 )
             },
             trailingContent = {
                 LoadingIconButton(
-                    state = if (likeLoading) {
+                    state = if (followLoading) {
                         LoadingIconButtonState.Loading
                     } else {
-                        LoadingIconButtonState.NotLoading(novel.isBookmarked)
+                        LoadingIconButtonState.NotLoading(followed)
                     },
                     colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                     ),
                     onClick = {
-                        if (likeLoading) return@LoadingIconButton
+                        if (followLoading) return@LoadingIconButton
                         scope.launch {
-                            likeLoading = true
+                            followLoading = true
                             try {
-                                onLikeClicked(novel, !novel.isBookmarked)
+                                onFollowClicked(author, !followed)
                             } finally {
-                                likeLoading = false
+                                followLoading = false
                             }
                         }
                     },
-                    onLongClick = { scope.launch { onLikeLongClicked(novel) } },
                 ) { buttonState ->
-                    val bookmarked =
+                    val isFollowed =
                         (buttonState as? LoadingIconButtonState.NotLoading<*>)?.state as? Boolean == true
                     Icon(
-                        imageVector = if (bookmarked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                        imageVector = if (isFollowed) Icons.Outlined.PersonRemove else Icons.Outlined.PersonAdd,
                         contentDescription = stringResource(
-                            if (bookmarked) Lang.string.novel_fetch_unlike else Lang.string.novel_fetch_like,
+                            if (isFollowed) Lang.string.author_fetch_unfollow else Lang.string.author_fetch_follow,
                         ),
-                        tint = if (bookmarked) Color.Red else LocalContentColor.current,
                     )
                 }
             },
@@ -335,51 +306,23 @@ private fun NovelListItem(
     }
 }
 
-private fun previewNovel(id: Long, bookmarked: Boolean = false) = NovelCacheDisplayed(
-    novelId = id,
-    title = "Novel $id",
-    caption = "",
-    imageUrlsId = "novel:$id:cover",
-    authorId = 1L,
-    createTime = 0L,
-    textLength = 12000,
-    seriesId = 1L,
-    isBookmarked = bookmarked,
-    totalBookmarks = 42,
-    totalView = 100,
-    totalComments = 3,
-    isAI = false,
-    isR18 = false,
-    isR18G = false,
-    author = AuthorDisplayed(
-        userId = 1L,
-        name = "author",
-        account = "account",
-        profileImageUrlsId = "profile",
-        profileImageUrls = ImageUrlsCache(id = "profile", medium = ""),
-    ),
-    imageUrls = ImageUrlsCache(id = "novel:$id:cover", medium = ""),
-    tags = listOf(
-        TagCache(id = "fantasy", name = "fantasy", translatedName = "奇幻"),
-        TagCache(id = "adventure", name = "adventure", translatedName = "冒险"),
-    ),
-    series = NovelSeriesCache(
-        id = 1L,
-        title = "Sample series",
-        caption = null,
-        contentCount = null,
-        totalCharacterCount = null,
-        userId = 1L,
-    ),
+private fun previewAuthor(id: Long, followed: Boolean = false) = AuthorDisplayed(
+    userId = id,
+    name = "Author $id",
+    account = "author_$id",
+    profileImageUrlsId = "user:$id:profile",
+    isFollowed = followed,
+    comment = "Creates illustrations and stories.",
+    profileImageUrls = ImageUrlsCache(id = "user:$id:profile", medium = ""),
 )
 
 @Preview(name = "Loading")
 @Composable
-private fun NovelFetchContentLoadingPreview() {
-    val items = flowOf(PagingData.from(emptyList<NovelCacheDisplayed>())).collectAsLazyPagingItems()
+private fun AuthorFetchContentLoadingPreview() {
+    val items = flowOf(PagingData.from(emptyList<AuthorDisplayed>())).collectAsLazyPagingItems()
     MaterialTheme {
-        NovelFetchContent(
-            screenState = NovelFetchScreenState.Loading,
+        AuthorFetchContent(
+            screenState = AuthorFetchScreenState.Loading,
             items = items,
             columns = StaggeredGridCells.Fixed(1),
             state = rememberLazyStaggeredGridState(),
@@ -390,11 +333,11 @@ private fun NovelFetchContentLoadingPreview() {
 
 @Preview(name = "Error")
 @Composable
-private fun NovelFetchContentErrorPreview() {
-    val items = flowOf(PagingData.from(emptyList<NovelCacheDisplayed>())).collectAsLazyPagingItems()
+private fun AuthorFetchContentErrorPreview() {
+    val items = flowOf(PagingData.from(emptyList<AuthorDisplayed>())).collectAsLazyPagingItems()
     MaterialTheme {
-        NovelFetchContent(
-            screenState = NovelFetchScreenState.Error,
+        AuthorFetchContent(
+            screenState = AuthorFetchScreenState.Error,
             items = items,
             columns = StaggeredGridCells.Fixed(1),
             state = rememberLazyStaggeredGridState(),
@@ -405,18 +348,18 @@ private fun NovelFetchContentErrorPreview() {
 
 @Preview(name = "Success", showBackground = true)
 @Composable
-private fun NovelFetchContentSuccessPreview() {
+private fun AuthorFetchContentSuccessPreview() {
     val items = flowOf(
         PagingData.from(
             listOf(
-                previewNovel(1L, bookmarked = true),
-                previewNovel(2L),
+                previewAuthor(1L, followed = true),
+                previewAuthor(2L),
             ),
         ),
     ).collectAsLazyPagingItems()
     MaterialTheme {
-        NovelFetchContent(
-            screenState = NovelFetchScreenState.Success,
+        AuthorFetchContent(
+            screenState = AuthorFetchScreenState.Success,
             items = items,
             columns = StaggeredGridCells.Fixed(1),
             state = rememberLazyStaggeredGridState(),

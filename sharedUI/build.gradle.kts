@@ -71,6 +71,7 @@ kotlin {
             implementation(libs.store)
             implementation(libs.pixko)
             implementation(libs.wvbridge.core)
+            implementation(libs.ktor.client.logging)
 
             api(project(":sharedUI:i18n"))
             api(project(":plugins:logger:api"))

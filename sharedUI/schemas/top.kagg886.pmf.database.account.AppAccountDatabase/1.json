@@ -2,8 +2,71 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "8acd16c0aaa01cad446ad565d9772450",
+    "identityHash": "999eb73e5c4c30f384eb13c520655fb2",
     "entities": [
+      {
+        "tableName": "author_flow",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tag` TEXT NOT NULL, `userCacheId` INTEGER NOT NULL, FOREIGN KEY(`userCacheId`) REFERENCES `user_cache`(`userId`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tag",
+            "columnName": "tag",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userCacheId",
+            "columnName": "userCacheId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_author_flow_tag",
+            "unique": false,
+            "columnNames": [
+              "tag"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_author_flow_tag` ON `${TABLE_NAME}` (`tag`)"
+          },
+          {
+            "name": "index_author_flow_userCacheId",
+            "unique": false,
+            "columnNames": [
+              "userCacheId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_author_flow_userCacheId` ON `${TABLE_NAME}` (`userCacheId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "user_cache",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "userCacheId"
+            ],
+            "referencedColumns": [
+              "userId"
+            ]
+          }
+        ]
+      },
       {
         "tableName": "illust_cache",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`illustId` INTEGER NOT NULL, `title` TEXT NOT NULL, `caption` TEXT NOT NULL, `type` TEXT NOT NULL, `authorId` INTEGER NOT NULL, `createTime` INTEGER NOT NULL, `pageCount` INTEGER NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL, `sanityLevel` INTEGER NOT NULL, `xRestrict` INTEGER NOT NULL, `totalView` INTEGER NOT NULL, `totalBookmarks` INTEGER NOT NULL, `isBookmarked` INTEGER NOT NULL, `illustAiType` INTEGER NOT NULL, `imageUrlsId` TEXT NOT NULL, `singlePageMetaJson` TEXT, PRIMARY KEY(`illustId`), FOREIGN KEY(`authorId`) REFERENCES `user_cache`(`userId`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`imageUrlsId`) REFERENCES `image_urls_cache`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
@@ -903,7 +966,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8acd16c0aaa01cad446ad565d9772450')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '999eb73e5c4c30f384eb13c520655fb2')"
     ]
   }
 }

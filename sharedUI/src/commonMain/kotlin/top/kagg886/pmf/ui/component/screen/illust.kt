@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,19 +22,15 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -69,8 +64,6 @@ import top.kagg886.pmf.i18n.illust_fetch_load_failed_summary
 import top.kagg886.pmf.i18n.illust_fetch_load_failed_title
 import top.kagg886.pmf.i18n.illust_fetch_retry
 import top.kagg886.pmf.i18n.illust_fetch_unlike
-import top.kagg886.pmf.i18n.logger_open
-import top.kagg886.pmf.ui.component.EmptyScreen
 import top.kagg886.pmf.ui.component.LoadingIconButton
 import top.kagg886.pmf.ui.component.LoadingIconButtonState
 import top.kagg886.pmf.ui.component.ProgressableImage
@@ -88,6 +81,7 @@ import top.kagg886.pmf.ui.util.placeholder
 
 private enum class IllustFetchScreenState {
     Loading,
+    Empty,
     Success,
     Error,
 }
@@ -107,6 +101,7 @@ fun IllustFetchScreen(
     val screenState = when (items.itemCount) {
         0 if items.loadState.refresh is LoadState.Loading -> IllustFetchScreenState.Loading
         0 if items.loadState.refresh is LoadState.Error -> IllustFetchScreenState.Error
+        0 -> IllustFetchScreenState.Empty
         else -> IllustFetchScreenState.Success
     }
     val nav = LocalNavController.current
@@ -152,11 +147,14 @@ private fun IllustFetchContent(
     ) { currentState ->
         when (currentState) {
             IllustFetchScreenState.Loading -> LoadingContent()
-
             IllustFetchScreenState.Error -> ErrorContent(
                 onRetry = items::retry,
                 onViewLogClicked = onViewLogClicked,
+                title = { Text(stringResource(Lang.string.illust_fetch_load_failed_title)) },
+                summary = { Text(stringResource(Lang.string.illust_fetch_load_failed_summary)) },
+                retryText = { Text(stringResource(Lang.string.illust_fetch_retry)) },
             )
+            IllustFetchScreenState.Empty -> EmptyContent(items::refresh)
 
             IllustFetchScreenState.Success -> IllustGridContent(
                 items = items,
@@ -169,41 +167,6 @@ private fun IllustFetchContent(
             )
         }
     }
-}
-
-@Composable
-private fun LoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
-private fun ErrorContent(onRetry: () -> Unit, onViewLogClicked: () -> Unit) {
-    EmptyScreen(
-        icon = {
-            Icon(
-                imageVector = Icons.Outlined.ErrorOutline,
-                contentDescription = null,
-                modifier = Modifier.padding(8.dp),
-            )
-        },
-        title = { Text(stringResource(Lang.string.illust_fetch_load_failed_title)) },
-        summary = { Text(stringResource(Lang.string.illust_fetch_load_failed_summary)) },
-        actions = {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedButton(onClick = onViewLogClicked) {
-                    Text(stringResource(Lang.string.logger_open))
-                }
-                Button(onClick = onRetry) {
-                    Text(stringResource(Lang.string.illust_fetch_retry))
-                }
-            }
-        },
-    )
 }
 
 @Composable

@@ -16,8 +16,15 @@ import top.kagg886.pixko.module.illust.getRecommendIllustNext
 import top.kagg886.pixko.module.novel.NovelResult
 import top.kagg886.pixko.module.novel.getRecommendNovel
 import top.kagg886.pixko.module.novel.getRecommendNovelNext
+import top.kagg886.pixko.module.user.RelatedUserResult
+import top.kagg886.pixko.module.user.followUser
+import top.kagg886.pixko.module.user.getRelatedUser
+import top.kagg886.pixko.module.user.getRelatedUserNext
+import top.kagg886.pixko.module.user.unFollowUser
+import top.kagg886.pmf.ui.component.screen.AuthorFetchScreen
 import top.kagg886.pmf.ui.component.screen.IllustFetchScreen
 import top.kagg886.pmf.ui.component.screen.NovelFetchScreen
+import top.kagg886.pmf.ui.repository.AuthorNextUrlRepo
 import top.kagg886.pmf.ui.repository.IllustNextUrlRepo
 import top.kagg886.pmf.ui.repository.NovelNextUrlRepo
 import top.kagg886.pmf.ui.screen.main.MainViewModel
@@ -70,6 +77,7 @@ fun HomeScreen() {
             )
             */
 
+            /* Novel flow example retained for comparison.
             val novelRepo = remember(state.database) {
                 object : NovelNextUrlRepo(state.database, "novel:recommend") {
                     override suspend fun requestInitial(): NovelResult {
@@ -89,6 +97,31 @@ fun HomeScreen() {
                 columns = StaggeredGridCells.Adaptive(420.dp),
                 modifier = Modifier.fillMaxSize(),
                 onLikeItemClicked = { _, _ -> delay(3.seconds) },
+            )
+            */
+
+
+            val relatedId = 115863841
+            val authorRepo = remember(state.database, relatedId) {
+                object : AuthorNextUrlRepo(state.database, "author:related:${relatedId}") {
+                    override suspend fun requestInitial() = run {
+                        val result = state.client.getRelatedUser(relatedId.toLong())
+                        loadedPage(nextRequest = result.next_url, users = result.user_previews)
+                    }
+
+                    override suspend fun requestNext(nextUrl: String) = run {
+                        val result = state.client.getRelatedUserNext(RelatedUserResult(next_url = nextUrl))
+                            ?: return@run loadedPage(nextRequest = null, users = emptyList())
+                        loadedPage(nextRequest = result.next_url, users = result.user_previews)
+                    }
+                }
+            }
+
+            AuthorFetchScreen(
+                pager = authorRepo.pager,
+                columns = StaggeredGridCells.Adaptive(360.dp),
+                modifier = Modifier.fillMaxSize(),
+                onFollowItemClicked = { _, _ -> delay(3.seconds)},
             )
         }
 

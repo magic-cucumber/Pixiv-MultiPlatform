@@ -10,6 +10,9 @@ interface UserDao {
     @Upsert
     suspend fun upsert(item: UserCache)
 
+    @Upsert
+    suspend fun upsert(items: List<UserCache>)
+
     @Query("SELECT * FROM user_cache WHERE userId = :userId")
     suspend fun find(userId: Long): UserCache?
 
