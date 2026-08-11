@@ -34,7 +34,7 @@ fun Modifier.placeholder(
     background: Color = MaterialTheme.colorScheme.surfaceContainer,
 ) = skeleton(
     visible = visible,
-    color = MaterialTheme.colorScheme.surfaceContainer,
+    color = background,
     shape = shape,
     highlight = PlaceholderHighlight.fade(highlight)
 )
@@ -56,7 +56,7 @@ private fun PlaceholderPreviewPlaceHolder() {
 @Composable
 private fun PlaceholderPreview() {
     MaterialTheme {
-        Card(Modifier.placeholder(true, shape = CardDefaults.shape, background = CardDefaults.cardColors().containerColor)) {
+        Card(Modifier.placeholder(false, shape = CardDefaults.shape, background = CardDefaults.cardColors().containerColor)) {
             Box(Modifier.size(200.dp,120.dp), contentAlignment = Alignment.Center) {
                 Text("Hello, World!")
             }
