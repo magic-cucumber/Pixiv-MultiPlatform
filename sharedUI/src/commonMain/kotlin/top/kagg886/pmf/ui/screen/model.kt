@@ -1,6 +1,7 @@
 package top.kagg886.pmf.ui.screen
 
 import androidx.lifecycle.ViewModel
+import co.touchlab.kermit.Severity.*
 import co.touchlab.kermit.Logger as KermitLogger
 import coil3.ImageLoader
 import coil3.PlatformContext
@@ -67,6 +68,42 @@ private fun initializeImageLoader(context: PlatformContext) {
                     .maxSizePercent(context)
                     .build()
             }
+            .logger(
+                object : coil3.util.Logger {
+                    override var minLevel: coil3.util.Logger.Level
+                        get() = when (KermitLogger.config.minSeverity) {
+                            Verbose -> coil3.util.Logger.Level.Verbose
+                            Debug -> coil3.util.Logger.Level.Debug
+                            Info -> coil3.util.Logger.Level.Info
+                            Warn -> coil3.util.Logger.Level.Warn
+                            Error -> coil3.util.Logger.Level.Error
+                            Assert -> coil3.util.Logger.Level.Error
+                        }
+                        set(_) {
+                            throw UnsupportedOperationException("coil logger will be hosted by kermit.")
+                        }
+
+                    override fun log(
+                        tag: String,
+                        level: coil3.util.Logger.Level,
+                        message: String?,
+                        throwable: Throwable?
+                    ) {
+                        KermitLogger.log(
+                            severity = when (level) {
+                                coil3.util.Logger.Level.Verbose -> Verbose
+                                coil3.util.Logger.Level.Debug -> Debug
+                                coil3.util.Logger.Level.Info -> Info
+                                coil3.util.Logger.Level.Warn -> Warn
+                                coil3.util.Logger.Level.Error -> Error
+                            },
+                            tag = "Coil - $tag",
+                            message = message ?: "",
+                            throwable = throwable,
+                        )
+                    }
+                }
+            )
             .diskCache {
                 DiskCache.Builder()
                     .directory(cachePath.resolve("image"))

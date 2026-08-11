@@ -17,6 +17,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.Info
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.outlined.PriorityHigh
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -116,6 +118,15 @@ fun LoggerListScreen() {
                         Text(stringResource(Lang.string.logger_clear))
                     }
                 },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            nav.popBackStack()
+                        }
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack,contentDescription = null)
+                    }
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
