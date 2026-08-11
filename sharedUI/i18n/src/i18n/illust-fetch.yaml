@@ -1,0 +1,19 @@
+illust_fetch_load_failed_title:
+  en_us: Failed to load illustrations
+  zh_cn: 插画加载失败
+
+illust_fetch_load_failed_summary:
+  en_us: Check your network connection and try again.
+  zh_cn: 请检查网络连接后重试。
+
+illust_fetch_retry:
+  en_us: Retry
+  zh_cn: 重试
+
+illust_fetch_like:
+  en_us: Like
+  zh_cn: 点赞
+
+illust_fetch_unlike:
+  en_us: Unlike
+  zh_cn: 取消点赞

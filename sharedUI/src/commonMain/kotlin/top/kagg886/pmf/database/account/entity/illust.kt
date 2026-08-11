@@ -1,10 +1,10 @@
 package top.kagg886.pmf.database.account.entity
 
-import androidx.room3.Entity
-import androidx.room3.ForeignKey
-import androidx.room3.Index
-import androidx.room3.Junction
-import androidx.room3.Relation
+import androidx.room3.*
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import top.kagg886.pixko.module.illust.Illust
 
 @Entity(
     tableName = "illust_cache",
@@ -85,4 +85,55 @@ data class IllustCacheDisplayed(
         entityColumns = ["illustId"],
     )
     val metaPages: List<IllustMetaPageDisplayed>,
-)
+) {
+    @Ignore
+    val isR18G: Boolean = xRestrict == 2 && sanityLevel >= 6
+
+    /**
+     * 是否为R18
+     */@Ignore
+    val isR18: Boolean = isR18G || xRestrict == 1 && sanityLevel >= 4
+    @Ignore
+    val isUgoira: Boolean = type == "ugoira"
+
+
+    /**
+     * 是否为AI
+     */
+    @Ignore
+    val isAI: Boolean = illustAiType == 2
+
+    @delegate:Ignore
+    val contentImages: List<ImageUrlsCache> by lazy {
+        if (pageCount > 1) {
+            return@lazy metaPages.map { it.imageUrls }
+        }
+        return@lazy listOf(
+            imageUrls.copy(
+                original = singlePageMetaJson?.let {
+                    Json.parseToJsonElement(it).jsonObject["original_image_url"]?.jsonPrimitive?.content
+                }
+            )
+        )
+    }
+
+    /**
+     * 插画若被限制，可调用此字段获取限制原因
+     */
+    @delegate:Ignore
+    val limitLevel: Illust.LimitLevel by lazy {
+        val token = "https://s.pximg.net/common/images/limit_"
+        val level = imageUrls.content.takeIf { it.startsWith(token) }?.substring(token.length)
+            ?: return@lazy Illust.LimitLevel.NONE
+
+        when {
+            level.startsWith("r18g_") -> Illust.LimitLevel.LIMIT_R18G
+            level.startsWith("r18_") -> Illust.LimitLevel.LIMIT_R18
+            level.startsWith("mypixiv_") -> Illust.LimitLevel.LIMIT_PRIVACY
+            level.startsWith("sanity_level_") -> Illust.LimitLevel.LIMIT_R15
+            level.startsWith("unviewable_") -> Illust.LimitLevel.LIMIT_UNKNOWN
+            level.startsWith("unknown_") -> Illust.LimitLevel.LIMIT_UNKNOWN
+            else -> Illust.LimitLevel.NONE
+        }
+    }
+}
