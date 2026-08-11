@@ -137,7 +137,8 @@ private fun IllustFetchContent(
 ) {
     AnimatedContent(
         targetState = screenState,
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
         transitionSpec = {
             if (initialState == IllustFetchScreenState.Loading && targetState == IllustFetchScreenState.Success) {
                 (fadeIn() + expandIn(expandFrom = Alignment.Center)) togetherWith

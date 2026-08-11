@@ -83,6 +83,155 @@
 
 - 容器页面负责显示其子页面；子页面只负责自身内容。容器共享的状态可供其子页面使用，页面自身状态不得跨功能长期复用。
 
+## 组件设计及封装规范
+
+- 页面的公开入口只负责收集数据、判断页面状态、获取导航等环境依赖，并将整理后的状态、数据和事件回调传给私有 `Content`；具体界面不得堆叠在公开入口中。
+
+  ```kotlin
+  @Composable
+  fun FeatureScreen(model: FeatureViewModel) {
+      val state by model.state.collectAsState()
+      FeatureContent(state = state, onRetry = model::retry) // 公开入口只做状态调度
+  }
+  ```
+
+- 私有 `Content` 应通过参数接收显示所需的状态、数据和回调，不直接依赖页面 ViewModel 或导航环境，使其可以独立预览和复用。
+
+  ```kotlin
+  @Composable
+  private fun FeatureContent(state: FeatureState, onRetry: () -> Unit) {
+      // 只使用参数，不在这里获取 ViewModel 或 NavController
+      if (state.failed) ErrorContent(onRetry = onRetry)
+  }
+  ```
+
+- 页面存在加载、成功、错误等互斥状态时，应定义明确的页面状态，并由统一的状态容器负责切换；各状态的具体界面应拆分为私有 Content composable。
+
+  ```kotlin
+  private enum class ScreenState { Loading, Success, Error }
+
+  AnimatedContent(targetState = screenState) { state ->
+      when (state) { // 这里只分发，各状态 UI 独立封装
+          ScreenState.Loading -> LoadingContent()
+          ScreenState.Success -> SuccessContent()
+          ScreenState.Error -> ErrorContent()
+      }
+  }
+  ```
+
+- 页面状态切换应使用过渡动画。默认使用淡入淡出；只有业务语义明确且布局变化适合时，才为特定状态转换增加展开、收缩等尺寸动画，不要让所有状态共用复杂转场。
+
+  ```kotlin
+  transitionSpec = {
+      if (initialState == ScreenState.Loading && targetState == ScreenState.Success) {
+          (fadeIn() + expandIn()) togetherWith (fadeOut() + shrinkOut()) // 特定状态对
+      } else {
+          fadeIn() togetherWith fadeOut() // 其余状态使用默认淡入淡出
+      }
+  }
+  ```
+
+- 首次加载且尚无可展示内容时，可以显示整页加载或错误状态；已有内容的刷新不应替换整个页面，应保留当前内容，并使用页面内的轻量进度提示反馈刷新状态。
+
+  ```kotlin
+  val screenState = when {
+      items.isEmpty() && refreshLoading -> ScreenState.Loading // 仅空内容时占满页面
+      items.isEmpty() && refreshFailed -> ScreenState.Error
+      else -> ScreenState.Success // 已有内容时继续显示
+  }
+  AnimatedVisibility(visible = items.isNotEmpty() && refreshLoading) {
+      LinearProgressIndicator(Modifier.fillMaxWidth()) // 页内刷新反馈
+  }
+  ```
+
+- 状态容器应占满页面可用区域，并为不同状态提供稳定的对齐基准，避免状态切换时产生无意义的位置跳动。
+
+  ```kotlin
+  AnimatedContent(
+      targetState = screenState,
+      modifier = Modifier.fillMaxSize(), // 各状态使用相同页面范围
+      contentAlignment = Alignment.Center, // 固定切换时的对齐基准
+  ) { state -> /* ... */ }
+  ```
+
+- 列表或网格页面应使用同一个间距参数推导内容边距、横向间距和纵向间距，不要在页面各处分别硬编码；涉及水平方向时应兼容当前布局方向。
+
+  ```kotlin
+  val direction = LocalLayoutDirection.current
+  val horizontalSpacing = (
+      itemPadding.calculateStartPadding(direction) +
+          itemPadding.calculateEndPadding(direction)
+  ) / 2 // 间距统一从 itemPadding 推导
+  LazyVerticalGrid(contentPadding = itemPadding, horizontalArrangement = Arrangement.spacedBy(horizontalSpacing))
+  ```
+
+- 滚动条应与对应的列表或网格共享同一个滚动状态，并通过适配器连接；需要覆盖在内容侧边时，使用同一层叠容器对齐，不维护独立滚动状态。
+
+  ```kotlin
+  val listState = rememberLazyListState()
+  Box {
+      LazyColumn(state = listState) { /* ... */ }
+      VerticalScrollbar(
+          adapter = rememberScrollbarAdapter(listState), // 与列表共享状态
+          modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+      )
+  }
+  ```
+
+- Lazy 列表或网格中的数据项应提供稳定且唯一的 key；分页数据尚未就绪时，应显示尺寸稳定的占位内容，避免布局突然塌陷或重排。
+
+  ```kotlin
+  items(
+      count = pagingItems.itemCount,
+      key = { index -> pagingItems.peek(index)?.id ?: "placeholder-$index" }, // 稳定 key
+  ) { index ->
+      pagingItems[index]?.let { ItemContent(it) } ?: ItemPlaceholder() // 保留条目尺寸
+  }
+  ```
+
+- 依赖异步内容才能操作的浮层控件，应在依赖内容准备完成后再显示，并使用可见性动画平滑出现或消失。
+
+  ```kotlin
+  AnimatedVisibility(
+      visible = imageLoaded, // 图片成功后才允许显示操作
+      enter = fadeIn(),
+      exit = fadeOut(),
+  ) {
+      ItemActionButton()
+  }
+  ```
+
+- 异步操作开始后，应立即切换对应控件的加载状态并阻止重复触发；无论成功或失败，都应在操作结束时恢复加载状态。Lazy 容器中的局部状态应以数据项的稳定标识为记忆键，防止复用时串到其他条目。
+
+  ```kotlin
+  var actionLoading by remember(item.id) { mutableStateOf(false) } // 状态绑定条目
+  fun onAction() {
+      if (actionLoading) return // 阻止重复触发
+      scope.launch {
+          actionLoading = true
+          try { submit(item) } finally { actionLoading = false } // 所有结果都恢复状态
+      }
+  }
+  ```
+
+- 优先复用项目已有的加载、错误、图片、滚动条和带进度操作组件，不在页面内重复实现同类组件。
+
+  ```kotlin
+  EmptyScreen(/* 项目统一错误态 */)
+  ProgressableImage(model = imageUrl, contentDescription = description)
+  LoadingIconButton(state = buttonState, onClick = onClick) { Icon(/* ... */) }
+  ```
+
+- 应为加载、成功、错误等主要状态分别提供私有 Preview；预览调用私有 `Content`，不经过真实数据源、导航或业务状态容器。
+
+  ```kotlin
+  @Preview(name = "Loading")
+  @Composable
+  private fun FeatureLoadingPreview() {
+      MaterialTheme { FeatureContent(state = PreviewState.Loading, onRetry = {}) } // 直接预览纯 UI
+  }
+  ```
+
 ## 弹窗与蒙层设计
 
 - 按交互的信息量和操作复杂度选择蒙层形态，不要仅凭视觉样式互换组件。
