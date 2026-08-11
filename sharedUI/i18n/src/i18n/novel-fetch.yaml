@@ -1,0 +1,19 @@
+novel_fetch_load_failed_title:
+  en_us: Failed to load novels
+  zh_cn: 小说加载失败
+
+novel_fetch_load_failed_summary:
+  en_us: Check your network connection and try again.
+  zh_cn: 请检查网络连接后重试。
+
+novel_fetch_retry:
+  en_us: Retry
+  zh_cn: 重试
+
+novel_fetch_like:
+  en_us: Like
+  zh_cn: 点赞
+
+novel_fetch_unlike:
+  en_us: Unlike
+  zh_cn: 取消点赞

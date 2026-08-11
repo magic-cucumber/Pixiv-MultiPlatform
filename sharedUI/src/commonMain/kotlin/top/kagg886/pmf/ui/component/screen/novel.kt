@@ -7,24 +7,28 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -33,6 +37,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -45,9 +50,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -55,21 +63,22 @@ import androidx.paging.Pager
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
 import top.kagg886.pmf.database.account.entity.AuthorDisplayed
-import top.kagg886.pmf.database.account.entity.IllustCacheDisplayed
 import top.kagg886.pmf.database.account.entity.ImageUrlsCache
+import top.kagg886.pmf.database.account.entity.NovelCacheDisplayed
+import top.kagg886.pmf.database.account.entity.NovelSeriesCache
+import top.kagg886.pmf.database.account.entity.TagCache
 import top.kagg886.pmf.i18n.Lang
-import top.kagg886.pmf.i18n.illust_fetch_like
-import top.kagg886.pmf.i18n.illust_fetch_load_failed_summary
-import top.kagg886.pmf.i18n.illust_fetch_load_failed_title
-import top.kagg886.pmf.i18n.illust_fetch_retry
-import top.kagg886.pmf.i18n.illust_fetch_unlike
 import top.kagg886.pmf.i18n.logger_open
+import top.kagg886.pmf.i18n.novel_fetch_like
+import top.kagg886.pmf.i18n.novel_fetch_load_failed_summary
+import top.kagg886.pmf.i18n.novel_fetch_load_failed_title
+import top.kagg886.pmf.i18n.novel_fetch_retry
+import top.kagg886.pmf.i18n.novel_fetch_unlike
 import top.kagg886.pmf.ui.component.EmptyScreen
 import top.kagg886.pmf.ui.component.LoadingIconButton
 import top.kagg886.pmf.ui.component.LoadingIconButtonState
@@ -79,45 +88,40 @@ import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.screen.logger.LoggerRoute
 import top.kagg886.pmf.ui.util.placeholder
 
-/**
- * ================================================
- * Author:     iveou
- * Created on: 2026/8/10 14:54
- * ================================================
- */
+private val NovelItemHeight = 152.dp
 
-private enum class IllustFetchScreenState {
+private enum class NovelFetchScreenState {
     Loading,
     Success,
     Error,
 }
 
 @Composable
-fun IllustFetchScreen(
-    pager: Pager<Int, IllustCacheDisplayed>,
+fun NovelFetchScreen(
+    pager: Pager<Int, NovelCacheDisplayed>,
     columns: StaggeredGridCells,
     modifier: Modifier = Modifier,
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     itemPadding: PaddingValues = PaddingValues(4.dp),
-    onIllustItemClicked: suspend (IllustCacheDisplayed) -> Unit = {},
-    onLikeItemClicked: suspend (IllustCacheDisplayed, Boolean) -> Unit = { _, _ -> },
-    onLikeItemLongClicked: suspend (IllustCacheDisplayed) -> Unit = {},
+    onNovelItemClicked: suspend (NovelCacheDisplayed) -> Unit = {},
+    onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit = { _, _ -> },
+    onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit = {},
 ) {
     val items = pager.flow.collectAsLazyPagingItems()
     val screenState = when (items.itemCount) {
-        0 if items.loadState.refresh is LoadState.Loading -> IllustFetchScreenState.Loading
-        0 if items.loadState.refresh is LoadState.Error -> IllustFetchScreenState.Error
-        else -> IllustFetchScreenState.Success
+        0 if items.loadState.refresh is LoadState.Loading -> NovelFetchScreenState.Loading
+        0 if items.loadState.refresh is LoadState.Error -> NovelFetchScreenState.Error
+        else -> NovelFetchScreenState.Success
     }
     val nav = LocalNavController.current
-    IllustFetchContent(
+    NovelFetchContent(
         screenState = screenState,
         items = items,
         columns = columns,
         state = state,
         itemPadding = itemPadding,
         modifier = modifier,
-        onIllustItemClicked = onIllustItemClicked,
+        onNovelItemClicked = onNovelItemClicked,
         onLikeItemClicked = onLikeItemClicked,
         onLikeItemLongClicked = onLikeItemLongClicked,
         onViewLogClicked = { nav.navigate(LoggerRoute) },
@@ -125,16 +129,16 @@ fun IllustFetchScreen(
 }
 
 @Composable
-private fun IllustFetchContent(
-    screenState: IllustFetchScreenState,
-    items: LazyPagingItems<IllustCacheDisplayed>,
+private fun NovelFetchContent(
+    screenState: NovelFetchScreenState,
+    items: LazyPagingItems<NovelCacheDisplayed>,
     columns: StaggeredGridCells,
     state: LazyStaggeredGridState,
     itemPadding: PaddingValues,
     modifier: Modifier = Modifier,
-    onIllustItemClicked: suspend (IllustCacheDisplayed) -> Unit = {},
-    onLikeItemClicked: suspend (IllustCacheDisplayed, Boolean) -> Unit = { _, _ -> },
-    onLikeItemLongClicked: suspend (IllustCacheDisplayed) -> Unit = {},
+    onNovelItemClicked: suspend (NovelCacheDisplayed) -> Unit = {},
+    onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit = { _, _ -> },
+    onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit = {},
     onViewLogClicked: () -> Unit = {},
 ) {
     AnimatedContent(
@@ -142,28 +146,23 @@ private fun IllustFetchContent(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center,
         transitionSpec = {
-            if (initialState == IllustFetchScreenState.Loading && targetState == IllustFetchScreenState.Success) {
+            if (initialState == NovelFetchScreenState.Loading && targetState == NovelFetchScreenState.Success) {
                 (fadeIn() + expandIn(expandFrom = Alignment.Center)) togetherWith
-                        (fadeOut() + shrinkOut(shrinkTowards = Alignment.Center))
+                    (fadeOut() + shrinkOut(shrinkTowards = Alignment.Center))
             } else {
                 fadeIn() togetherWith fadeOut()
             }
         },
     ) { currentState ->
         when (currentState) {
-            IllustFetchScreenState.Loading -> LoadingContent()
-
-            IllustFetchScreenState.Error -> ErrorContent(
-                onRetry = items::retry,
-                onViewLogClicked = onViewLogClicked,
-            )
-
-            IllustFetchScreenState.Success -> IllustGridContent(
+            NovelFetchScreenState.Loading -> LoadingContent()
+            NovelFetchScreenState.Error -> ErrorContent(items::retry, onViewLogClicked)
+            NovelFetchScreenState.Success -> NovelListContent(
                 items = items,
                 columns = columns,
                 state = state,
                 itemPadding = itemPadding,
-                onIllustItemClicked = onIllustItemClicked,
+                onNovelItemClicked = onNovelItemClicked,
                 onLikeItemClicked = onLikeItemClicked,
                 onLikeItemLongClicked = onLikeItemLongClicked,
             )
@@ -173,10 +172,7 @@ private fun IllustFetchContent(
 
 @Composable
 private fun LoadingContent() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator()
     }
 }
@@ -191,15 +187,15 @@ private fun ErrorContent(onRetry: () -> Unit, onViewLogClicked: () -> Unit) {
                 modifier = Modifier.padding(8.dp),
             )
         },
-        title = { Text(stringResource(Lang.string.illust_fetch_load_failed_title)) },
-        summary = { Text(stringResource(Lang.string.illust_fetch_load_failed_summary)) },
+        title = { Text(stringResource(Lang.string.novel_fetch_load_failed_title)) },
+        summary = { Text(stringResource(Lang.string.novel_fetch_load_failed_summary)) },
         actions = {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 OutlinedButton(onClick = onViewLogClicked) {
                     Text(stringResource(Lang.string.logger_open))
                 }
                 Button(onClick = onRetry) {
-                    Text(stringResource(Lang.string.illust_fetch_retry))
+                    Text(stringResource(Lang.string.novel_fetch_retry))
                 }
             }
         },
@@ -207,26 +203,22 @@ private fun ErrorContent(onRetry: () -> Unit, onViewLogClicked: () -> Unit) {
 }
 
 @Composable
-private fun IllustGridContent(
-    items: LazyPagingItems<IllustCacheDisplayed>,
+private fun NovelListContent(
+    items: LazyPagingItems<NovelCacheDisplayed>,
     columns: StaggeredGridCells,
     state: LazyStaggeredGridState,
     itemPadding: PaddingValues,
-    onIllustItemClicked: suspend (IllustCacheDisplayed) -> Unit,
-    onLikeItemClicked: suspend (IllustCacheDisplayed, Boolean) -> Unit,
-    onLikeItemLongClicked: suspend (IllustCacheDisplayed) -> Unit,
+    onNovelItemClicked: suspend (NovelCacheDisplayed) -> Unit,
+    onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit,
+    onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val horizontalSpacing =
         (itemPadding.calculateLeftPadding(layoutDirection) + itemPadding.calculateRightPadding(layoutDirection)) / 2
     val verticalSpacing = (itemPadding.calculateTopPadding() + itemPadding.calculateBottomPadding()) / 2
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-        ) {
+    Column(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxWidth().weight(1f)) {
             LazyVerticalStaggeredGrid(
                 columns = columns,
                 state = state,
@@ -238,80 +230,108 @@ private fun IllustGridContent(
                 items(
                     count = items.itemCount,
                     key = { index ->
-                        items.peek(index)?.let { "illust-${it.illustId}" } ?: "placeholder-$index"
+                        items.peek(index)?.let { "novel-${it.novelId}" } ?: "novel-placeholder-$index"
                     },
                 ) { index ->
-                    val illust = items[index]
-                    if (illust == null) {
+                    val novel = items[index]
+                    if (novel == null) {
                         Box(
-                            modifier = Modifier
+                            Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(1f)
+                                .height(NovelItemHeight)
                                 .placeholder(visible = true, shape = CardDefaults.shape),
                         )
                     } else {
-                        IllustGridItem(
-                            illust = illust,
-                            onClick = onIllustItemClicked,
+                        NovelListItem(
+                            novel = novel,
+                            onClick = onNovelItemClicked,
                             onLikeClicked = onLikeItemClicked,
                             onLikeLongClicked = onLikeItemLongClicked,
                         )
                     }
                 }
             }
-
             VerticalScrollbar(
                 adapter = rememberScrollbarAdapter(state),
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .fillMaxHeight(),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
             )
         }
-
         AnimatedVisibility(visible = items.loadState.refresh is LoadState.Loading) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun IllustGridItem(
-    illust: IllustCacheDisplayed,
-    onClick: suspend (IllustCacheDisplayed) -> Unit,
-    onLikeClicked: suspend (IllustCacheDisplayed, Boolean) -> Unit,
-    onLikeLongClicked: suspend (IllustCacheDisplayed) -> Unit,
+private fun NovelListItem(
+    novel: NovelCacheDisplayed,
+    onClick: suspend (NovelCacheDisplayed) -> Unit,
+    onLikeClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit,
+    onLikeLongClicked: suspend (NovelCacheDisplayed) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var imageLoaded by remember(illust.illustId) { mutableStateOf(false) }
-    var likeLoading by remember(illust.illustId) { mutableStateOf(false) }
+    var likeLoading by remember(novel.novelId) { mutableStateOf(false) }
 
-    Card(onClick = { scope.launch { onClick(illust) } },) {
-        Box {
-            ProgressableImage(
-                model = illust.imageUrls.content,
-                contentDescription = illust.title,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(illust.width.toFloat() / illust.height.coerceAtLeast(1)),
-                onState = { imageState ->
-                    imageLoaded = imageState is AsyncImagePainter.State.Success
-                },
-                contentScale = ContentScale.Crop,
-            )
-
-            this@Card.AnimatedVisibility(
-                visible = imageLoaded,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(4.dp),
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
+    Card(
+        onClick = { scope.launch { onClick(novel) } },
+        modifier = Modifier.fillMaxWidth().height(NovelItemHeight),
+    ) {
+        ListItem(
+            modifier = Modifier.fillMaxSize(),
+            headlineContent = {
+                Text(
+                    text = novel.title,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            supportingContent = {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = listOfNotNull(
+                            novel.author.name,
+                            novel.series?.title?.takeIf(String::isNotBlank),
+                        ).joinToString(" · "),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth().clipToBounds(),
+                        maxLines = 1,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        novel.tags.forEach { tag ->
+                            Text(
+                                text = tag.translatedName ?: tag.name,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.labelSmall,
+                            )
+                        }
+                    }
+                }
+            },
+            leadingContent = {
+                ProgressableImage(
+                    model = novel.imageUrls.content,
+                    contentDescription = novel.title,
+                    modifier = Modifier.size(width = 84.dp, height = 124.dp),
+                    contentScale = ContentScale.Crop,
+                )
+            },
+            trailingContent = {
                 LoadingIconButton(
                     state = if (likeLoading) {
                         LoadingIconButtonState.Loading
                     } else {
-                        LoadingIconButtonState.NotLoading(illust.isBookmarked)
+                        LoadingIconButtonState.NotLoading(novel.isBookmarked)
                     },
                     colors = IconButtonDefaults.iconButtonColors(
                         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
@@ -322,76 +342,76 @@ private fun IllustGridItem(
                         scope.launch {
                             likeLoading = true
                             try {
-                                onLikeClicked(illust, !illust.isBookmarked)
+                                onLikeClicked(novel, !novel.isBookmarked)
                             } finally {
                                 likeLoading = false
                             }
                         }
                     },
-                    onLongClick = {
-                        scope.launch { onLikeLongClicked(illust) }
-                    },
+                    onLongClick = { scope.launch { onLikeLongClicked(novel) } },
                 ) { buttonState ->
-                    val bookmarked = when (buttonState) {
-                        is LoadingIconButtonState.NotLoading<*> -> buttonState.state as? Boolean == true
-                        else -> false
-                    }
+                    val bookmarked =
+                        (buttonState as? LoadingIconButtonState.NotLoading<*>)?.state as? Boolean == true
                     Icon(
                         imageVector = if (bookmarked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = stringResource(
-                            if (bookmarked) Lang.string.illust_fetch_unlike else Lang.string.illust_fetch_like,
+                            if (bookmarked) Lang.string.novel_fetch_unlike else Lang.string.novel_fetch_like,
                         ),
                         tint = if (bookmarked) Color.Red else LocalContentColor.current,
                     )
                 }
-            }
-        }
+            },
+        )
     }
 }
 
-private fun previewIllust(
-    id: Long,
-    bookmarked: Boolean = false,
-    width: Int = 600,
-    height: Int = 800,
-) = IllustCacheDisplayed(
-    illustId = id,
-    title = "Illust $id",
+private fun previewNovel(id: Long, bookmarked: Boolean = false) = NovelCacheDisplayed(
+    novelId = id,
+    title = "Novel $id",
     caption = "",
-    type = "illust",
+    imageUrlsId = "novel:$id:cover",
     authorId = 1L,
     createTime = 0L,
-    pageCount = 1,
-    width = width,
-    height = height,
-    sanityLevel = 0,
-    xRestrict = 0,
-    totalView = 0,
-    totalBookmarks = 0,
+    textLength = 12000,
+    seriesId = 1L,
     isBookmarked = bookmarked,
-    illustAiType = 0,
-    imageUrlsId = "img$id",
+    totalBookmarks = 42,
+    totalView = 100,
+    totalComments = 3,
+    isAI = false,
+    isR18 = false,
+    isR18G = false,
     author = AuthorDisplayed(
         userId = 1L,
         name = "author",
         account = "account",
         profileImageUrlsId = "profile",
-        profileImageUrls = ImageUrlsCache(id = "profile"),
+        profileImageUrls = ImageUrlsCache(id = "profile", medium = ""),
     ),
-    imageUrls = ImageUrlsCache(id = "img$id", medium = ""),
-    tags = emptyList(),
-    metaPages = emptyList(),
+    imageUrls = ImageUrlsCache(id = "novel:$id:cover", medium = ""),
+    tags = listOf(
+        TagCache(id = "fantasy", name = "fantasy", translatedName = "奇幻"),
+        TagCache(id = "adventure", name = "adventure", translatedName = "冒险"),
+    ),
+    series = NovelSeriesCache(
+        id = 1L,
+        title = "Sample series",
+        caption = null,
+        contentCount = null,
+        totalCharacterCount = null,
+        userId = 1L,
+    ),
 )
 
 @Preview(name = "Loading")
 @Composable
-private fun IllustFetchContentLoadingPreview() {
-    val items = flowOf(PagingData.from(emptyList<IllustCacheDisplayed>())).collectAsLazyPagingItems()
+private fun NovelFetchContentLoadingPreview() {
+    val items = flowOf(PagingData.from(emptyList<NovelCacheDisplayed>())).collectAsLazyPagingItems()
     MaterialTheme {
-        IllustFetchContent(
-            screenState = IllustFetchScreenState.Loading,
+        NovelFetchContent(
+            screenState = NovelFetchScreenState.Loading,
             items = items,
-            columns = StaggeredGridCells.Fixed(2),
+            columns = StaggeredGridCells.Fixed(1),
             state = rememberLazyStaggeredGridState(),
             itemPadding = PaddingValues(4.dp),
         )
@@ -400,13 +420,13 @@ private fun IllustFetchContentLoadingPreview() {
 
 @Preview(name = "Error")
 @Composable
-private fun IllustFetchContentErrorPreview() {
-    val items = flowOf(PagingData.from(emptyList<IllustCacheDisplayed>())).collectAsLazyPagingItems()
+private fun NovelFetchContentErrorPreview() {
+    val items = flowOf(PagingData.from(emptyList<NovelCacheDisplayed>())).collectAsLazyPagingItems()
     MaterialTheme {
-        IllustFetchContent(
-            screenState = IllustFetchScreenState.Error,
+        NovelFetchContent(
+            screenState = NovelFetchScreenState.Error,
             items = items,
-            columns = StaggeredGridCells.Fixed(2),
+            columns = StaggeredGridCells.Fixed(1),
             state = rememberLazyStaggeredGridState(),
             itemPadding = PaddingValues(4.dp),
         )
@@ -415,21 +435,20 @@ private fun IllustFetchContentErrorPreview() {
 
 @Preview(name = "Success", showBackground = true)
 @Composable
-private fun IllustFetchContentSuccessPreview() {
+private fun NovelFetchContentSuccessPreview() {
     val items = flowOf(
         PagingData.from(
             listOf(
-                previewIllust(1L, bookmarked = true, width = 600, height = 800),
-                previewIllust(2L, width = 800, height = 600),
-                previewIllust(3L, width = 600, height = 900),
+                previewNovel(1L, bookmarked = true),
+                previewNovel(2L),
             ),
         ),
     ).collectAsLazyPagingItems()
     MaterialTheme {
-        IllustFetchContent(
-            screenState = IllustFetchScreenState.Success,
+        NovelFetchContent(
+            screenState = NovelFetchScreenState.Success,
             items = items,
-            columns = StaggeredGridCells.Fixed(2),
+            columns = StaggeredGridCells.Fixed(1),
             state = rememberLazyStaggeredGridState(),
             itemPadding = PaddingValues(4.dp),
         )

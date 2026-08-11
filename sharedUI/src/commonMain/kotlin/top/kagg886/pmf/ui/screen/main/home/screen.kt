@@ -13,8 +13,13 @@ import org.orbitmvi.orbit.compose.collectAsState
 import top.kagg886.pixko.module.illust.IllustResult
 import top.kagg886.pixko.module.illust.getRecommendIllust
 import top.kagg886.pixko.module.illust.getRecommendIllustNext
+import top.kagg886.pixko.module.novel.NovelResult
+import top.kagg886.pixko.module.novel.getRecommendNovel
+import top.kagg886.pixko.module.novel.getRecommendNovelNext
 import top.kagg886.pmf.ui.component.screen.IllustFetchScreen
+import top.kagg886.pmf.ui.component.screen.NovelFetchScreen
 import top.kagg886.pmf.ui.repository.IllustNextUrlRepo
+import top.kagg886.pmf.ui.repository.NovelNextUrlRepo
 import top.kagg886.pmf.ui.screen.main.MainViewModel
 import top.kagg886.pmf.ui.screen.main.MainViewModelState
 import top.kagg886.pmf.util.nav3.SerializableNavKey
@@ -39,6 +44,7 @@ fun HomeScreen() {
 
     when (val state = state) {
         is MainViewModelState.LoadSuccess -> {
+            /* Illustration flow example retained for comparison.
             val repo = remember(state.database) {
                 object : IllustNextUrlRepo(state.database,"recommend") {
                     override suspend fun requestInitial(): IllustResult {
@@ -61,6 +67,28 @@ fun HomeScreen() {
                 columns = StaggeredGridCells.Adaptive(265.dp),
                 modifier = Modifier.fillMaxSize(),
                 onLikeItemClicked = {a,b-> delay(3.seconds) }
+            )
+            */
+
+            val novelRepo = remember(state.database) {
+                object : NovelNextUrlRepo(state.database, "novel:recommend") {
+                    override suspend fun requestInitial(): NovelResult {
+                        return state.client.getRecommendNovel()
+                    }
+
+                    override suspend fun requestNext(nextUrl: String): NovelResult {
+                        return state.client.getRecommendNovelNext(
+                            NovelResult(nextUrl = nextUrl, novels = emptyList()),
+                        ) ?: NovelResult(nextUrl = null, novels = emptyList())
+                    }
+                }
+            }
+
+            NovelFetchScreen(
+                pager = novelRepo.pager,
+                columns = StaggeredGridCells.Adaptive(420.dp),
+                modifier = Modifier.fillMaxSize(),
+                onLikeItemClicked = { _, _ -> delay(3.seconds) },
             )
         }
 

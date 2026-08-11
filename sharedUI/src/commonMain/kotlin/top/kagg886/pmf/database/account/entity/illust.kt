@@ -1,3 +1,5 @@
+@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
+
 package top.kagg886.pmf.database.account.entity
 
 import androidx.room3.*
@@ -5,6 +7,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import top.kagg886.pixko.module.illust.Illust
+import kotlin.time.ExperimentalTime
 
 @Entity(
     tableName = "illust_cache",
@@ -33,7 +36,30 @@ data class IllustCache(
     val illustAiType: Int,
     val imageUrlsId: String,
     val singlePageMetaJson: String? = null,
-)
+) {
+    companion object {
+        @OptIn(ExperimentalTime::class)
+        fun fromBean(bean: Illust): IllustCache = IllustCache(
+            illustId = bean.id.toLong(),
+            title = bean.title,
+            caption = bean.caption,
+            type = bean.type,
+            authorId = bean.user.id.toLong(),
+            createTime = bean.createTime.toEpochMilliseconds(),
+            pageCount = bean.pageCount,
+            width = bean.width,
+            height = bean.height,
+            sanityLevel = bean.sanityLevel,
+            xRestrict = bean.xRestrict,
+            totalView = bean.totalView,
+            totalBookmarks = bean.totalBookmarks,
+            isBookmarked = bean.isBookMarked,
+            illustAiType = bean.illustAiType,
+            imageUrlsId = "illust:${bean.id}:cover",
+            singlePageMetaJson = bean.singlePageMeta?.toString(),
+        )
+    }
+}
 
 data class IllustCacheDisplayed(
     val illustId: Long,
