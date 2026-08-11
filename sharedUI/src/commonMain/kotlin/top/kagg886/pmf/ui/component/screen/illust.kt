@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.Pager
 import top.kagg886.pmf.database.account.entity.IllustCacheDisplayed
+import top.kagg886.pmf.ui.component.ProgressableImageInteractivePreview
 import top.kagg886.pmf.ui.util.placeholder
 
 /**
@@ -35,9 +36,5 @@ fun IllustFetchScreen(
     onLikeItemClicked: suspend (IllustCacheDisplayed, Boolean) -> Unit = { _, _ -> },
     onLikeItemLongClicked: suspend (IllustCacheDisplayed) -> Unit = {},
 ) {
-    Card(Modifier.placeholder(true, shape = CardDefaults.shape, background = CardDefaults.cardColors().containerColor, highlight = CardDefaults.cardColors().contentColor)) {
-        Box(Modifier.size(200.dp,120.dp), contentAlignment = Alignment.Center) {
-            Text("Hello, World!")
-        }
-    }
+
 }
