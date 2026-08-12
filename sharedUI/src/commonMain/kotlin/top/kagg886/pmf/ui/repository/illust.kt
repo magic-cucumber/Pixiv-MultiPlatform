@@ -17,7 +17,7 @@ import top.kagg886.pmf.database.account.entity.UserCache
 import top.kagg886.pmf.logger.Logger
 
 /** A forward-only illustration repository for APIs whose request is a numeric index. */
-@Logger("IllustIndexedRepo")
+@Logger
 abstract class IllustIndexedRepo(
     database: AppAccountDatabase,
     tag: String,
@@ -60,7 +60,7 @@ abstract class IllustIndexedRepo(
 }
 
 /** A forward-only illustration repository for APIs whose response supplies an opaque next URL. */
-@Logger("IllustNextUrlRepo")
+@Logger
 abstract class IllustNextUrlRepo(
     database: AppAccountDatabase,
     tag: String,

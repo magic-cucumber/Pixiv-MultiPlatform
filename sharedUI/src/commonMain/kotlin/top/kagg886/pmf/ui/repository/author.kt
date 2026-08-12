@@ -10,7 +10,7 @@ import top.kagg886.pmf.database.account.entity.UserCache
 import top.kagg886.pmf.logger.Logger
 
 /** A forward-only author repository for APIs whose request is a numeric index. */
-@Logger("AuthorIndexedRepo")
+@Logger
 abstract class AuthorIndexedRepo(
     database: AppAccountDatabase,
     tag: String,
@@ -59,7 +59,7 @@ abstract class AuthorIndexedRepo(
 }
 
 /** A forward-only author repository for APIs whose response supplies an opaque next URL. */
-@Logger("AuthorNextUrlRepo")
+@Logger
 abstract class AuthorNextUrlRepo(
     database: AppAccountDatabase,
     tag: String,
