@@ -57,7 +57,7 @@ fun launch(start: () -> NavKey) {
         CompositionLocalProvider(
             LocalWindowExceptionHandlerFactory provides WindowExceptionHandlerFactory { window ->
                 WindowExceptionHandler { ex ->
-                    logger.e("uncaught error occured",ex)
+                    logger.e("uncaught error occured", ex)
                     lastException = ex
                     exitApplication()
                 }
