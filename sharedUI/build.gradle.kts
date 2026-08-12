@@ -154,7 +154,7 @@ dependencies {
 }
 
 tasks.configureEach {
-    if (name.startsWith("compileKotlin") || name.startsWith("kspKotlin")) {
+    if (name.startsWith("compileKotlin") || (name.startsWith("ksp") && name != "kspCommonMainKotlinMetadata")) {
         dependsOn("kspCommonMainKotlinMetadata")
     }
 }
