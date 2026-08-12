@@ -1,19 +1,11 @@
 package top.kagg886.pmf.ui.component.screen
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -31,7 +24,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -49,12 +41,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.paging.LoadState
 import androidx.paging.Pager
-import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
@@ -66,22 +54,14 @@ import top.kagg886.pmf.i18n.author_fetch_load_failed_summary
 import top.kagg886.pmf.i18n.author_fetch_load_failed_title
 import top.kagg886.pmf.i18n.author_fetch_retry
 import top.kagg886.pmf.i18n.author_fetch_unfollow
+import top.kagg886.pmf.i18n.common_page_no_more_data
 import top.kagg886.pmf.ui.component.LoadingIconButton
 import top.kagg886.pmf.ui.component.LoadingIconButtonState
 import top.kagg886.pmf.ui.component.ProgressableImage
-import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
-import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.screen.logger.LoggerRoute
 import top.kagg886.pmf.ui.util.placeholder
 
 private val AuthorItemHeight = 112.dp
-
-private enum class AuthorFetchScreenState {
-    Loading,
-    Empty,
-    Success,
-    Error,
-}
 
 @Composable
 fun AuthorFetchScreen(
@@ -93,63 +73,22 @@ fun AuthorFetchScreen(
     onAuthorItemClicked: suspend (AuthorDisplayed) -> Unit = {},
     onFollowItemClicked: suspend (AuthorDisplayed, Boolean) -> Unit = { _, _ -> },
 ) {
-    val items = pager.flow.collectAsLazyPagingItems()
-    val screenState = when (items.itemCount) {
-        0 if items.loadState.refresh is LoadState.Loading -> AuthorFetchScreenState.Loading
-        0 if items.loadState.refresh is LoadState.Error -> AuthorFetchScreenState.Error
-        0 -> AuthorFetchScreenState.Empty
-        else -> AuthorFetchScreenState.Success
-    }
     val nav = LocalNavController.current
-    AuthorFetchContent(
-        screenState = screenState,
-        items = items,
-        columns = columns,
-        state = state,
-        itemPadding = itemPadding,
+    BaseFetchScreen(
+        pager = pager,
+        scrollState = state,
         modifier = modifier,
-        onAuthorItemClicked = onAuthorItemClicked,
-        onFollowItemClicked = onFollowItemClicked,
-        onViewLogClicked = { nav.navigate(LoggerRoute) },
-    )
-}
-
-@Composable
-private fun AuthorFetchContent(
-    screenState: AuthorFetchScreenState,
-    items: LazyPagingItems<AuthorDisplayed>,
-    columns: StaggeredGridCells,
-    state: LazyStaggeredGridState,
-    itemPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    onAuthorItemClicked: suspend (AuthorDisplayed) -> Unit = {},
-    onFollowItemClicked: suspend (AuthorDisplayed, Boolean) -> Unit = { _, _ -> },
-    onViewLogClicked: () -> Unit = {},
-) {
-    AnimatedContent(
-        targetState = screenState,
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-        transitionSpec = {
-            if (initialState == AuthorFetchScreenState.Loading && targetState == AuthorFetchScreenState.Success) {
-                (fadeIn() + expandIn(expandFrom = Alignment.Center)) togetherWith
-                    (fadeOut() + shrinkOut(shrinkTowards = Alignment.Center))
-            } else {
-                fadeIn() togetherWith fadeOut()
-            }
-        },
-    ) { currentState ->
-        when (currentState) {
-            AuthorFetchScreenState.Loading -> LoadingContent()
-            AuthorFetchScreenState.Error -> ErrorContent(
-                onRetry = items::retry,
-                onViewLogClicked = onViewLogClicked,
+        errorContent = { onRetry ->
+            ErrorContent(
+                onRetry = onRetry,
+                onViewLogClicked = { nav.navigate(LoggerRoute) },
                 title = { Text(stringResource(Lang.string.author_fetch_load_failed_title)) },
                 summary = { Text(stringResource(Lang.string.author_fetch_load_failed_summary)) },
                 retryText = { Text(stringResource(Lang.string.author_fetch_retry)) },
             )
-            AuthorFetchScreenState.Empty -> EmptyContent(items::refresh)
-            AuthorFetchScreenState.Success -> AuthorListContent(
+        },
+        successContent = { items, state ->
+            AuthorListContent(
                 items = items,
                 columns = columns,
                 state = state,
@@ -157,8 +96,8 @@ private fun AuthorFetchContent(
                 onAuthorItemClicked = onAuthorItemClicked,
                 onFollowItemClicked = onFollowItemClicked,
             )
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -188,39 +127,41 @@ private fun AuthorListContent(
                 items(
                     count = items.itemCount,
                     key = { index ->
-                        items.peek(index)?.let { "author-${it.userId}" } ?: "author-placeholder-$index"
+                        items.peek(index)?.let { "author-${it.userId}-$index" } ?: "author-placeholder-$index"
                     },
                 ) { index ->
                     val author = items[index]
                     if (author == null) {
                         Box(
                             Modifier
+                                .animateItem()
                                 .fillMaxWidth()
                                 .height(AuthorItemHeight)
                                 .placeholder(visible = true, shape = CardDefaults.shape),
                         )
                     } else {
                         AuthorListItem(
+                            modifier = Modifier.animateItem(),
                             author = author,
                             onClick = onAuthorItemClicked,
                             onFollowClicked = onFollowItemClicked,
                         )
                     }
                 }
+
+                item(span = StaggeredGridItemSpan.FullLine) {
+                    PagingAppendFooter(loadState = items.loadState.append) {
+                        Text(stringResource(Lang.string.common_page_no_more_data))
+                    }
+                }
             }
-            VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(state),
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            )
-        }
-        AnimatedVisibility(visible = items.itemCount > 0 && items.loadState.refresh is LoadState.Loading) {
-            LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
 private fun AuthorListItem(
+    modifier: Modifier = Modifier,
     author: AuthorDisplayed,
     onClick: suspend (AuthorDisplayed) -> Unit,
     onFollowClicked: suspend (AuthorDisplayed, Boolean) -> Unit,
@@ -231,7 +172,7 @@ private fun AuthorListItem(
 
     Card(
         onClick = { scope.launch { onClick(author) } },
-        modifier = Modifier.fillMaxWidth().height(AuthorItemHeight),
+        modifier = modifier.fillMaxWidth().height(AuthorItemHeight),
     ) {
         ListItem(
             modifier = Modifier.fillMaxSize(),
@@ -316,54 +257,14 @@ private fun previewAuthor(id: Long, followed: Boolean = false) = AuthorDisplayed
     profileImageUrls = ImageUrlsCache(id = "user:$id:profile", medium = ""),
 )
 
-@Preview(name = "Loading")
+@Preview(name = "Author item", showBackground = true)
 @Composable
-private fun AuthorFetchContentLoadingPreview() {
-    val items = flowOf(PagingData.from(emptyList<AuthorDisplayed>())).collectAsLazyPagingItems()
+private fun AuthorListItemPreview() {
     MaterialTheme {
-        AuthorFetchContent(
-            screenState = AuthorFetchScreenState.Loading,
-            items = items,
-            columns = StaggeredGridCells.Fixed(1),
-            state = rememberLazyStaggeredGridState(),
-            itemPadding = PaddingValues(4.dp),
-        )
-    }
-}
-
-@Preview(name = "Error")
-@Composable
-private fun AuthorFetchContentErrorPreview() {
-    val items = flowOf(PagingData.from(emptyList<AuthorDisplayed>())).collectAsLazyPagingItems()
-    MaterialTheme {
-        AuthorFetchContent(
-            screenState = AuthorFetchScreenState.Error,
-            items = items,
-            columns = StaggeredGridCells.Fixed(1),
-            state = rememberLazyStaggeredGridState(),
-            itemPadding = PaddingValues(4.dp),
-        )
-    }
-}
-
-@Preview(name = "Success", showBackground = true)
-@Composable
-private fun AuthorFetchContentSuccessPreview() {
-    val items = flowOf(
-        PagingData.from(
-            listOf(
-                previewAuthor(1L, followed = true),
-                previewAuthor(2L),
-            ),
-        ),
-    ).collectAsLazyPagingItems()
-    MaterialTheme {
-        AuthorFetchContent(
-            screenState = AuthorFetchScreenState.Success,
-            items = items,
-            columns = StaggeredGridCells.Fixed(1),
-            state = rememberLazyStaggeredGridState(),
-            itemPadding = PaddingValues(4.dp),
+        AuthorListItem(
+            author = previewAuthor(1L, followed = true),
+            onClick = {},
+            onFollowClicked = { _, _ -> },
         )
     }
 }

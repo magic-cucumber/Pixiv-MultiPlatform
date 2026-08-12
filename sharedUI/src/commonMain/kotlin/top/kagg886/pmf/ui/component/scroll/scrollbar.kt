@@ -18,8 +18,10 @@ package top.kagg886.pmf.ui.component.scroll
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.TweenSpec
-import androidx.compose.foundation.*
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.*
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -42,12 +44,12 @@ import androidx.compose.ui.layout.MeasurePolicy
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.*
-import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import top.kagg886.pmf.ui.component.scroll.v2.*
+import kotlin.math.roundToInt
 
 /**
  * [CompositionLocal] used to pass [ScrollbarStyle] down the tree.
@@ -114,8 +116,8 @@ fun defaultScrollbarStyle() = ScrollbarStyle(
  */
 @Deprecated(
     "Use VerticalScrollbar(" +
-        "adapter: top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter)" +
-        " instead",
+            "adapter: top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter)" +
+            " instead",
 )
 @Composable
 fun VerticalScrollbar(
@@ -165,7 +167,7 @@ fun VerticalScrollbar(
  */
 @Deprecated(
     "Use HorizontalScrollbar(" +
-        "adapter: top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter) instead",
+            "adapter: top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter) instead",
 )
 @Composable
 fun HorizontalScrollbar(
@@ -472,11 +474,12 @@ private class NewScrollbarAdapterAsOld(
  * Converts an instance of the new scrollbar adapter to an old one.
  */
 @Suppress("DEPRECATION")
-private fun top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter.asOldAdapter(): ScrollbarAdapter = if (this is OldScrollbarAdapterAsNew) {
-    this.oldAdapter // Just unwrap
-} else {
-    NewScrollbarAdapterAsOld(this)
-}
+private fun top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter.asOldAdapter(): ScrollbarAdapter =
+    if (this is OldScrollbarAdapterAsNew) {
+        this.oldAdapter // Just unwrap
+    } else {
+        NewScrollbarAdapterAsOld(this)
+    }
 
 /**
  * Create and [remember] (old) [ScrollbarAdapter] for scrollable container and current instance of
@@ -616,6 +619,16 @@ fun rememberScrollbarAdapter(
     scrollState: LazyGridState,
 ): top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter = remember(scrollState) {
     ScrollbarAdapter(scrollState)
+}
+
+@Composable
+fun <T> rememberScrollbarAdapter(scrollState: T): top.kagg886.pmf.ui.component.scroll.v2.ScrollbarAdapter = remember(scrollState) {
+    when (scrollState) {
+        is LazyListState -> ScrollbarAdapter(scrollState)
+        is LazyStaggeredGridState -> ScrollbarAdapter(scrollState)
+        is LazyGridState -> ScrollbarAdapter(scrollState)
+        else -> error("not supported")
+    }
 }
 
 /**

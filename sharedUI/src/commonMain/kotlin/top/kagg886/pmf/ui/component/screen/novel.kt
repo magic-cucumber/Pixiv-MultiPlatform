@@ -1,12 +1,5 @@
 package top.kagg886.pmf.ui.component.screen
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandIn
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -32,7 +25,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -53,12 +45,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.paging.LoadState
 import androidx.paging.Pager
-import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
@@ -73,22 +61,14 @@ import top.kagg886.pmf.i18n.novel_fetch_load_failed_summary
 import top.kagg886.pmf.i18n.novel_fetch_load_failed_title
 import top.kagg886.pmf.i18n.novel_fetch_retry
 import top.kagg886.pmf.i18n.novel_fetch_unlike
+import top.kagg886.pmf.i18n.common_page_no_more_data
 import top.kagg886.pmf.ui.component.LoadingIconButton
 import top.kagg886.pmf.ui.component.LoadingIconButtonState
 import top.kagg886.pmf.ui.component.ProgressableImage
-import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
-import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.screen.logger.LoggerRoute
 import top.kagg886.pmf.ui.util.placeholder
 
 private val NovelItemHeight = 152.dp
-
-private enum class NovelFetchScreenState {
-    Loading,
-    Empty,
-    Success,
-    Error,
-}
 
 @Composable
 fun NovelFetchScreen(
@@ -101,65 +81,22 @@ fun NovelFetchScreen(
     onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit = { _, _ -> },
     onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit = {},
 ) {
-    val items = pager.flow.collectAsLazyPagingItems()
-    val screenState = when (items.itemCount) {
-        0 if items.loadState.refresh is LoadState.Loading -> NovelFetchScreenState.Loading
-        0 if items.loadState.refresh is LoadState.Error -> NovelFetchScreenState.Error
-        0 -> NovelFetchScreenState.Empty
-        else -> NovelFetchScreenState.Success
-    }
     val nav = LocalNavController.current
-    NovelFetchContent(
-        screenState = screenState,
-        items = items,
-        columns = columns,
-        state = state,
-        itemPadding = itemPadding,
+    BaseFetchScreen(
+        pager = pager,
+        scrollState = state,
         modifier = modifier,
-        onNovelItemClicked = onNovelItemClicked,
-        onLikeItemClicked = onLikeItemClicked,
-        onLikeItemLongClicked = onLikeItemLongClicked,
-        onViewLogClicked = { nav.navigate(LoggerRoute) },
-    )
-}
-
-@Composable
-private fun NovelFetchContent(
-    screenState: NovelFetchScreenState,
-    items: LazyPagingItems<NovelCacheDisplayed>,
-    columns: StaggeredGridCells,
-    state: LazyStaggeredGridState,
-    itemPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    onNovelItemClicked: suspend (NovelCacheDisplayed) -> Unit = {},
-    onLikeItemClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit = { _, _ -> },
-    onLikeItemLongClicked: suspend (NovelCacheDisplayed) -> Unit = {},
-    onViewLogClicked: () -> Unit = {},
-) {
-    AnimatedContent(
-        targetState = screenState,
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-        transitionSpec = {
-            if (initialState == NovelFetchScreenState.Loading && targetState == NovelFetchScreenState.Success) {
-                (fadeIn() + expandIn(expandFrom = Alignment.Center)) togetherWith
-                    (fadeOut() + shrinkOut(shrinkTowards = Alignment.Center))
-            } else {
-                fadeIn() togetherWith fadeOut()
-            }
-        },
-    ) { currentState ->
-        when (currentState) {
-            NovelFetchScreenState.Loading -> LoadingContent()
-            NovelFetchScreenState.Error -> ErrorContent(
-                onRetry = items::retry,
-                onViewLogClicked = onViewLogClicked,
+        errorContent = { onRetry ->
+            ErrorContent(
+                onRetry = onRetry,
+                onViewLogClicked = { nav.navigate(LoggerRoute) },
                 title = { Text(stringResource(Lang.string.novel_fetch_load_failed_title)) },
                 summary = { Text(stringResource(Lang.string.novel_fetch_load_failed_summary)) },
                 retryText = { Text(stringResource(Lang.string.novel_fetch_retry)) },
             )
-            NovelFetchScreenState.Empty -> EmptyContent(items::refresh)
-            NovelFetchScreenState.Success -> NovelListContent(
+        },
+        successContent = { items, state ->
+            NovelListContent(
                 items = items,
                 columns = columns,
                 state = state,
@@ -168,8 +105,8 @@ private fun NovelFetchContent(
                 onLikeItemClicked = onLikeItemClicked,
                 onLikeItemLongClicked = onLikeItemLongClicked,
             )
-        }
-    }
+        },
+    )
 }
 
 @Composable
@@ -200,19 +137,21 @@ private fun NovelListContent(
                 items(
                     count = items.itemCount,
                     key = { index ->
-                        items.peek(index)?.let { "novel-${it.novelId}" } ?: "novel-placeholder-$index"
+                        items.peek(index)?.let { "novel-${it.novelId}-$index" } ?: "novel-placeholder-$index"
                     },
                 ) { index ->
                     val novel = items[index]
                     if (novel == null) {
                         Box(
                             Modifier
+                                .animateItem()
                                 .fillMaxWidth()
                                 .height(NovelItemHeight)
                                 .placeholder(visible = true, shape = CardDefaults.shape),
                         )
                     } else {
                         NovelListItem(
+                            modifier = Modifier.animateItem(),
                             novel = novel,
                             onClick = onNovelItemClicked,
                             onLikeClicked = onLikeItemClicked,
@@ -220,14 +159,13 @@ private fun NovelListContent(
                         )
                     }
                 }
+
+                item(span = StaggeredGridItemSpan.FullLine) {
+                    PagingAppendFooter(loadState = items.loadState.append) {
+                        Text(stringResource(Lang.string.common_page_no_more_data))
+                    }
+                }
             }
-            VerticalScrollbar(
-                adapter = rememberScrollbarAdapter(state),
-                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
-            )
-        }
-        AnimatedVisibility(visible = items.loadState.refresh is LoadState.Loading) {
-            LinearProgressIndicator(Modifier.fillMaxWidth())
         }
     }
 }
@@ -235,6 +173,7 @@ private fun NovelListContent(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NovelListItem(
+    modifier: Modifier = Modifier,
     novel: NovelCacheDisplayed,
     onClick: suspend (NovelCacheDisplayed) -> Unit,
     onLikeClicked: suspend (NovelCacheDisplayed, Boolean) -> Unit,
@@ -245,7 +184,7 @@ private fun NovelListItem(
 
     Card(
         onClick = { scope.launch { onClick(novel) } },
-        modifier = Modifier.fillMaxWidth().height(NovelItemHeight),
+        modifier = modifier.fillMaxWidth().height(NovelItemHeight),
     ) {
         ListItem(
             modifier = Modifier.fillMaxSize(),
@@ -373,54 +312,16 @@ private fun previewNovel(id: Long, bookmarked: Boolean = false) = NovelCacheDisp
     ),
 )
 
-@Preview(name = "Loading")
+@OptIn(ExperimentalLayoutApi::class)
+@Preview(name = "Novel item", showBackground = true)
 @Composable
-private fun NovelFetchContentLoadingPreview() {
-    val items = flowOf(PagingData.from(emptyList<NovelCacheDisplayed>())).collectAsLazyPagingItems()
+private fun NovelListItemPreview() {
     MaterialTheme {
-        NovelFetchContent(
-            screenState = NovelFetchScreenState.Loading,
-            items = items,
-            columns = StaggeredGridCells.Fixed(1),
-            state = rememberLazyStaggeredGridState(),
-            itemPadding = PaddingValues(4.dp),
-        )
-    }
-}
-
-@Preview(name = "Error")
-@Composable
-private fun NovelFetchContentErrorPreview() {
-    val items = flowOf(PagingData.from(emptyList<NovelCacheDisplayed>())).collectAsLazyPagingItems()
-    MaterialTheme {
-        NovelFetchContent(
-            screenState = NovelFetchScreenState.Error,
-            items = items,
-            columns = StaggeredGridCells.Fixed(1),
-            state = rememberLazyStaggeredGridState(),
-            itemPadding = PaddingValues(4.dp),
-        )
-    }
-}
-
-@Preview(name = "Success", showBackground = true)
-@Composable
-private fun NovelFetchContentSuccessPreview() {
-    val items = flowOf(
-        PagingData.from(
-            listOf(
-                previewNovel(1L, bookmarked = true),
-                previewNovel(2L),
-            ),
-        ),
-    ).collectAsLazyPagingItems()
-    MaterialTheme {
-        NovelFetchContent(
-            screenState = NovelFetchScreenState.Success,
-            items = items,
-            columns = StaggeredGridCells.Fixed(1),
-            state = rememberLazyStaggeredGridState(),
-            itemPadding = PaddingValues(4.dp),
+        NovelListItem(
+            novel = previewNovel(1L, bookmarked = true),
+            onClick = {},
+            onLikeClicked = { _, _ -> },
+            onLikeLongClicked = {},
         )
     }
 }

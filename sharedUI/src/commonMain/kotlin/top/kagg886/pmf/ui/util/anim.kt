@@ -1,6 +1,7 @@
 package top.kagg886.pmf.ui.util
 
 import androidx.compose.animation.*
+import androidx.compose.ui.Alignment
 
 /**
  * ================================================
@@ -17,5 +18,15 @@ fun <S> createMenuButtonAnim(block: AnimatedContentTransitionScope<S>.() -> Bool
         } else {
             slideInVertically { height -> -height } + fadeIn() togetherWith
                     slideOutVertically { height -> height } + fadeOut()
+        }
+    }
+
+fun <S> createContentAnim(block: AnimatedContentTransitionScope<S>.() -> Boolean): AnimatedContentTransitionScope<S>.() -> ContentTransform =
+    {
+        if (block()) {
+            (fadeIn() + expandIn(expandFrom = Alignment.Center)) togetherWith
+                    (fadeOut() + shrinkOut(shrinkTowards = Alignment.Center))
+        } else {
+            fadeIn() togetherWith fadeOut()
         }
     }

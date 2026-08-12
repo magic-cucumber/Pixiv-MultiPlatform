@@ -10,3 +10,7 @@ common_page_empty_title:
 common_page_empty_summary:
   en_us: Page is Empty
   zh_cn: 页面无任何内容
+
+common_page_no_more_data:
+  en_us: No more data
+  zh_cn: 没有更多了~

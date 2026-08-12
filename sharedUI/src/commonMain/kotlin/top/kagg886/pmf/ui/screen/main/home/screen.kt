@@ -51,33 +51,34 @@ fun HomeScreen() {
 
     when (val state = state) {
         is MainViewModelState.LoadSuccess -> {
-            /* Illustration flow example retained for comparison.
-            val repo = remember(state.database) {
-                object : IllustNextUrlRepo(state.database,"recommend") {
-                    override suspend fun requestInitial(): IllustResult {
-                        return state.client.getRecommendIllust()
-                    }
+//            //Illustration flow example retained for comparison.
+//            val repo = remember(state.database) {
+//                object : IllustNextUrlRepo(state.database,"recommend") {
+//                    override suspend fun requestInitial(): IllustResult {
+//                        delay(5.seconds)
+//                        return state.client.getRecommendIllust()
+//                    }
+//
+//                    override suspend fun requestNext(nextUrl: String): IllustResult {
+//                        delay(5.seconds)
+//                        val resp =
+//                            state.client.getRecommendIllustNext(IllustResult(nextUrl = nextUrl, illusts = emptyList()))
+//                                ?: return IllustResult(nextUrl = null, illusts = emptyList())
+//
+//                        return resp
+//                    }
+//
+//                }
+//            }
+//
+//            IllustFetchScreen(
+//                pager = repo.pager,
+//                columns = StaggeredGridCells.Adaptive(265.dp),
+//                modifier = Modifier.fillMaxSize(),
+//                onLikeItemClicked = {a,b-> delay(3.seconds) }
+//            )
 
-                    override suspend fun requestNext(nextUrl: String): IllustResult {
-                        val resp =
-                            state.client.getRecommendIllustNext(IllustResult(nextUrl = nextUrl, illusts = emptyList()))
-                                ?: return IllustResult(nextUrl = null, illusts = emptyList())
-
-                        return resp
-                    }
-
-                }
-            }
-
-            IllustFetchScreen(
-                pager = repo.pager,
-                columns = StaggeredGridCells.Adaptive(265.dp),
-                modifier = Modifier.fillMaxSize(),
-                onLikeItemClicked = {a,b-> delay(3.seconds) }
-            )
-            */
-
-            /* Novel flow example retained for comparison.
+            //Novel flow example retained for comparison.
             val novelRepo = remember(state.database) {
                 object : NovelNextUrlRepo(state.database, "novel:recommend") {
                     override suspend fun requestInitial(): NovelResult {
@@ -98,31 +99,31 @@ fun HomeScreen() {
                 modifier = Modifier.fillMaxSize(),
                 onLikeItemClicked = { _, _ -> delay(3.seconds) },
             )
-            */
 
 
-            val relatedId = 115863841
-            val authorRepo = remember(state.database, relatedId) {
-                object : AuthorNextUrlRepo(state.database, "author:related:${relatedId}") {
-                    override suspend fun requestInitial() = run {
-                        val result = state.client.getRelatedUser(relatedId.toLong())
-                        loadedPage(nextRequest = result.next_url, users = result.user_previews)
-                    }
 
-                    override suspend fun requestNext(nextUrl: String) = run {
-                        val result = state.client.getRelatedUserNext(RelatedUserResult(next_url = nextUrl))
-                            ?: return@run loadedPage(nextRequest = null, users = emptyList())
-                        loadedPage(nextRequest = result.next_url, users = result.user_previews)
-                    }
-                }
-            }
-
-            AuthorFetchScreen(
-                pager = authorRepo.pager,
-                columns = StaggeredGridCells.Adaptive(360.dp),
-                modifier = Modifier.fillMaxSize(),
-                onFollowItemClicked = { _, _ -> delay(3.seconds)},
-            )
+//            val relatedId = 115863841
+//            val authorRepo = remember(state.database, relatedId) {
+//                object : AuthorNextUrlRepo(state.database, "author:related:${relatedId}") {
+//                    override suspend fun requestInitial() = run {
+//                        val result = state.client.getRelatedUser(relatedId.toLong())
+//                        loadedPage(nextRequest = result.next_url, users = result.user_previews)
+//                    }
+//
+//                    override suspend fun requestNext(nextUrl: String) = run {
+//                        val result = state.client.getRelatedUserNext(RelatedUserResult(next_url = nextUrl))
+//                            ?: return@run loadedPage(nextRequest = null, users = emptyList())
+//                        loadedPage(nextRequest = result.next_url, users = result.user_previews)
+//                    }
+//                }
+//            }
+//
+//            AuthorFetchScreen(
+//                pager = authorRepo.pager,
+//                columns = StaggeredGridCells.Adaptive(360.dp),
+//                modifier = Modifier.fillMaxSize(),
+//                onFollowItemClicked = { _, _ -> delay(3.seconds)},
+//            )
         }
 
         else -> Unit
