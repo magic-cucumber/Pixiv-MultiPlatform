@@ -1,6 +1,7 @@
 package top.kagg886.pmf.ui.util
 
 import androidx.lifecycle.ViewModel
+import arrow.fx.coroutines.parZip
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.nullableString
 import io.ktor.client.*
@@ -18,7 +19,10 @@ import top.kagg886.pmf.BuildConfig
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.PlatformEngine
 import top.kagg886.pmf.backend.SystemConfig
-import top.kagg886.pmf.res.*
+import top.kagg886.pmf.res.Res
+import top.kagg886.pmf.res.update_check_failed
+import top.kagg886.pmf.res.version_latest
+import top.kagg886.pmf.res.you_can_still_check_update_on_setting
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
 
@@ -40,6 +44,21 @@ data class Release(
     val assets: List<Asset>,
     val body: String,
 )
+
+private fun String.toVersionCode(): Int? {
+    val parts = removePrefix("v").split(".")
+    if (parts.size != 3) {
+        return null
+    }
+
+    val (major, minor, patch) = parts.map { it.toIntOrNull() }
+
+    return if (major == null || minor == null || patch == null) {
+        null
+    } else {
+        major * 100 + minor * 10 + patch
+    }
+}
 
 class UpdateCheckViewModel(
     config: Settings = SystemConfig.getConfig(),
@@ -80,36 +99,58 @@ class UpdateCheckViewModel(
             }
             return@intent
         }
-        var result = kotlin.runCatching {
-            net.get("https://api.github.com/repos/kagg886/Pixiv-MultiPlatform/releases/latest").body<Release>()
+
+        suspend fun fetchKagg886Release(): Result<Release> = runCatching {
+            net.get("https://api.github.com/repos/kagg886/Pixiv-MultiPlatform/releases/latest").body()
         }
 
-        if (result.isFailure) {
-            logger.i("first update check error: ${result.exceptionOrNull()}, now let's use magic-cucumber url")
-            result = runCatching {
-                net.get("https://api.github.com/repos/magic-cucumber/Pixiv-MultiPlatform/releases/latest").body()
-            }
+        suspend fun fetchMagicCucumberRelease(): Result<Release> = runCatching {
+            net.get("https://api.github.com/repos/magic-cucumber/Pixiv-MultiPlatform/releases/latest").body()
         }
 
-        if (result.isFailure) {
-            logger.i("magic-cucumber update check error: ${result.exceptionOrNull()}, now let's use fallback url")
-            result = runCatching {
-                net.get("https://pmf.kagg886.top/fallback.json").body()
-            }
+        suspend fun fetchFallbackRelease(): Result<Release> = runCatching {
+            net.get("https://pmf.kagg886.top/fallback.json").body()
         }
 
-        if (result.isFailure) {
-            result.exceptionOrNull()?.let {
-                logger.e(it) { "update check failed: ${it.message}" }
+        val results = parZip(
+            { fetchKagg886Release() },
+            { fetchMagicCucumberRelease() },
+            { fetchFallbackRelease() },
+        ) { kagg886, magicCucumber, fallback ->
+            listOf(kagg886, magicCucumber, fallback)
+        }
+
+        val latest = results
+            .mapNotNull { result ->
+                result.getOrNull()?.let { release ->
+                    release.tagName.toVersionCode()?.let { versionCode ->
+                        versionCode to release
+                    }
+                }
             }
+            .maxByOrNull { it.first }
+
+        if (latest == null) {
+            results.forEach { result ->
+                result.exceptionOrNull()?.let {
+                    logger.e(it) { "update check failed: ${it.message}" }
+                }
+            }
+
             if (AppConfig.checkFailedToast) {
-                postSideEffect(UpdateCheckSideEffect.Toast(getString(Res.string.update_check_failed)))
+                postSideEffect(
+                    UpdateCheckSideEffect.Toast(
+                        getString(Res.string.update_check_failed),
+                    ),
+                )
             }
+
             return@intent
         }
-        val data = result.getOrThrow()
 
-        if ("v${BuildConfig.APP_VERSION_NAME}" != data.tagName) {
+        val (versionCode, data) = latest
+
+        if (versionCode > BuildConfig.APP_VERSION_CODE) {
             reduce {
                 UpdateCheckState.HaveUpdate(data)
             }

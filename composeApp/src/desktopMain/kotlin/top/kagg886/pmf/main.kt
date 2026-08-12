@@ -33,6 +33,7 @@ import top.kagg886.pmf.util.absolutePath
 import top.kagg886.pmf.util.createNewFile
 import top.kagg886.pmf.util.exists
 import top.kagg886.pmf.util.getString
+import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.mkdirs
 import top.kagg886.pmf.util.parentFile
 import top.kagg886.pmf.util.writeString
@@ -56,6 +57,7 @@ fun launch(start: () -> NavKey) {
         CompositionLocalProvider(
             LocalWindowExceptionHandlerFactory provides WindowExceptionHandlerFactory { window ->
                 WindowExceptionHandler { ex ->
+                    logger.e("uncaught error occured", ex)
                     lastException = ex
                     exitApplication()
                 }
