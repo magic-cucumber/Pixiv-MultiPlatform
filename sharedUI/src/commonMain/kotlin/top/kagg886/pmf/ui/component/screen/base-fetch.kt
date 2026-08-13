@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +24,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.i18n.Lang
@@ -35,6 +35,9 @@ import top.kagg886.pmf.i18n.common_page_refresh
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.util.createContentAnim
+import top.kagg886.pmf.util.TraceEffect
+import top.kagg886.pmf.util.d
+import top.kagg886.pmf.util.i
 
 private enum class FetchScreenState {
     Loading,
@@ -59,6 +62,24 @@ internal fun <Key : Any, Item : Any, ScrollState : Any> BaseFetchScreen(
         0 if items.loadState.refresh is LoadState.Error -> FetchScreenState.Error
         0 -> FetchScreenState.Empty
         else -> FetchScreenState.Success
+    }
+
+    val refreshState = items.loadState.refresh.describeForUiLog()
+    val prependState = items.loadState.prepend.describeForUiLog()
+    val appendState = items.loadState.append.describeForUiLog()
+    TraceEffect(
+        "BaseFetchScreen",
+        items.itemCount,
+        refreshState,
+        prependState,
+        appendState,
+        screenState,
+    ) {
+        i(
+            message = "Paging UI snapshot changed (itemCount=${items.itemCount}, " +
+                "refresh=$refreshState, prepend=$prependState, append=$appendState, " +
+                "screenState=$screenState)",
+        )
     }
 
     BaseFetchContent(
@@ -95,6 +116,9 @@ private fun <Item : Any, ScrollState : Any> BaseFetchContent(
             initialState == FetchScreenState.Loading && targetState == FetchScreenState.Success
         },
     ) { currentState ->
+        TraceEffect("BaseFetchContent", currentState) {
+            i(message = "Animated content branch became active (state=$currentState)")
+        }
         when (currentState) {
             FetchScreenState.Loading -> loadingContent()
             FetchScreenState.Error -> errorContent(items::retry)
@@ -117,6 +141,10 @@ internal fun PagingAppendFooter(
     loadState: LoadState,
     noMoreContent: @Composable () -> Unit,
 ) {
+    val appendState = loadState.describeForUiLog()
+    TraceEffect("PagingAppendFooter", appendState) {
+        d(message = "Append footer state changed (state=$appendState)")
+    }
     AnimatedContent(
         targetState = loadState,
         transitionSpec = { fadeIn() togetherWith fadeOut() },
@@ -135,6 +163,12 @@ internal fun PagingAppendFooter(
             is LoadState.Error -> Unit
         }
     }
+}
+
+internal fun LoadState.describeForUiLog(): String = when (this) {
+    LoadState.Loading -> "Loading"
+    is LoadState.NotLoading -> "NotLoading(endReached=$endOfPaginationReached)"
+    is LoadState.Error -> "Error(type=${error::class.simpleName ?: "Unknown"})"
 }
 
 @Composable
@@ -171,7 +205,7 @@ private fun BaseFetchPreview(state: FetchScreenState) {
                 ) {
                     items(
                         count = pagingItems.itemCount,
-                        key = { index -> "preview-$index" },
+                        key = pagingItems.itemKey { item -> "preview-$item" },
                     ) { index ->
                         pagingItems[index]?.let { item ->
                             Text(

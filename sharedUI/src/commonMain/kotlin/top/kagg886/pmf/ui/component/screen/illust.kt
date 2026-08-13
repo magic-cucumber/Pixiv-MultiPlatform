@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.Pager
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -108,9 +109,7 @@ private fun IllustGridContent(
             ) {
                 items(
                     count = items.itemCount,
-                    key = { index ->
-                        items.peek(index)?.let { "illust-${it.illustId}-$index" } ?: "placeholder-$index"
-                    },
+                    key = items.itemKey { illust -> "illust-${illust.illustId}" },
                 ) { index ->
                     val illust = items[index]
                     if (illust == null) {

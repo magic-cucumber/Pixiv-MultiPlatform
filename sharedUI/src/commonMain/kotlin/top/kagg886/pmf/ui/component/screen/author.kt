@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.Pager
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
@@ -126,9 +127,7 @@ private fun AuthorListContent(
             ) {
                 items(
                     count = items.itemCount,
-                    key = { index ->
-                        items.peek(index)?.let { "author-${it.userId}-$index" } ?: "author-placeholder-$index"
-                    },
+                    key = items.itemKey { author -> "author-${author.userId}" },
                 ) { index ->
                     val author = items[index]
                     if (author == null) {

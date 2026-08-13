@@ -77,7 +77,6 @@ val pagingFlow: Flow<PagingData<Item>> =
         config = PagingConfig(
             pageSize = 20,
             prefetchDistance = 5,
-            enablePlaceholders = false,
         ),
         pagingSourceFactory = { itemPagingSource }
     ).flow

@@ -1,44 +1,16 @@
 package top.kagg886.pmf.ui.component.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.staggeredgrid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -47,28 +19,33 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.Pager
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
-import top.kagg886.pmf.database.account.entity.AuthorDisplayed
-import top.kagg886.pmf.database.account.entity.ImageUrlsCache
-import top.kagg886.pmf.database.account.entity.NovelCacheDisplayed
-import top.kagg886.pmf.database.account.entity.NovelSeriesCache
-import top.kagg886.pmf.database.account.entity.TagCache
-import top.kagg886.pmf.i18n.Lang
-import top.kagg886.pmf.i18n.novel_fetch_like
-import top.kagg886.pmf.i18n.novel_fetch_load_failed_summary
-import top.kagg886.pmf.i18n.novel_fetch_load_failed_title
-import top.kagg886.pmf.i18n.novel_fetch_retry
-import top.kagg886.pmf.i18n.novel_fetch_unlike
-import top.kagg886.pmf.i18n.common_page_no_more_data
+import top.kagg886.pmf.database.account.entity.*
+import top.kagg886.pmf.i18n.*
+import top.kagg886.pmf.ui.component.ContextualFlowRow
 import top.kagg886.pmf.ui.component.LoadingIconButton
 import top.kagg886.pmf.ui.component.LoadingIconButtonState
 import top.kagg886.pmf.ui.component.ProgressableImage
 import top.kagg886.pmf.ui.screen.logger.LoggerRoute
 import top.kagg886.pmf.ui.util.placeholder
+import top.kagg886.pmf.util.TraceEffect
+import top.kagg886.pmf.util.d
+import top.kagg886.pmf.util.i
 
 private val NovelItemHeight = 152.dp
+private val NovelTagRowHeight = 24.dp
+
+private data class NovelScrollSnapshot(
+    val firstVisibleIndex: Int,
+    val lastVisibleIndex: Int,
+    val totalItemsCount: Int,
+    val firstVisibleOffset: Int,
+    val isScrollInProgress: Boolean,
+)
 
 @Composable
 fun NovelFetchScreen(
@@ -123,6 +100,56 @@ private fun NovelListContent(
     val horizontalSpacing =
         (itemPadding.calculateLeftPadding(layoutDirection) + itemPadding.calculateRightPadding(layoutDirection)) / 2
     val verticalSpacing = (itemPadding.calculateTopPadding() + itemPadding.calculateBottomPadding()) / 2
+    val refreshState = items.loadState.refresh.describeForUiLog()
+    val appendState = items.loadState.append.describeForUiLog()
+
+    TraceEffect(
+        "NovelListContent",
+        items.itemCount,
+        refreshState,
+        appendState,
+    ) {
+        i(
+            message = "Novel list content state changed (itemCount=${items.itemCount}, " +
+                "refresh=$refreshState, append=$appendState)",
+        )
+    }
+
+    TraceEffect("NovelListMount", state, items) {
+        val visibleItems = state.layoutInfo.visibleItemsInfo
+        val firstVisibleIndex = visibleItems.firstOrNull()?.index ?: -1
+        val lastVisibleIndex = visibleItems.lastOrNull()?.index ?: -1
+        d(
+            message = "Novel list content mounted (itemCount=${items.itemCount}, " +
+                "visibleRange=$firstVisibleIndex..$lastVisibleIndex, " +
+                "totalItems=${state.layoutInfo.totalItemsCount}, " +
+                "firstVisibleOffset=${state.firstVisibleItemScrollOffset})",
+        )
+    }
+
+    TraceEffect("NovelListScroll", state, items) {
+        snapshotFlow {
+            val visibleItems = state.layoutInfo.visibleItemsInfo
+            NovelScrollSnapshot(
+                firstVisibleIndex = visibleItems.firstOrNull()?.index ?: -1,
+                lastVisibleIndex = visibleItems.lastOrNull()?.index ?: -1,
+                totalItemsCount = state.layoutInfo.totalItemsCount,
+                firstVisibleOffset = state.firstVisibleItemScrollOffset,
+                isScrollInProgress = state.isScrollInProgress,
+            )
+        }.distinctUntilChanged { previous, current ->
+            previous.firstVisibleIndex == current.firstVisibleIndex &&
+                previous.lastVisibleIndex == current.lastVisibleIndex &&
+                previous.totalItemsCount == current.totalItemsCount &&
+                previous.isScrollInProgress == current.isScrollInProgress
+        }.collect { snapshot ->
+            d(
+                message = "Novel list scroll snapshot changed (visibleRange=${snapshot.firstVisibleIndex}..${snapshot.lastVisibleIndex}, " +
+                    "totalItems=${snapshot.totalItemsCount}, firstVisibleOffset=${snapshot.firstVisibleOffset}, " +
+                    "scrollInProgress=${snapshot.isScrollInProgress})",
+            )
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxWidth().weight(1f)) {
@@ -136,9 +163,7 @@ private fun NovelListContent(
             ) {
                 items(
                     count = items.itemCount,
-                    key = { index ->
-                        items.peek(index)?.let { "novel-${it.novelId}-$index" } ?: "novel-placeholder-$index"
-                    },
+                    key = items.itemKey { novel -> "novel-flow-${novel.flowId}" },
                 ) { index ->
                     val novel = items[index]
                     if (novel == null) {
@@ -180,8 +205,7 @@ private fun NovelListItem(
     onLikeLongClicked: suspend (NovelCacheDisplayed) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var likeLoading by remember(novel.novelId) { mutableStateOf(false) }
-
+    var likeLoading by remember(novel.flowId) { mutableStateOf(false) }
     Card(
         onClick = { scope.launch { onClick(novel) } },
         modifier = modifier.fillMaxWidth().height(NovelItemHeight),
@@ -207,23 +231,31 @@ private fun NovelListItem(
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodySmall,
                     )
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth().clipToBounds(),
+                    ContextualFlowRow(
+                        items = novel.tags,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(NovelTagRowHeight),
                         maxLines = 1,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        novel.tags.forEach { tag ->
-                            Text(
-                                text = tag.translatedName ?: tag.name,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .padding(horizontal = 4.dp, vertical = 2.dp),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.labelSmall,
-                            )
+                        overflowContent = { count, _ ->
+                            TooltipBox(
+                                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above,4.dp),
+                                tooltip = {
+                                    RichTooltip {
+                                        FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            for (tag in novel.tags.takeLast(count)) {
+                                                NovelTag(tag.translatedName ?: tag.name)
+                                            }
+                                        }
+                                    }
+                                },
+                                state = rememberTooltipState()
+                            ) {
+                                NovelTag(text = "+$count")
+                            }
                         }
+                    ) { tag ->
+                        NovelTag(text = tag.translatedName ?: tag.name)
                     }
                 }
             },
@@ -274,7 +306,26 @@ private fun NovelListItem(
     }
 }
 
+@Composable
+private fun NovelTag(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .then(modifier),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.labelSmall,
+    )
+}
+
 private fun previewNovel(id: Long, bookmarked: Boolean = false) = NovelCacheDisplayed(
+    flowId = id,
     novelId = id,
     title = "Novel $id",
     caption = "",
@@ -301,6 +352,10 @@ private fun previewNovel(id: Long, bookmarked: Boolean = false) = NovelCacheDisp
     tags = listOf(
         TagCache(id = "fantasy", name = "fantasy", translatedName = "奇幻"),
         TagCache(id = "adventure", name = "adventure", translatedName = "冒险"),
+        TagCache(id = "magic", name = "magic", translatedName = "魔法"),
+        TagCache(id = "mystery", name = "mystery", translatedName = "悬疑"),
+        TagCache(id = "friendship", name = "friendship", translatedName = "友情"),
+        TagCache(id = "long-tag", name = "long-tag", translatedName = "较长的标签"),
     ),
     series = NovelSeriesCache(
         id = 1L,

@@ -18,7 +18,7 @@ interface NovelFlowDao {
 
     @Query(
         """
-        SELECT novel_cache.* FROM novel_cache
+        SELECT novel_cache.*, novel_flow.id AS flowId FROM novel_cache
         INNER JOIN novel_flow ON novel_flow.novelCacheId = novel_cache.novelId
         WHERE novel_flow.tag = :tag
         ORDER BY novel_flow.id

@@ -24,6 +24,8 @@ import top.kagg886.pmf.logger.Logger
 import top.kagg886.pmf.util.cachePath
 import top.kagg886.pmf.util.createPlatformEngine
 import top.kagg886.pmf.util.databasePath
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 
 /**
  * ================================================
@@ -43,6 +45,7 @@ class RootViewModel(
                 logger.d { "Preparing to create the common database and install the persistent log writer" }
                 val database = AppCommonDatabase.create(databasePath / "common.db")
                 val logDao = database.logDao()
+                logDao.clearBeforeTime(Clock.System.now().minus(1.days))
                 KermitLogger.addLogWriter(DatabaseLogWriter(logDao))
                 logger.d { "Common database initialized; preparing the shared image loader" }
                 initializeImageLoader(platformContext)

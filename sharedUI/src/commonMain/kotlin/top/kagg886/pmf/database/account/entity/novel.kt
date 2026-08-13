@@ -58,6 +58,8 @@ data class NovelCache(
 }
 
 data class NovelCacheDisplayed(
+    /** The database identity of the row in novel_flow, not the Pixiv novel ID. */
+    val flowId: Long,
     val novelId: Long,
     val title: String,
     val caption: String,

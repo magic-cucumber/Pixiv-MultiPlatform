@@ -53,7 +53,9 @@ abstract class BaseRepo<Request : Any, Cache : Any> protected constructor(
         config = PagingConfig(
             pageSize = pageSize,
             initialLoadSize = pageSize,
-            enablePlaceholders = false,
+            // Room reports itemsBefore/itemsAfter for the LIMIT/OFFSET source. Keep those
+            // positions represented while a new source generation is loading after invalidation.
+            enablePlaceholders = true,
         ),
         remoteMediator = object : RemoteMediator<Int, Cache>() {
             override suspend fun initialize(): InitializeAction {
@@ -74,7 +76,10 @@ abstract class BaseRepo<Request : Any, Cache : Any> protected constructor(
                 state: PagingState<Int, Cache>,
             ): MediatorResult {
                 logger.i {
-                    "Loading cached flow page (loadType: $loadType, tagHash: ${flowTag.hashCode()}, presentedItems: ${state.pages.sumOf { it.data.size }})"
+                    "Loading cached flow page (loadType: $loadType, tagHash: ${flowTag.hashCode()}, " +
+                        "presentedItems: ${state.pages.sumOf { it.data.size }}, " +
+                        "loadedPages: ${state.pages.size}, anchorPosition: ${state.anchorPosition}, " +
+                        "placeholders: ${state.config.enablePlaceholders})"
                 }
                 if (loadType == LoadType.PREPEND) {
                     logger.v { "Skipping prepend because the repository only loads forward" }
