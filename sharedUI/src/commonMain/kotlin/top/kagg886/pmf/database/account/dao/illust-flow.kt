@@ -25,7 +25,7 @@ interface IllustFlowDao {
 
     @Query(
         """
-        SELECT illust_cache.* FROM illust_cache
+        SELECT illust_cache.*, illust_flow.id AS flowId FROM illust_cache
         INNER JOIN illust_flow ON illust_flow.illustCacheId = illust_cache.illustId
         WHERE illust_flow.tag = :tag
         ORDER BY illust_flow.id

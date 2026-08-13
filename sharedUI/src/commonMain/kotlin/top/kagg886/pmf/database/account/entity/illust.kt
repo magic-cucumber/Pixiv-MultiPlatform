@@ -62,6 +62,8 @@ data class IllustCache(
 }
 
 data class IllustCacheDisplayed(
+    /** The database identity of the row in illust_flow, not the Pixiv illustration ID. */
+    val flowId: Long,
     val illustId: Long,
     val title: String,
     val caption: String,

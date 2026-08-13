@@ -109,7 +109,7 @@ private fun IllustGridContent(
             ) {
                 items(
                     count = items.itemCount,
-                    key = items.itemKey { illust -> "illust-${illust.illustId}" },
+                    key = items.itemKey { illust -> "illust-flow-${illust.flowId}" },
                 ) { index ->
                     val illust = items[index]
                     if (illust == null) {
@@ -150,8 +150,8 @@ private fun IllustGridItem(
     onLikeLongClicked: suspend (IllustCacheDisplayed) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var imageLoaded by remember(illust.illustId) { mutableStateOf(false) }
-    var likeLoading by remember(illust.illustId) { mutableStateOf(false) }
+    var imageLoaded by remember(illust.flowId) { mutableStateOf(false) }
+    var likeLoading by remember(illust.flowId) { mutableStateOf(false) }
 
     Card(modifier = modifier, onClick = { scope.launch { onClick(illust) } }) {
         Box {
@@ -223,6 +223,7 @@ private fun previewIllust(
     width: Int = 600,
     height: Int = 800,
 ) = IllustCacheDisplayed(
+    flowId = id,
     illustId = id,
     title = "Illust $id",
     caption = "",

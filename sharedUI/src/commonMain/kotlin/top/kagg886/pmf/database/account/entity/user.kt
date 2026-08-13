@@ -33,6 +33,8 @@ data class UserCache(
 }
 
 data class AuthorDisplayed(
+    /** The database identity of the row in author_flow; zero for nested author relations. */
+    val flowId: Long = 0L,
     val userId: Long,
     val name: String,
     val account: String,

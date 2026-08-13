@@ -127,7 +127,7 @@ private fun AuthorListContent(
             ) {
                 items(
                     count = items.itemCount,
-                    key = items.itemKey { author -> "author-${author.userId}" },
+                    key = items.itemKey { author -> "author-flow-${author.flowId}" },
                 ) { index ->
                     val author = items[index]
                     if (author == null) {
@@ -166,7 +166,7 @@ private fun AuthorListItem(
     onFollowClicked: suspend (AuthorDisplayed, Boolean) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    var followLoading by remember(author.userId) { mutableStateOf(false) }
+    var followLoading by remember(author.flowId) { mutableStateOf(false) }
     val followed = author.isFollowed == true
 
     Card(

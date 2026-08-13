@@ -51,54 +51,54 @@ fun HomeScreen() {
 
     when (val state = state) {
         is MainViewModelState.LoadSuccess -> {
-//            //Illustration flow example retained for comparison.
-//            val repo = remember(state.database) {
-//                object : IllustNextUrlRepo(state.database,"recommend") {
-//                    override suspend fun requestInitial(): IllustResult {
-//                        delay(5.seconds)
-//                        return state.client.getRecommendIllust()
-//                    }
-//
-//                    override suspend fun requestNext(nextUrl: String): IllustResult {
-//                        delay(5.seconds)
-//                        val resp =
-//                            state.client.getRecommendIllustNext(IllustResult(nextUrl = nextUrl, illusts = emptyList()))
-//                                ?: return IllustResult(nextUrl = null, illusts = emptyList())
-//
-//                        return resp
-//                    }
-//
-//                }
-//            }
-//
-//            IllustFetchScreen(
-//                pager = repo.pager,
-//                columns = StaggeredGridCells.Adaptive(265.dp),
-//                modifier = Modifier.fillMaxSize(),
-//                onLikeItemClicked = {a,b-> delay(3.seconds) }
-//            )
-
-            //Novel flow example retained for comparison.
-            val novelRepo = remember(state.database) {
-                object : NovelNextUrlRepo(state.database, "novel:recommend") {
-                    override suspend fun requestInitial(): NovelResult {
-                        return state.client.getRecommendNovel()
+            //Illustration flow example retained for comparison.
+            val repo = remember(state.database) {
+                object : IllustNextUrlRepo(state.database,"recommend") {
+                    override suspend fun requestInitial(): IllustResult {
+                        delay(5.seconds)
+                        return state.client.getRecommendIllust()
                     }
 
-                    override suspend fun requestNext(nextUrl: String): NovelResult {
-                        return state.client.getRecommendNovelNext(
-                            NovelResult(nextUrl = nextUrl, novels = emptyList()),
-                        ) ?: NovelResult(nextUrl = null, novels = emptyList())
+                    override suspend fun requestNext(nextUrl: String): IllustResult {
+                        delay(5.seconds)
+                        val resp =
+                            state.client.getRecommendIllustNext(IllustResult(nextUrl = nextUrl, illusts = emptyList()))
+                                ?: return IllustResult(nextUrl = null, illusts = emptyList())
+
+                        return resp
                     }
+
                 }
             }
 
-            NovelFetchScreen(
-                pager = novelRepo.pager,
-                columns = StaggeredGridCells.Adaptive(420.dp),
+            IllustFetchScreen(
+                pager = repo.pager,
+                columns = StaggeredGridCells.Adaptive(265.dp),
                 modifier = Modifier.fillMaxSize(),
-                onLikeItemClicked = { _, _ -> delay(3.seconds) },
+                onLikeItemClicked = {a,b-> delay(3.seconds) }
             )
+
+//            //Novel flow example retained for comparison.
+//            val novelRepo = remember(state.database) {
+//                object : NovelNextUrlRepo(state.database, "novel:recommend") {
+//                    override suspend fun requestInitial(): NovelResult {
+//                        return state.client.getRecommendNovel()
+//                    }
+//
+//                    override suspend fun requestNext(nextUrl: String): NovelResult {
+//                        return state.client.getRecommendNovelNext(
+//                            NovelResult(nextUrl = nextUrl, novels = emptyList()),
+//                        ) ?: NovelResult(nextUrl = null, novels = emptyList())
+//                    }
+//                }
+//            }
+//
+//            NovelFetchScreen(
+//                pager = novelRepo.pager,
+//                columns = StaggeredGridCells.Adaptive(420.dp),
+//                modifier = Modifier.fillMaxSize(),
+//                onLikeItemClicked = { _, _ -> delay(3.seconds) },
+//            )
 
 
 

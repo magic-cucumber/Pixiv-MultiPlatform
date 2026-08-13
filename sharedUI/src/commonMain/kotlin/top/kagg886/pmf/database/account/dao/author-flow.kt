@@ -18,7 +18,7 @@ interface AuthorFlowDao {
 
     @Query(
         """
-        SELECT user_cache.* FROM user_cache
+        SELECT user_cache.*, author_flow.id AS flowId FROM user_cache
         INNER JOIN author_flow ON author_flow.userCacheId = user_cache.userId
         WHERE author_flow.tag = :tag
         ORDER BY author_flow.id
