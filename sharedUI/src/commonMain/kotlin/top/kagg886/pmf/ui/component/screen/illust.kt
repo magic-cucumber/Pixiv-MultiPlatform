@@ -22,9 +22,11 @@ import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
-import top.kagg886.pmf.database.account.entity.AuthorDisplayed
+import top.kagg886.pmf.database.account.entity.UserDisplayed
 import top.kagg886.pmf.database.account.entity.IllustCacheDisplayed
 import top.kagg886.pmf.database.account.entity.ImageUrlsCache
+import top.kagg886.pmf.database.account.entity.UserCache
+import top.kagg886.pmf.database.account.entity.UserDisplayedWithoutFlowed
 import top.kagg886.pmf.i18n.*
 import top.kagg886.pmf.ui.component.LoadingIconButton
 import top.kagg886.pmf.ui.component.LoadingIconButtonState
@@ -240,7 +242,7 @@ private fun previewIllust(
     isBookmarked = bookmarked,
     illustAiType = 0,
     imageUrlsId = "img$id",
-    author = AuthorDisplayed(
+    author = UserDisplayedWithoutFlowed(
         userId = 1L,
         name = "author",
         account = "account",

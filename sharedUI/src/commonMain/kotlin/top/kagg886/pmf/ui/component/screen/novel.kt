@@ -341,7 +341,7 @@ private fun previewNovel(id: Long, bookmarked: Boolean = false) = NovelCacheDisp
     isAI = false,
     isR18 = false,
     isR18G = false,
-    author = AuthorDisplayed(
+    author = UserDisplayedWithoutFlowed(
         userId = 1L,
         name = "author",
         account = "account",

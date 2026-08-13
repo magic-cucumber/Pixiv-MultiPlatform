@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
@@ -33,7 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -47,7 +45,7 @@ import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import top.kagg886.pmf.LocalNavController
-import top.kagg886.pmf.database.account.entity.AuthorDisplayed
+import top.kagg886.pmf.database.account.entity.UserDisplayed
 import top.kagg886.pmf.database.account.entity.ImageUrlsCache
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.author_fetch_follow
@@ -66,13 +64,13 @@ private val AuthorItemHeight = 112.dp
 
 @Composable
 fun AuthorFetchScreen(
-    pager: Pager<Int, AuthorDisplayed>,
+    pager: Pager<Int, UserDisplayed>,
     columns: StaggeredGridCells,
     modifier: Modifier = Modifier,
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     itemPadding: PaddingValues = PaddingValues(4.dp),
-    onAuthorItemClicked: suspend (AuthorDisplayed) -> Unit = {},
-    onFollowItemClicked: suspend (AuthorDisplayed, Boolean) -> Unit = { _, _ -> },
+    onAuthorItemClicked: suspend (UserDisplayed) -> Unit = {},
+    onFollowItemClicked: suspend (UserDisplayed, Boolean) -> Unit = { _, _ -> },
 ) {
     val nav = LocalNavController.current
     BaseFetchScreen(
@@ -103,12 +101,12 @@ fun AuthorFetchScreen(
 
 @Composable
 private fun AuthorListContent(
-    items: LazyPagingItems<AuthorDisplayed>,
+    items: LazyPagingItems<UserDisplayed>,
     columns: StaggeredGridCells,
     state: LazyStaggeredGridState,
     itemPadding: PaddingValues,
-    onAuthorItemClicked: suspend (AuthorDisplayed) -> Unit,
-    onFollowItemClicked: suspend (AuthorDisplayed, Boolean) -> Unit,
+    onAuthorItemClicked: suspend (UserDisplayed) -> Unit,
+    onFollowItemClicked: suspend (UserDisplayed, Boolean) -> Unit,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val horizontalSpacing =
@@ -161,9 +159,9 @@ private fun AuthorListContent(
 @Composable
 private fun AuthorListItem(
     modifier: Modifier = Modifier,
-    author: AuthorDisplayed,
-    onClick: suspend (AuthorDisplayed) -> Unit,
-    onFollowClicked: suspend (AuthorDisplayed, Boolean) -> Unit,
+    author: UserDisplayed,
+    onClick: suspend (UserDisplayed) -> Unit,
+    onFollowClicked: suspend (UserDisplayed, Boolean) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
     var followLoading by remember(author.flowId) { mutableStateOf(false) }
@@ -246,7 +244,7 @@ private fun AuthorListItem(
     }
 }
 
-private fun previewAuthor(id: Long, followed: Boolean = false) = AuthorDisplayed(
+private fun previewAuthor(id: Long, followed: Boolean = false) = UserDisplayed(
     userId = id,
     name = "Author $id",
     account = "author_$id",

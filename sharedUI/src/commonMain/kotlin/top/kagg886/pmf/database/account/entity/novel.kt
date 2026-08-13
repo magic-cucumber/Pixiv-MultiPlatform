@@ -77,7 +77,7 @@ data class NovelCacheDisplayed(
     val isR18G: Boolean,
 
     @Relation(entity = UserCache::class, parentColumns = ["authorId"], entityColumns = ["userId"])
-    val author: AuthorDisplayed,
+    val author: UserDisplayedWithoutFlowed,
 
     @Relation(parentColumns = ["imageUrlsId"], entityColumns = ["id"])
     val imageUrls: ImageUrlsCache,

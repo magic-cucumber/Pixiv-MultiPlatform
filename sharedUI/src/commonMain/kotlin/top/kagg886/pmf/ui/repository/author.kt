@@ -3,7 +3,7 @@ package top.kagg886.pmf.ui.repository
 import androidx.paging.PagingSource
 import top.kagg886.pixko.User
 import top.kagg886.pmf.database.account.AppAccountDatabase
-import top.kagg886.pmf.database.account.entity.AuthorDisplayed
+import top.kagg886.pmf.database.account.entity.UserDisplayed
 import top.kagg886.pmf.database.account.entity.AuthorFlow
 import top.kagg886.pmf.database.account.entity.ImageUrlsCache
 import top.kagg886.pmf.database.account.entity.UserCache
@@ -15,7 +15,7 @@ abstract class AuthorIndexedRepo(
     database: AppAccountDatabase,
     tag: String,
     private val networkPageSize: Int = DEFAULT_PAGE_SIZE,
-) : BaseIndexedRepo<AuthorDisplayed>(database, tag, networkPageSize) {
+) : BaseIndexedRepo<UserDisplayed>(database, tag, networkPageSize) {
     protected abstract suspend fun request(index: Int): List<User>
 
     protected open fun endOfPaginationReached(index: Int, users: List<User>): Boolean =
@@ -27,7 +27,7 @@ abstract class AuthorIndexedRepo(
 
     final override suspend fun clearFlow() = database.authorFlowDao().clean(flowTag)
 
-    final override fun pagingSource(): PagingSource<Int, AuthorDisplayed> =
+    final override fun pagingSource(): PagingSource<Int, UserDisplayed> =
         database.authorFlowDao().query(flowTag)
 
     private suspend fun load(index: Int): LoadedPage<Int> {
@@ -64,7 +64,7 @@ abstract class AuthorNextUrlRepo(
     database: AppAccountDatabase,
     tag: String,
     pageSize: Int = DEFAULT_PAGE_SIZE,
-) : BaseNextUrlRepo<AuthorDisplayed>(database, tag, pageSize) {
+) : BaseNextUrlRepo<UserDisplayed>(database, tag, pageSize) {
     protected abstract suspend fun requestInitial(): LoadedPage<String>
 
     protected abstract suspend fun requestNext(nextUrl: String): LoadedPage<String>
@@ -93,7 +93,7 @@ abstract class AuthorNextUrlRepo(
 
     final override suspend fun clearFlow() = database.authorFlowDao().clean(flowTag)
 
-    final override fun pagingSource(): PagingSource<Int, AuthorDisplayed> =
+    final override fun pagingSource(): PagingSource<Int, UserDisplayed> =
         database.authorFlowDao().query(flowTag)
 
     private fun logLoadedPage(page: LoadedPage<String>, responseLabel: String) {

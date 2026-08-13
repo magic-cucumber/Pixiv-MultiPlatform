@@ -7,7 +7,7 @@ import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
-import top.kagg886.pmf.database.account.entity.AuthorDisplayed
+import top.kagg886.pmf.database.account.entity.UserDisplayed
 import top.kagg886.pmf.database.account.entity.AuthorFlow
 
 @Dao
@@ -25,7 +25,7 @@ interface AuthorFlowDao {
         """,
     )
     @Transaction
-    fun query(tag: String): PagingSource<Int, AuthorDisplayed>
+    fun query(tag: String): PagingSource<Int, UserDisplayed>
 
     @Insert
     suspend fun insert(flow: List<AuthorFlow>)

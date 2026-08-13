@@ -87,7 +87,7 @@ data class IllustCacheDisplayed(
         parentColumns = ["authorId"],
         entityColumns = ["userId"],
     )
-    val author: AuthorDisplayed,
+    val author: UserDisplayedWithoutFlowed,
 
     @Relation(
         parentColumns = ["imageUrlsId"],

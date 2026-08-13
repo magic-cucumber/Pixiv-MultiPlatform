@@ -32,9 +32,25 @@ data class UserCache(
     }
 }
 
-data class AuthorDisplayed(
+data class UserDisplayed(
     /** The database identity of the row in author_flow; zero for nested author relations. */
     val flowId: Long = 0L,
+    val userId: Long,
+    val name: String,
+    val account: String,
+    val profileImageUrlsId: String,
+    val isFollowed: Boolean? = null,
+    val comment: String? = null,
+
+    @Relation(
+        parentColumns = ["profileImageUrlsId"],
+        entityColumns = ["id"],
+    )
+    val profileImageUrls: ImageUrlsCache,
+)
+
+
+data class UserDisplayedWithoutFlowed(
     val userId: Long,
     val name: String,
     val account: String,
