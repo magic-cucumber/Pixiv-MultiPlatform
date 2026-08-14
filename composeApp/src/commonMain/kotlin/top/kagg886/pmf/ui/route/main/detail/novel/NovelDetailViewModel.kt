@@ -18,6 +18,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,8 +65,19 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.LanguageDetector
+import top.kagg886.pmf.translate.PageTranslationState
+import top.kagg886.pmf.translate.SentencePair
+import top.kagg886.pmf.translate.SentenceSegmenter
+import top.kagg886.pmf.translate.SentenceTranslationParser
+import top.kagg886.pmf.translate.TranslateResult
+import top.kagg886.pmf.translate.TranslateScheduler
+import top.kagg886.pmf.translate.isAiTranslateEnabled
+import top.kagg886.pmf.translate.translationDisplayText
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.util.NovelNodeElement
+import top.kagg886.pmf.ui.util.buildPageIndex
+import top.kagg886.pmf.ui.util.buildPageText
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
@@ -78,6 +90,9 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         container(NovelDetailViewState.Loading(MutableStateFlow("Loading...")))
     private val client = PixivConfig.newAccountFromConfig()
     private val database by inject<AppDatabase>()
+    private val translateScheduler by inject<TranslateScheduler>()
+    private val translationMutex = Mutex()
+    private val activePages = mutableSetOf<Int>()
 
     private fun CombinedText.toPlainString() = this.joinToString("") { it.text }
 
@@ -542,6 +557,146 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         database.illustGalleryDAO().insert(illust)
         postSideEffect(NovelDetailSideEffect.NavigateIllustDetail(IllustDetailRoute(illust.id)))
     }
+
+    /** 切换正文翻译模式；开启后由 [onVisiblePagesChanged] 懒触发可见页翻译。 */
+    @OptIn(OrbitExperimental::class)
+    fun toggleTranslateNovel() = intent {
+        runOn<NovelDetailViewState.Success> {
+            if (state.translationMode) {
+                reduce { state.copy(translationMode = false, pageTranslations = emptyMap()) }
+                return@runOn
+            }
+            if (!isAiTranslateEnabled()) return@runOn
+            reduce { state.copy(translationMode = true) }
+        }
+    }
+
+    /**
+     * 可见页懒翻译：仅对 Pending 且包含文本的页发起流式翻译，
+     * 进行中的页由 [activePages] 去重，失败页不自动重试。
+     */
+    @OptIn(OrbitExperimental::class)
+    fun onVisiblePagesChanged(visiblePages: Set<Int>) = intent {
+        runOn<NovelDetailViewState.Success> {
+            val current = state
+            if (!current.translationMode) return@runOn
+            val pageIndex = buildPageIndex(current.nodeMap)
+            val toStart = translationMutex.withLock {
+                visiblePages.filter { page ->
+                    val translation = current.pageTranslations[page]
+                    page !in activePages &&
+                        (translation == null || translation is PageTranslationState.Pending) &&
+                        buildPageText(current.nodeMap, pageIndex, page).isNotBlank()
+                }.also { activePages += it }
+            }
+            if (toStart.isEmpty()) return@runOn
+
+            val target = LanguageDetector.targetLanguageName()
+            // 仅用于 toast 提示；每页的成功/失败由各协程局部 pageFailed 独立判定，
+            // 避免一页失败把同批其他成功页误标为 Failed。
+            val anyFailed = atomic(false)
+            coroutineScope {
+                toStart.map { page ->
+                    launch {
+                        var pageFailed = false
+                        try {
+                            val pageText = buildPageText(current.nodeMap, pageIndex, page)
+                            var lastText: String? = null
+                            reduce {
+                                if (!state.translationMode) return@reduce state
+                                state.copy(
+                                    pageTranslations =
+                                    state.pageTranslations + (page to PageTranslationState.Translating("")),
+                                )
+                            }
+                            translateScheduler.translateStream(pageText, target).collect { result ->
+                                when (result) {
+                                    is TranslateResult.Success -> {
+                                        lastText = result.text
+                                        reduce {
+                                            if (!state.translationMode) return@reduce state
+                                            state.copy(
+                                                pageTranslations =
+                                                state.pageTranslations +
+                                                    (page to PageTranslationState.Translating(result.text)),
+                                            )
+                                        }
+                                    }
+
+                                    is TranslateResult.Failure -> pageFailed = true
+                                }
+                            }
+                            val finalText = lastText
+                            if (pageFailed || finalText == null) {
+                                anyFailed.value = true
+                                reduce {
+                                    if (!state.translationMode) return@reduce state
+                                    state.copy(
+                                        pageTranslations = state.pageTranslations + (page to PageTranslationState.Failed),
+                                    )
+                                }
+                            } else {
+                                val originalSentences = SentenceSegmenter.split(pageText)
+                                val translatedSentences = SentenceTranslationParser.parse(finalText)
+                                val pairs =
+                                    SentenceTranslationParser.align(originalSentences, translatedSentences)
+                                        ?: listOf(SentencePair(pageText, translatedSentences.joinToString("\n")))
+                                reduce {
+                                    if (!state.translationMode) return@reduce state
+                                    state.copy(
+                                        pageTranslations =
+                                        state.pageTranslations + (page to PageTranslationState.Complete(pairs)),
+                                    )
+                                }
+                            }
+                        } finally {
+                            translationMutex.withLock { activePages -= page }
+                        }
+                    }
+                }.joinAll()
+            }
+            if (anyFailed.value) {
+                postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.ai_translate_failed)))
+            }
+        }
+    }
+
+    /** 切换抽屉内标题+简介的译文显示。 */
+    @OptIn(OrbitExperimental::class)
+    fun toggleTranslateIntro() = intent {
+        runOn<NovelDetailViewState.Success> {
+            val current = state
+            if (current.introTranslating) return@runOn
+            if (current.introTranslations.isNotEmpty()) {
+                reduce { state.copy(introTranslations = emptyMap()) }
+                return@runOn
+            }
+            if (!isAiTranslateEnabled()) return@runOn
+
+            reduce { state.copy(introTranslating = true) }
+            val target = LanguageDetector.targetLanguageName()
+            val (titleResult, captionResult) = coroutineScope {
+                val titleDeferred = async { translateScheduler.translate(current.novel.title, target) }
+                val captionDeferred = async { translateScheduler.translate(current.novel.caption, target) }
+                titleDeferred.await() to captionDeferred.await()
+            }
+
+            if (titleResult is TranslateResult.Failure || captionResult is TranslateResult.Failure) {
+                postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.ai_translate_failed)))
+                reduce { state.copy(introTranslating = false) }
+            } else {
+                reduce {
+                    state.copy(
+                        introTranslating = false,
+                        introTranslations = mapOf(
+                            "title" to (titleResult as TranslateResult.Success).text.translationDisplayText(),
+                            "caption" to (captionResult as TranslateResult.Success).text.translationDisplayText(),
+                        ),
+                    )
+                }
+            }
+        }
+    }
 }
 
 sealed class NovelDetailViewState {
@@ -554,6 +709,10 @@ sealed class NovelDetailViewState {
         val seriesInfo: SeriesInfo? = null,
 
         val itemInViewLater: Boolean,
+        val translationMode: Boolean = false,
+        val pageTranslations: Map<Int, PageTranslationState> = emptyMap(),
+        val introTranslations: Map<String, String> = emptyMap(),
+        val introTranslating: Boolean = false,
     ) : NovelDetailViewState()
 }
 

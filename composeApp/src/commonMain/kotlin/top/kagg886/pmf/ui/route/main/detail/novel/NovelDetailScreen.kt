@@ -34,6 +34,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -42,6 +43,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.OutlinedCard
@@ -67,6 +69,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -92,6 +95,9 @@ import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.openBrowser
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.LanguageDetector
+import top.kagg886.pmf.translate.PageTranslationState
+import top.kagg886.pmf.translate.isAiTranslateEnabled
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.FavoriteButton
 import top.kagg886.pmf.ui.component.FavoriteState
@@ -103,6 +109,9 @@ import top.kagg886.pmf.ui.component.collapsable.v3.connectedScroll
 import top.kagg886.pmf.ui.component.collapsable.v3.nestedScrollWorkaround
 import top.kagg886.pmf.ui.component.collapsable.v3.rememberConnectedScrollState
 import top.kagg886.pmf.ui.component.dialog.TagFavoriteDialog
+import top.kagg886.pmf.ui.component.icon.AiTranslateButton
+import top.kagg886.pmf.ui.component.icon.ShowOriginal
+import top.kagg886.pmf.ui.component.icon.Translate
 import top.kagg886.pmf.ui.component.icon.View
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
@@ -113,6 +122,7 @@ import top.kagg886.pmf.ui.util.AuthorCard
 import top.kagg886.pmf.ui.util.CommentPanel
 import top.kagg886.pmf.ui.util.HTMLRichText
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
+import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.RichText
 import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.keyboardScrollerController
@@ -240,11 +250,12 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                         contentDescription = null,
                                     )
                                     Spacer(Modifier.height(8.dp))
+                                    val introTitle = state.introTranslations["title"] ?: state.novel.title
                                     Text(
                                         text = buildAnnotatedString {
                                             withClickable(
                                                 theme,
-                                                state.novel.title,
+                                                introTitle,
                                             ) {
                                                 model.intent {
                                                     postSideEffect(
@@ -286,14 +297,46 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                 OutlinedCard(modifier = Modifier.padding(horizontal = 8.dp)) {
                                     ListItem(
                                         headlineContent = {
-                                            SelectionContainer {
-                                                HTMLRichText(
-                                                    html = state.novel.caption.ifEmpty {
-                                                        stringResource(
-                                                            Res.string.no_description_novel,
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                verticalAlignment = Alignment.Bottom,
+                                            ) {
+                                                Box(Modifier.weight(1f)) {
+                                                    val introCaption = state.introTranslations["caption"]
+                                                    if (introCaption != null) {
+                                                        SelectionContainer {
+                                                            Text(introCaption)
+                                                        }
+                                                    } else {
+                                                        SelectionContainer {
+                                                            HTMLRichText(
+                                                                html = state.novel.caption.ifEmpty {
+                                                                    stringResource(
+                                                                        Res.string.no_description_novel,
+                                                                    )
+                                                                },
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                if (state.introTranslations.isNotEmpty() ||
+                                                    state.introTranslating ||
+                                                    (
+                                                        isAiTranslateEnabled() &&
+                                                            LanguageDetector.isForeign(state.novel.title + state.novel.caption)
                                                         )
-                                                    },
-                                                )
+                                                ) {
+                                                    AiTranslateButton(
+                                                        translated = state.introTranslations.isNotEmpty(),
+                                                        translating = state.introTranslating,
+                                                        modifier = Modifier.padding(start = 8.dp),
+                                                        iconSize = 18.dp,
+                                                        touchSize = 24.dp,
+                                                        onClick = {
+                                                            model.toggleTranslateIntro()
+                                                        },
+                                                    )
+                                                }
                                             }
                                         },
                                     )
@@ -534,6 +577,10 @@ private fun NovelDetailTopAppBar(
     onDrawerOpen: () -> Unit = {},
     onViewLaterBtnClick: (Boolean) -> Unit = {},
     onBlackRequest: () -> Unit = {},
+    translateVisible: Boolean = false,
+    translated: Boolean = false,
+    translating: Boolean = false,
+    onTranslateClick: () -> Unit = {},
 ) {
     val stack = LocalNavBackStack.current
     TopAppBar(
@@ -619,6 +666,29 @@ private fun NovelDetailTopAppBar(
                     }
                 }
 
+                if (translateVisible) {
+                    IconButton(onClick = onTranslateClick) {
+                        if (translating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = if (translated) ShowOriginal else Translate,
+                                contentDescription = stringResource(
+                                    if (translated) {
+                                        Res.string.ai_translate_show_original
+                                    } else {
+                                        Res.string.ai_translate_translate
+                                    },
+                                ),
+                                tint = LocalContentColor.current,
+                            )
+                        }
+                    }
+                }
+
                 IconButton(onClick = onDrawerOpen) {
                     Icon(Icons.Default.Edit, null)
                 }
@@ -658,8 +728,25 @@ private fun NovelDetailContent(
 
         is NovelDetailViewState.Success -> {
             val scroll = rememberScrollState()
+            var viewportHeightPx by remember {
+                mutableIntStateOf(0)
+            }
             val connect =
                 rememberConnectedScrollState(immediatelyShowTopBarWhenFingerPullDown = true)
+            val novelBodyText = remember(state.nodeMap) {
+                buildString {
+                    for (node in state.nodeMap) {
+                        when (node) {
+                            is NovelNodeElement.Plain -> append(node.text).append('\n')
+                            is NovelNodeElement.Title -> append(node.text).append('\n')
+                            else -> {}
+                        }
+                    }
+                }
+            }
+            val showNovelTranslate =
+                state.translationMode ||
+                    (isAiTranslateEnabled() && LanguageDetector.isForeign(novelBodyText))
 
             Column(modifier) {
                 // TopAppBar 使用 connectedScroll 来实现联动滚动
@@ -674,12 +761,22 @@ private fun NovelDetailContent(
                         if (it) model.addViewLater() else model.removeViewLater()
                     },
                     onBlackRequest = onBlackRequest,
+                    translateVisible = showNovelTranslate,
+                    translated = state.translationMode,
+                    translating =
+                    state.pageTranslations.values.any { it is PageTranslationState.Translating },
+                    onTranslateClick = {
+                        model.toggleTranslateNovel()
+                    },
                 )
 
                 // 内容区域，应用 nestedScroll 来处理滚动事件
                 Box(
                     modifier = Modifier
                         .weight(1f)
+                        .onSizeChanged {
+                            viewportHeightPx = it.height
+                        }
                         .nestedScroll(connect.nestedScrollConnection)
                         .nestedScrollWorkaround(scroll, connect),
                 ) {
@@ -695,6 +792,12 @@ private fun NovelDetailContent(
                         val scope = rememberCoroutineScope()
                         RichText(
                             state = state.nodeMap,
+                            pageTranslations = state.pageTranslations,
+                            scrollState = scroll,
+                            viewportHeightPx = viewportHeightPx,
+                            onVisiblePagesChanged = {
+                                model.onVisiblePagesChanged(it)
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 15.dp)

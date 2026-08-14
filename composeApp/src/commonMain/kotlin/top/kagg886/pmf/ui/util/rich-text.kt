@@ -1,5 +1,6 @@
 package top.kagg886.pmf.ui.util
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.InlineTextContent
@@ -28,13 +29,18 @@ import com.fleeksoft.ksoup.nodes.TextNode
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.time.Clock
+import kotlinx.coroutines.flow.distinctUntilChanged
 import top.kagg886.pixko.module.illust.Illust
 import top.kagg886.pixko.module.illust.IllustImagesType
 import top.kagg886.pixko.module.illust.get
 import top.kagg886.pmf.backend.AppConfig
 import top.kagg886.pmf.backend.Platform
 import top.kagg886.pmf.backend.currentPlatform
+import top.kagg886.pmf.translate.PageTranslationState
 import top.kagg886.pmf.ui.component.ImagePreviewer
+import top.kagg886.pmf.ui.component.translate.appendSentencePairs
+import top.kagg886.pmf.ui.component.translate.failedTranslationColor
+import top.kagg886.pmf.ui.component.translate.translatingTranslationColor
 
 sealed interface NovelNodeElement {
     data class Plain(val text: String) : NovelNodeElement
@@ -96,6 +102,11 @@ fun RichText(
     state: List<NovelNodeElement>,
     modifier: Modifier = Modifier,
     onIllustClick: (Illust) -> Unit = {},
+    pageTranslations: Map<Int, PageTranslationState> = emptyMap(),
+    scrollState: ScrollState? = null,
+    viewportHeightPx: Int = 0,
+    onVisiblePagesChanged: (Set<Int>) -> Unit = {},
+    translationMode: Boolean = false,
 ) {
     val previews = remember {
         state.filterIsInstance<NovelNodeElement.UploadImage>().map { it.url }
@@ -114,8 +125,14 @@ fun RichText(
     val defaultTextStyle = LocalTextStyle.current
 
     val density = LocalDensity.current
+    val pageIndex = remember(state) {
+        buildPageIndex(state)
+    }
     var screenWidth by remember {
         mutableStateOf(0.sp)
+    }
+    var layoutResult by remember {
+        mutableStateOf<TextLayoutResult?>(null)
     }
     val inlineNode = remember(state, screenWidth, onIllustClick) {
         buildMap {
@@ -186,14 +203,108 @@ fun RichText(
         }
     }
     val colors = MaterialTheme.colorScheme
-    val annotateString = remember {
-        buildAnnotatedString {
-            for (i in state) {
+    val failureColor = failedTranslationColor()
+    val translatingColor = translatingTranslationColor()
+    var toggledSentences by remember {
+        mutableStateOf(emptyMap<Int, Set<Int>>())
+    }
+
+    val annotatedState =
+        remember(
+            state,
+            pageTranslations,
+            toggledSentences,
+            screenWidth,
+            colors,
+            failureColor,
+            translatingColor,
+        ) {
+            val builder = AnnotatedString.Builder()
+            val ranges = mutableListOf<Pair<Int, Int>>()
+            val appendedPages = mutableSetOf<Int>()
+
+            fun AnnotatedString.Builder.appendTextNode(text: String, index: Int, title: Boolean) {
+                val pageId = pageIndex[index]
+                val pageState = pageTranslations[pageId]
+                val translated = pageState != null && pageState !is PageTranslationState.Pending
+                if (translated) {
+                    if (pageId !in appendedPages) {
+                        appendedPages += pageId
+                        when (pageState) {
+                            is PageTranslationState.Translating -> {
+                                withStyle(SpanStyle(color = translatingColor)) {
+                                    append(pageState.streamedText)
+                                }
+                            }
+
+                            is PageTranslationState.Failed -> {
+                                withStyle(SpanStyle(color = failureColor)) {
+                                    append(buildPageText(state, pageIndex, pageId))
+                                }
+                            }
+
+                            is PageTranslationState.Complete -> {
+                                appendSentencePairs(
+                                    pairs = pageState.pairs,
+                                    showingOriginal = toggledSentences[pageId] ?: emptySet(),
+                                    colors = colors,
+                                ) { sentenceIndex ->
+                                    val current = toggledSentences[pageId] ?: emptySet()
+                                    toggledSentences =
+                                        toggledSentences +
+                                        (
+                                            pageId to
+                                                if (sentenceIndex in current) {
+                                                    current - sentenceIndex
+                                                } else {
+                                                    current + sentenceIndex
+                                                }
+                                            )
+                                }
+                            }
+
+                            is PageTranslationState.Pending -> {}
+                        }
+                    }
+                    return
+                }
+
+                if (title) {
+                    appendLine()
+                    withStyle(ParagraphStyle(textIndent = TextIndent(firstLine = 0.sp))) {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = textSize * 1.5)) {
+                            append(text)
+                        }
+                    }
+                    appendLine()
+                    return
+                }
+
+                fun String.replaceBigLines() = replace("(\\s*\\r?\\n){2,}\n".toRegex(), "\n")
+                if (AppConfig.autoTypo) {
+                    with(text.replaceBigLines().lines()) {
+                        filter { it.isNotBlank() }.map {
+                            if (currentPlatform is Platform.Android) {
+                                return@map it.trim()
+                            }
+                            // 8个空格
+                            return@map "\n        ${it.trim()}"
+                        }.forEach {
+                            appendLine(it)
+                        }
+                    }
+                    return
+                }
+                append(text)
+            }
+
+            for ((index, i) in state.withIndex()) {
+                val start = builder.length
                 when (i) {
                     is NovelNodeElement.JumpPage -> {}
 
                     is NovelNodeElement.JumpUri -> {
-                        withLink(
+                        builder.withLink(
                             colors = colors,
                             link = i.uri,
                             display = i.text,
@@ -201,57 +312,77 @@ fun RichText(
                     }
 
                     is NovelNodeElement.NewPage -> {
-                        withStyle(ParagraphStyle(lineHeight = screenWidth, textIndent = TextIndent(firstLine = 0.sp))) {
-                            appendInlineContent("page_${i.index}")
+                        builder.withStyle(ParagraphStyle(lineHeight = screenWidth, textIndent = TextIndent(firstLine = 0.sp))) {
+                            builder.appendInlineContent("page_${i.index}")
                         }
                     }
 
                     is NovelNodeElement.Notation -> {
-                        append(i.notation)
+                        builder.append(i.notation)
                     }
 
                     is NovelNodeElement.UploadImage -> {
-                        withStyle(ParagraphStyle(lineHeight = screenWidth, textIndent = TextIndent(firstLine = 0.sp))) {
-                            appendInlineContent("upload_${i.url.hashCode()}")
+                        builder.withStyle(ParagraphStyle(lineHeight = screenWidth, textIndent = TextIndent(firstLine = 0.sp))) {
+                            builder.appendInlineContent("upload_${i.url.hashCode()}")
                         }
                     }
 
                     is NovelNodeElement.PixivImage -> {
-                        withStyle(ParagraphStyle(lineHeight = screenWidth, textIndent = TextIndent(firstLine = 0.sp))) {
-                            appendInlineContent("pixiv_${i.illust.id}")
+                        builder.withStyle(ParagraphStyle(lineHeight = screenWidth, textIndent = TextIndent(firstLine = 0.sp))) {
+                            builder.appendInlineContent("pixiv_${i.illust.id}")
                         }
                     }
 
                     is NovelNodeElement.Plain -> {
-                        fun String.replaceBigLines() = replace("(\\s*\\r?\\n){2,}\n".toRegex(), "\n")
-                        if (AppConfig.autoTypo) {
-                            with(i.text.replaceBigLines().lines()) {
-                                filter { it.isNotBlank() }.map {
-                                    if (currentPlatform is Platform.Android) {
-                                        return@map it.trim()
-                                    }
-                                    // 8个空格
-                                    return@map "\n        ${it.trim()}"
-                                }.forEach(this@buildAnnotatedString::appendLine)
-                            }
-                            continue
-                        }
-                        append(i.text)
+                        builder.appendTextNode(i.text, index, title = false)
                     }
 
                     is NovelNodeElement.Title -> {
-                        appendLine()
-                        withStyle(ParagraphStyle(textIndent = TextIndent(firstLine = 0.sp))) {
-                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = textSize * 1.5)) {
-                                append(i.text)
-                            }
-                        }
-                        appendLine()
+                        builder.appendTextNode(i.text, index, title = true)
                     }
                 }
+                ranges += start to builder.length
+            }
+            builder.toAnnotatedString() to ranges
+        }
+    val annotateString = annotatedState.first
+    val nodeRanges = annotatedState.second
+
+    val currentOnVisiblePagesChanged by rememberUpdatedState(onVisiblePagesChanged)
+    val currentViewportHeightPx by rememberUpdatedState(viewportHeightPx)
+    LaunchedEffect(scrollState, pageIndex, nodeRanges) {
+        val scroll = scrollState ?: return@LaunchedEffect
+        snapshotFlow {
+            val layout = layoutResult
+            val viewport = currentViewportHeightPx
+            if (layout == null || viewport <= 0) {
+                emptySet<Int>()
+            } else {
+                val startLine = layout.getLineForVerticalPosition(scroll.value.toFloat())
+                val endLine =
+                    layout.getLineForVerticalPosition((scroll.value + viewport).toFloat())
+                        .coerceAtLeast(startLine)
+                // 保守向前多取几行，提前触发翻译
+                val lookaheadEndLine = (endLine + LOOKAHEAD_LINES).coerceAtMost(layout.lineCount - 1)
+                val visibleStart = layout.getLineStart(startLine)
+                val visibleEnd = layout.getLineEnd(lookaheadEndLine)
+                val pages = mutableSetOf<Int>()
+                for ((index, range) in nodeRanges.withIndex()) {
+                    val (rangeStart, rangeEnd) = range
+                    if (rangeEnd <= rangeStart) continue
+                    if (rangeStart <= visibleEnd && rangeEnd >= visibleStart) {
+                        pages += pageIndex[index]
+                    }
+                }
+                pages
             }
         }
+            .distinctUntilChanged()
+            .collect {
+                currentOnVisiblePagesChanged(it)
+            }
     }
+
     val style = remember {
         when {
             AppConfig.autoTypo -> TextStyle(
@@ -271,6 +402,9 @@ fun RichText(
         inlineContent = inlineNode,
         fontSize = textSize,
         style = style,
+        onTextLayout = {
+            layoutResult = it
+        },
         modifier = modifier.onGloballyPositioned {
             screenWidth = with(density) {
                 val offset = it.positionInParent()
@@ -279,6 +413,8 @@ fun RichText(
         },
     )
 }
+
+private const val LOOKAHEAD_LINES = 3
 
 @Composable
 fun HTMLRichText(
