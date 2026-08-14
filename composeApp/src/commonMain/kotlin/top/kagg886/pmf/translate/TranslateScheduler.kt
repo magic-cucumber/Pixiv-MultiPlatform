@@ -94,7 +94,17 @@ class TranslateScheduler(
         semaphore.withPermit {
             withTimeout(timeout) {
                 val translated = translator.translate(text, targetLang)
-                if (translated.isBlank()) TranslateResult.Failure(text) else TranslateResult.Success(translated)
+                when {
+                    translated.isBlank() -> TranslateResult.Failure(text)
+
+                    // 模型"回显原文"：与原文相同的输出视为失败，绝不缓存
+                    isIdentityTranslation(text, translated) -> {
+                        logger.w { "ai translate returned identity text, treat as failure" }
+                        TranslateResult.Failure(text)
+                    }
+
+                    else -> TranslateResult.Success(translated)
+                }
             }
         }
     } catch (e: TimeoutCancellationException) {
@@ -238,7 +248,17 @@ class TranslateScheduler(
                 }
             }
         }
-        if (builder.isEmpty()) TranslateResult.Failure(text) else TranslateResult.Success(builder.toString())
+        when {
+            builder.isEmpty() -> TranslateResult.Failure(text)
+
+            // 模型"回显原文"：累积结果与原文相同视为失败，绝不缓存
+            isIdentityTranslation(text, builder.toString()) -> {
+                logger.w { "ai translate stream returned identity text, treat as failure" }
+                TranslateResult.Failure(text)
+            }
+
+            else -> TranslateResult.Success(builder.toString())
+        }
     } catch (e: TimeoutCancellationException) {
         logger.w { "ai translate stream timeout after ${timeout.inWholeSeconds}s" }
         TranslateResult.Failure(text)

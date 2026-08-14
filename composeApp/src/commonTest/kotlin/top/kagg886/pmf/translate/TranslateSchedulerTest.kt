@@ -244,6 +244,80 @@ class TranslateSchedulerTest {
     }
 
     @Test
+    fun testBlankTranslationIsFailureAndNotCached() = runBlocking {
+        var calls = 0
+        val translator = object : Translator {
+            override suspend fun translate(text: String, targetLang: String): String {
+                calls++
+                return ""
+            }
+
+            override fun translateStream(text: String, targetLang: String): Flow<String> = flow {}
+        }
+        val scheduler = TranslateScheduler(translator)
+
+        // 空内容不得被当作成功译文（否则原文会被缓存，之后永远显示原文）
+        assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
+        // 失败不缓存：再次调用必须重新请求 translator
+        assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
+        assertEquals(2, calls, "失败结果不应被缓存，重试必须重新请求")
+    }
+
+    @Test
+    fun testIdentityTranslationIsFailureAndNotCached() = runBlocking {
+        var calls = 0
+        val translator = object : Translator {
+            override suspend fun translate(text: String, targetLang: String): String {
+                calls++
+                return text // 模型回显原文
+            }
+
+            override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit(text) }
+        }
+        val scheduler = TranslateScheduler(translator)
+
+        assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
+        assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
+        assertEquals(2, calls, "回显原文的结果不应被缓存")
+    }
+
+    @Test
+    fun testBlankStreamIsFailureAndNotCached() = runBlocking {
+        var calls = 0
+        val translator = object : Translator {
+            override suspend fun translate(text: String, targetLang: String): String = ""
+
+            override fun translateStream(text: String, targetLang: String): Flow<String> = flow {
+                calls++
+                // 空流：不发射任何内容
+            }
+        }
+        val scheduler = TranslateScheduler(translator)
+
+        val results = scheduler.translateStream("hello", "中文").toList()
+        assertTrue(results.isNotEmpty(), "流式失败应以 Failure 结尾而非静默结束")
+        assertEquals(TranslateResult.Failure("hello"), results.last())
+
+        scheduler.translateStream("hello", "中文").toList()
+        assertEquals(2, calls, "流式失败不应被缓存")
+    }
+
+    @Test
+    fun testIdentityStreamIsFailure() = runBlocking {
+        val translator = object : Translator {
+            override suspend fun translate(text: String, targetLang: String): String = text
+
+            override fun translateStream(text: String, targetLang: String): Flow<String> = flow {
+                emit(text)
+            }
+        }
+        val scheduler = TranslateScheduler(translator)
+
+        val results = scheduler.translateStream("hello", "中文").toList()
+        assertEquals(TranslateResult.Failure("hello"), results.last(), "流式回显原文应以 Failure 结尾")
+    }
+
+    @Test
     fun testStreamConcurrentCollectorsShareSession() = runBlocking {
         val translator = FakeTranslator(delayMillis = 50)
         val scheduler = TranslateScheduler(translator)

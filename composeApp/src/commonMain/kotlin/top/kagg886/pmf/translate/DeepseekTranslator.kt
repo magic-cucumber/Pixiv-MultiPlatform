@@ -75,7 +75,9 @@ class DeepseekTranslator : Translator {
     override suspend fun translate(text: String, targetLang: String): String {
         val c = currentClient(targetLang)
         val response = c.chatStream(text).collectResponse()
-        return response.content.ifBlank { text }
+        // 空内容如实返回（由 TranslateScheduler 判为 Failure），
+        // 绝不把原文当作"译文"回退——否则会被当作成功结果写入缓存，导致后续永远显示原文。
+        return response.content
     }
 
     override fun translateStream(text: String, targetLang: String): Flow<String> = flow {
