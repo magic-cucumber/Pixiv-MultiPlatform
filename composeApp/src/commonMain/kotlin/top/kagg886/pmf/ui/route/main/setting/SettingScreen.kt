@@ -772,6 +772,109 @@ fun SettingScreen() {
                 onValueChange = { customShareDomain = it },
             )
         }
+        SettingsGroup(title = { Text(stringResource(Res.string.ai_translate_settings)) }) {
+            var aiTranslateEnabled by remember {
+                mutableStateOf(AppConfig.aiTranslateEnabled)
+            }
+            LaunchedEffect(aiTranslateEnabled) {
+                AppConfig.aiTranslateEnabled = aiTranslateEnabled
+            }
+
+            SettingsSwitch(
+                state = aiTranslateEnabled,
+                title = { Text(stringResource(Res.string.ai_translate_enable)) },
+                subtitle = {
+                    Text(stringResource(Res.string.ai_translate_enable_description))
+                },
+                onCheckedChange = {
+                    aiTranslateEnabled = it
+                },
+            )
+
+            AnimatedVisibility(
+                visible = aiTranslateEnabled,
+                enter = expandVertically(),
+                exit = shrinkVertically(),
+            ) {
+                Column {
+                    var deepseekApiKey by remember {
+                        mutableStateOf(AppConfig.deepseekApiKey)
+                    }
+                    LaunchedEffect(deepseekApiKey) {
+                        AppConfig.deepseekApiKey = deepseekApiKey
+                    }
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_api_key)) },
+                        value = deepseekApiKey,
+                        secret = true,
+                        onValueChange = {
+                            deepseekApiKey = it
+                        },
+                    )
+
+                    var aiTranslatePrompt by remember {
+                        mutableStateOf(AppConfig.aiTranslatePrompt)
+                    }
+                    LaunchedEffect(aiTranslatePrompt) {
+                        AppConfig.aiTranslatePrompt = aiTranslatePrompt
+                    }
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_prompt)) },
+                        value = aiTranslatePrompt,
+                        onValueChange = {
+                            aiTranslatePrompt = it
+                        },
+                    )
+
+                    var aiTranslateProperNouns by remember {
+                        mutableStateOf(AppConfig.aiTranslateProperNouns)
+                    }
+                    LaunchedEffect(aiTranslateProperNouns) {
+                        AppConfig.aiTranslateProperNouns = aiTranslateProperNouns
+                    }
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_proper_nouns)) },
+                        value = aiTranslateProperNouns,
+                        onValueChange = {
+                            aiTranslateProperNouns = it
+                        },
+                    )
+
+                    var aiTranslateCacheEnabled by remember {
+                        mutableStateOf(AppConfig.aiTranslateCacheEnabled)
+                    }
+                    LaunchedEffect(aiTranslateCacheEnabled) {
+                        AppConfig.aiTranslateCacheEnabled = aiTranslateCacheEnabled
+                    }
+                    SettingsSwitch(
+                        state = aiTranslateCacheEnabled,
+                        title = { Text(stringResource(Res.string.ai_translate_cache)) },
+                        subtitle = {
+                            Text(stringResource(Res.string.ai_translate_cache_description))
+                        },
+                        onCheckedChange = {
+                            aiTranslateCacheEnabled = it
+                        },
+                    )
+
+                    var aiTranslateModel by remember {
+                        mutableStateOf(AppConfig.aiTranslateModel)
+                    }
+                    LaunchedEffect(aiTranslateModel) {
+                        AppConfig.aiTranslateModel = aiTranslateModel
+                    }
+                    SettingsDropdownMenu(
+                        title = { Text(stringResource(Res.string.ai_translate_model)) },
+                        current = aiTranslateModel,
+                        data = listOf("deepseek-v4-flash", "deepseek-v4-pro"),
+                        optionsFormat = { it },
+                        onSelected = {
+                            aiTranslateModel = it
+                        },
+                    )
+                }
+            }
+        }
         SettingsGroup(title = { Text(stringResource(Res.string.login_sessions)) }) {
             val clip = LocalClipboard.current
             val scope = rememberCoroutineScope()
