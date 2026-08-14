@@ -632,7 +632,11 @@ private val pattern = Regex("\\(([^)]+)\\)")
 @Composable
 private fun CommentText(modifier: Modifier = Modifier, comment: String, emojis: Map<String, Int>) {
     val style = LocalTextStyle.current
-    val state by produceState(AnnotatedString("") to emptyMap<String, InlineTextContent>()) {
+    val state by produceState(
+        AnnotatedString("") to emptyMap<String, InlineTextContent>(),
+        comment,
+        emojis,
+    ) {
         val inlineContentMap = mutableMapOf<String, InlineTextContent>()
         val annotated = buildAnnotatedString {
             var lastIndex = 0
