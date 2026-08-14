@@ -102,10 +102,15 @@ import top.kagg886.pmf.backend.PlatformConfig
 import top.kagg886.pmf.backend.PlatformEngine
 import top.kagg886.pmf.backend.cachePath
 import top.kagg886.pmf.backend.currentPlatform
+import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.databaseBuilder
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.pixiv.PixivTokenStorage
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.DeepseekTranslator
+import top.kagg886.pmf.translate.RoomTranslateCache
+import top.kagg886.pmf.translate.TranslateCache
+import top.kagg886.pmf.translate.TranslateScheduler
 import top.kagg886.pmf.ui.component.dialog.CheckUpdateDialog
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.login.v2.LoginScreen
@@ -596,6 +601,9 @@ fun setupEnv() {
                         setQueryCoroutineContext(Dispatchers.IO)
                     }.build()
                 }
+
+                single<TranslateCache> { RoomTranslateCache(get<AppDatabase>().aiTranslateCacheDAO()) }
+                single { TranslateScheduler(DeepseekTranslator(), get<TranslateCache>()) }
 
                 single { DownloadScreenModel() }
                 single { UpdateCheckViewModel() }

@@ -66,6 +66,30 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
 
     var customShareDomain by string("custom_share_domain", "https://pixiv.net")
 
+    var deepseekApiKey by string("deepseek_api_key", "")
+    var aiTranslateEnabled by boolean("ai_translate_enabled", false)
+    var aiTranslatePrompt by string("ai_translate_prompt", DEFAULT_AI_TRANSLATE_PROMPT)
+    var aiTranslateProperNouns by string("ai_translate_proper_nouns", DEFAULT_AI_TRANSLATE_PROPER_NOUNS)
+    var aiTranslateModel by string("ai_translate_model", "deepseek-v4-flash")
+    var aiTranslateCacheEnabled by boolean("ai_translate_cache_enabled", true)
+
+    const val DEFAULT_AI_TRANSLATE_PROMPT =
+        "You are a professional translator. Translate the user-provided text into %lang%. " +
+            "Preserve the original meaning, tone and formatting. " +
+            "Split the source text into sentences and translate sentence by sentence, " +
+            "keeping the same order and sentence count. " +
+            "Respond with a JSON object only: {\"sentences\": [\"translated sentence 1\", \"translated sentence 2\", ...]}. " +
+            "No explanations, no markdown, no extra text.\n" +
+            "你是一名专业翻译。请将用户提供的文本翻译成%lang%。保留原意、语气与格式，" +
+            "把源文本按句子逐句翻译，保持顺序与句数一致。" +
+            "只返回 JSON 对象：{\"sentences\": [\"译文1\", \"译文2\", ...]}，" +
+            "不要添加任何解释、Markdown 或多余内容。"
+
+    const val DEFAULT_AI_TRANSLATE_PROPER_NOUNS =
+        "Proper nouns (character names, work titles, place names) should keep the original form " +
+            "or use the commonly accepted translation; do not translate them literally.\n" +
+            "人名、作品名、地名等专有名词保持原文或使用通行的译法，不要直译。"
+
     @Serializable
     enum class LanguageSettings(val tag: StringResource, val locale: Locale) {
         EN(Res.string.language_en, Locale("en-US")),
@@ -132,6 +156,8 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
         data class Proxy(
             val host: String = "localhost",
             val port: Int = 7890,
+            // 序列化名避开多态区分符 "type"，否则 JsonEncodingException（既有 bug）
+            @SerialName("proxy_type")
             val type: ProxyType = ProxyType.HTTP,
         ) : BypassSetting {
 

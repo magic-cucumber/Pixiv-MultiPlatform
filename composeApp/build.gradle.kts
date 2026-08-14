@@ -79,7 +79,7 @@ buildConfig {
     buildConfigField("APP_VERSION_NAME", pkgVersion)
     buildConfigField("APP_VERSION_CODE", pkgCode)
 
-    buildConfigField("DATABASE_VERSION", 11)
+    buildConfigField("DATABASE_VERSION", 12)
     buildConfigField("APP_COMMIT_ID", gitSha)
 }
 
@@ -188,6 +188,9 @@ kotlin {
 
             // logging
             implementation(libs.kermit)
+
+            // ai translate
+            implementation(libs.deepseek.helper)
 
             // epub module
             implementation(project(":lib:epub"))
