@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMF 业务日志"
+  short_description: "规范 ViewModel、Repository 与 Compose UI 的业务追踪日志"
+  default_prompt: "使用 $pmf-logger 添加或审查当前 PMF 业务与 UI 追踪日志。"

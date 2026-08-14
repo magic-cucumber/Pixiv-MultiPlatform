@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMF 任务编排"
+  short_description: "分析需求并按 PMF 代码场景加载对应项目技能与边界"
+  default_prompt: "使用 $pmf-workflow 分析当前 PMF 任务并加载所需的项目技能。"

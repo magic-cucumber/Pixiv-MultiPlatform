@@ -164,7 +164,7 @@ public class NavGraph<T : SerializableNavKey> internal constructor(
             parent: K,
             startDestination: T,
             config: NavConfigOverride<T> = NavConfigOverride(),
-            noinline content: @Composable (@Composable () -> Unit) -> Unit,
+            noinline content: @Composable (@Composable () -> Unit) -> Unit = { it() },
             builder: RouteBuilder<T>.() -> Unit,
         ) {
             val childBuilder = RouteBuilder<T>()

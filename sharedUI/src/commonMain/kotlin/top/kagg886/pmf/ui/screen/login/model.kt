@@ -15,6 +15,7 @@ import top.kagg886.pixko.TokenStorage
 import top.kagg886.pixko.TokenType
 import top.kagg886.pixko.TokenType.*
 import top.kagg886.pixko.module.user.getCurrentUserSimpleProfile
+import top.kagg886.pmf.database.common.AppCommonDatabase
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.login_profiling
 import top.kagg886.pmf.i18n.login_verifying

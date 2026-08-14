@@ -51,7 +51,7 @@ class RootViewModel(
                 initializeImageLoader(platformContext)
                 logger.i { "Persistent log writer and image loader initialized successfully; setting state to LoadSuccess" }
                 reduce {
-                    RootViewModelState.LoadSuccess
+                    RootViewModelState.LoadSuccess(database)
                 }
             } catch (e: Exception) {
                 logger.e(e) { "Root page model initialization failed; setting state to Error" }
@@ -132,7 +132,7 @@ private fun initializeImageLoader(context: PlatformContext) {
 
 sealed interface RootViewModelState {
     data object Loading : RootViewModelState
-    data object LoadSuccess : RootViewModelState
+    data class LoadSuccess(val database: AppCommonDatabase) : RootViewModelState
     data object Error : RootViewModelState
 }
 

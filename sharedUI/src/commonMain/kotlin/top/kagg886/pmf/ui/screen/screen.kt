@@ -60,6 +60,6 @@ fun RootScreen(content: @Composable () -> Unit) {
             },
         )
 
-        RootViewModelState.LoadSuccess -> content()
+        is RootViewModelState.LoadSuccess -> content()
     }
 }

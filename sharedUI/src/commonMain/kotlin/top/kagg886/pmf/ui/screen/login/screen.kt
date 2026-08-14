@@ -19,11 +19,11 @@ import org.jetbrains.compose.resources.stringResource
 import org.orbitmvi.orbit.compose.collectAsState
 import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.LocalNavController
-import top.kagg886.pmf.ui.screen.main.MainRoute
 import top.kagg886.pmf.i18n.Lang
 import top.kagg886.pmf.i18n.login_browser_title
 import top.kagg886.pmf.i18n.login_retry
 import top.kagg886.pmf.i18n.login_verification_failed
+import top.kagg886.pmf.ui.screen.main.MainRoute
 import top.kagg886.pmf.util.nav3.SerializableNavKey
 import top.kagg886.wvbridge.LoadingState
 import top.kagg886.wvbridge.WebView

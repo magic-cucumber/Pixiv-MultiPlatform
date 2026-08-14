@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMF 列表分页"
+  short_description: "规范 Lazy 列表、网格、Paging、滚动条、稳定标识与占位"
+  default_prompt: "使用 $pmf-list 实现或修复当前 PMF 列表和分页行为。"

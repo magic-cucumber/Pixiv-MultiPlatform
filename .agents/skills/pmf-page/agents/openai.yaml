@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMF 页面架构"
+  short_description: "设计 route、model、screen 的页面状态、导航与副作用边界"
+  default_prompt: "使用 $pmf-page 设计当前 PMF 页面路由、状态和导航流程。"

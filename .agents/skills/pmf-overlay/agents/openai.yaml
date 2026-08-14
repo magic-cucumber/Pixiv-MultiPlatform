@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMF 弹层设计"
+  short_description: "选择并实现 Dialog、Bottom Sheet、Drawer 的页面交互与路由"
+  default_prompt: "使用 $pmf-overlay 设计当前 PMF 弹窗、抽屉或底部面板。"

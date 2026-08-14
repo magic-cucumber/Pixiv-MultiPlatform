@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMF 国际化"
+  short_description: "维护页面 YAML 资源、双语文案与生成资源访问器规则"
+  default_prompt: "使用 $pmf-i18n 更新当前 PMF 页面所需的双语资源。"

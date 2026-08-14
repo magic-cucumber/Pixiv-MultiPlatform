@@ -1,0 +1,4 @@
+interface:
+  display_name: "PMF Compose 设计"
+  short_description: "规范 Compose 页面状态、组件封装、动画、异步操作与预览"
+  default_prompt: "使用 $pmf-design 设计当前 PMF Compose 页面和可复用组件。"
