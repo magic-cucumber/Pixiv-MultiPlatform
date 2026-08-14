@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -795,6 +796,7 @@ private fun NovelDetailContent(
                             pageTranslations = state.pageTranslations,
                             scrollState = scroll,
                             viewportHeightPx = viewportHeightPx,
+                            translationMode = state.translationMode,
                             onVisiblePagesChanged = {
                                 model.onVisiblePagesChanged(it)
                             },
@@ -820,6 +822,25 @@ private fun NovelDetailContent(
                                 onNavigateNext = { model.navigateNextPage() },
                             )
                         }
+                    }
+
+                    // 当前页翻译完成前显示加载覆盖层；翻译失败则显示淡红原文（见 RichText 的 Failed 分支）
+                    val currentPageTranslation = state.pageTranslations[state.currentPage]
+                    val showTranslateLoading =
+                        state.translationMode &&
+                            state.currentPage >= 0 &&
+                            (
+                                currentPageTranslation == null ||
+                                    currentPageTranslation is PageTranslationState.Pending ||
+                                    currentPageTranslation is PageTranslationState.Translating
+                                )
+                    if (showTranslateLoading) {
+                        Loading(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
+                            text = stringResource(Res.string.ai_translate_loading),
+                        )
                     }
 
                     VerticalScrollbar(

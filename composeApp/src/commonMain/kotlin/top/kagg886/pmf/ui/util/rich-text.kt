@@ -233,7 +233,13 @@ fun RichText(
                         when (pageState) {
                             is PageTranslationState.Translating -> {
                                 withStyle(SpanStyle(color = translatingColor)) {
-                                    append(pageState.streamedText)
+                                    // 流式 JSON 尚未提取出完整句子时，灰色显示原文作为占位，
+                                    // 首句译文完成后自然替换
+                                    append(
+                                        pageState.streamedText.ifBlank {
+                                            buildPageText(state, pageIndex, pageId)
+                                        },
+                                    )
                                 }
                             }
 
@@ -350,7 +356,9 @@ fun RichText(
 
     val currentOnVisiblePagesChanged by rememberUpdatedState(onVisiblePagesChanged)
     val currentViewportHeightPx by rememberUpdatedState(viewportHeightPx)
-    LaunchedEffect(scrollState, pageIndex, nodeRanges) {
+    // translationMode 作为 key：模式关闭再开启时重启收集，
+    // 否则可见页集合未变化（distinctUntilChanged 不重发），页面不会重新触发翻译
+    LaunchedEffect(scrollState, pageIndex, nodeRanges, translationMode) {
         val scroll = scrollState ?: return@LaunchedEffect
         snapshotFlow {
             val layout = layoutResult

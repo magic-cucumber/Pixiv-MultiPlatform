@@ -18,7 +18,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -65,6 +64,7 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.IncrementalSentenceParser
 import top.kagg886.pmf.translate.LanguageDetector
 import top.kagg886.pmf.translate.PageTranslationState
 import top.kagg886.pmf.translate.SentencePair
@@ -73,6 +73,7 @@ import top.kagg886.pmf.translate.SentenceTranslationParser
 import top.kagg886.pmf.translate.TranslateResult
 import top.kagg886.pmf.translate.TranslateScheduler
 import top.kagg886.pmf.translate.isAiTranslateEnabled
+import top.kagg886.pmf.translate.isIdentityTranslation
 import top.kagg886.pmf.translate.translationDisplayText
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.util.NovelNodeElement
@@ -563,17 +564,26 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
     fun toggleTranslateNovel() = intent {
         runOn<NovelDetailViewState.Success> {
             if (state.translationMode) {
-                reduce { state.copy(translationMode = false, pageTranslations = emptyMap()) }
+                reduce {
+                    state.copy(
+                        translationMode = false,
+                        pageTranslations = emptyMap(),
+                        currentPage = -1,
+                    )
+                }
                 return@runOn
             }
             if (!isAiTranslateEnabled()) return@runOn
-            reduce { state.copy(translationMode = true) }
+            reduce { state.copy(translationMode = true, currentPage = -1) }
         }
     }
 
     /**
-     * 可见页懒翻译：仅对 Pending 且包含文本的页发起流式翻译，
-     * 进行中的页由 [activePages] 去重，失败页不自动重试。
+     * 可见页懒翻译：仅翻译"当前页 + 延后 [LOOKAHEAD_PAGES] 页"，
+     * 进行中的页由 [activePages] 去重；失败页标 [PageTranslationState.Failed]（淡红原文）且不自动重试。
+     *
+     * 翻译在 [viewModelScope] 中异步进行、不阻塞本次 intent，
+     * 避免滚动触发的新请求被上一批翻译串行等待而影响操作。
      */
     @OptIn(OrbitExperimental::class)
     fun onVisiblePagesChanged(visiblePages: Set<Int>) = intent {
@@ -581,54 +591,92 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             val current = state
             if (!current.translationMode) return@runOn
             val pageIndex = buildPageIndex(current.nodeMap)
+
+            // 当前页 = 可见且含文本的页中最靠前的一页；无文本页不参与翻译也不显示加载态
+            val currentPage = visiblePages
+                .filter { buildPageText(current.nodeMap, pageIndex, it).isNotBlank() }
+                .minOrNull() ?: -1
+
             val toStart = translationMutex.withLock {
-                visiblePages.filter { page ->
-                    val translation = current.pageTranslations[page]
-                    page !in activePages &&
-                        (translation == null || translation is PageTranslationState.Pending) &&
-                        buildPageText(current.nodeMap, pageIndex, page).isNotBlank()
-                }.also { activePages += it }
+                if (currentPage < 0) {
+                    emptyList()
+                } else {
+                    (currentPage..currentPage + LOOKAHEAD_PAGES)
+                        .filter { page ->
+                            val translation = current.pageTranslations[page]
+                            page !in activePages &&
+                                (translation == null || translation is PageTranslationState.Pending) &&
+                                buildPageText(current.nodeMap, pageIndex, page).isNotBlank()
+                        }
+                        .also { activePages += it }
+                }
             }
+
+            if (currentPage != current.currentPage) {
+                reduce {
+                    if (!state.translationMode) return@reduce state
+                    state.copy(currentPage = currentPage)
+                }
+            }
+
             if (toStart.isEmpty()) return@runOn
 
+            logger.i { "ai translate novel: currentPage=$currentPage, toStart=$toStart" }
             val target = LanguageDetector.targetLanguageName()
-            // 仅用于 toast 提示；每页的成功/失败由各协程局部 pageFailed 独立判定，
-            // 避免一页失败把同批其他成功页误标为 Failed。
-            val anyFailed = atomic(false)
-            coroutineScope {
-                toStart.map { page ->
-                    launch {
-                        var pageFailed = false
-                        try {
-                            val pageText = buildPageText(current.nodeMap, pageIndex, page)
-                            var lastText: String? = null
+            for (page in toStart) {
+                viewModelScope.launch {
+                    var pageFailed = false
+                    try {
+                        val pageText = buildPageText(current.nodeMap, pageIndex, page)
+                        var lastText: String? = null
+                        logger.i { "ai translate novel: page=$page start, textLen=${pageText.length}" }
+                        reduce {
+                            if (!state.translationMode) return@reduce state
+                            state.copy(
+                                pageTranslations =
+                                state.pageTranslations + (page to PageTranslationState.Translating("")),
+                            )
+                        }
+                        translateScheduler.translateStream(pageText, target).collect { result ->
+                            when (result) {
+                                is TranslateResult.Success -> {
+                                    lastText = result.text
+                                    // 流式输出是残缺 JSON：只把已闭合的句子提取上屏，
+                                    // 绝不把原始/未闭合的 JSON 显示给用户
+                                    val streamedSentences =
+                                        IncrementalSentenceParser.extractSentences(result.text)
+                                            .joinToString("\n")
+                                    reduce {
+                                        if (!state.translationMode) return@reduce state
+                                        state.copy(
+                                            pageTranslations =
+                                            state.pageTranslations +
+                                                (page to PageTranslationState.Translating(streamedSentences)),
+                                        )
+                                    }
+                                }
+
+                                is TranslateResult.Failure -> pageFailed = true
+                            }
+                        }
+                        val finalText = lastText
+                        if (pageFailed || finalText == null) {
+                            logger.w { "ai translate novel: page=$page failed (stream failure)" }
                             reduce {
                                 if (!state.translationMode) return@reduce state
                                 state.copy(
-                                    pageTranslations =
-                                    state.pageTranslations + (page to PageTranslationState.Translating("")),
+                                    pageTranslations = state.pageTranslations + (page to PageTranslationState.Failed),
                                 )
                             }
-                            translateScheduler.translateStream(pageText, target).collect { result ->
-                                when (result) {
-                                    is TranslateResult.Success -> {
-                                        lastText = result.text
-                                        reduce {
-                                            if (!state.translationMode) return@reduce state
-                                            state.copy(
-                                                pageTranslations =
-                                                state.pageTranslations +
-                                                    (page to PageTranslationState.Translating(result.text)),
-                                            )
-                                        }
-                                    }
-
-                                    is TranslateResult.Failure -> pageFailed = true
-                                }
-                            }
-                            val finalText = lastText
-                            if (pageFailed || finalText == null) {
-                                anyFailed.value = true
+                        } else {
+                            val originalSentences = SentenceSegmenter.split(pageText)
+                            // 严格解析：非 JSON / 空数组 / 回显原文一律视为失败，
+                            // 避免把原始 JSON 或原文当作译文展示
+                            val translatedSentences = SentenceTranslationParser.parseStrict(finalText)
+                            if (translatedSentences == null ||
+                                isIdentityTranslation(pageText, translatedSentences.joinToString("\n"))
+                            ) {
+                                logger.w { "ai translate novel: page=$page failed (unparseable or identity)" }
                                 reduce {
                                     if (!state.translationMode) return@reduce state
                                     state.copy(
@@ -636,11 +684,10 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                                     )
                                 }
                             } else {
-                                val originalSentences = SentenceSegmenter.split(pageText)
-                                val translatedSentences = SentenceTranslationParser.parse(finalText)
                                 val pairs =
                                     SentenceTranslationParser.align(originalSentences, translatedSentences)
                                         ?: listOf(SentencePair(pageText, translatedSentences.joinToString("\n")))
+                                logger.i { "ai translate novel: page=$page success, pairs=${pairs.size}" }
                                 reduce {
                                     if (!state.translationMode) return@reduce state
                                     state.copy(
@@ -649,14 +696,11 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                                     )
                                 }
                             }
-                        } finally {
-                            translationMutex.withLock { activePages -= page }
                         }
+                    } finally {
+                        translationMutex.withLock { activePages -= page }
                     }
-                }.joinAll()
-            }
-            if (anyFailed.value) {
-                postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.ai_translate_failed)))
+                }
             }
         }
     }
@@ -711,6 +755,8 @@ sealed class NovelDetailViewState {
         val itemInViewLater: Boolean,
         val translationMode: Boolean = false,
         val pageTranslations: Map<Int, PageTranslationState> = emptyMap(),
+        // 当前视口最靠前的含文本页号；-1 表示尚未确定（供加载覆盖层判断）
+        val currentPage: Int = -1,
         val introTranslations: Map<String, String> = emptyMap(),
         val introTranslating: Boolean = false,
     ) : NovelDetailViewState()
@@ -724,3 +770,6 @@ sealed class NovelDetailSideEffect {
 
     data object NavigateBack : NovelDetailSideEffect()
 }
+
+/** 懒翻译时在当前页基础上向后预取的页数。 */
+private const val LOOKAHEAD_PAGES = 2
