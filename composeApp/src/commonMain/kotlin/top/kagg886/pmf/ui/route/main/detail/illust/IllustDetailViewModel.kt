@@ -46,9 +46,13 @@ import top.kagg886.pmf.translate.TranslateResult
 import top.kagg886.pmf.translate.TranslateScheduler
 import top.kagg886.pmf.translate.isAiTranslateEnabled
 import top.kagg886.pmf.translate.translationDisplayText
+import top.kagg886.pmf.translate.translationDisplayTextOrNull
+import top.kagg886.pmf.ui.util.RichSegment
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.ui.util.notifyDislike
 import top.kagg886.pmf.ui.util.notifyLike
+import top.kagg886.pmf.ui.util.parseHtmlSegments
+import top.kagg886.pmf.ui.util.translateRichSegments
 import top.kagg886.pmf.util.UGOIRA_SCHEME
 import top.kagg886.pmf.util.getString
 
@@ -82,13 +86,23 @@ class IllustDetailViewModel(private val illustId: Int) :
 
             reduce { state.copy(translating = true) }
             val target = LanguageDetector.targetLanguageName()
-            val (titleResult, captionResult) = coroutineScope {
+
+            suspend fun translateBlock(text: String): String? {
+                val result = translateScheduler.translate(text, target)
+                return (result as? TranslateResult.Success)?.text?.translationDisplayTextOrNull()
+            }
+
+            val (titleResult, captionSegments) = coroutineScope {
                 val titleDeferred = async { translateScheduler.translate(current.illust.title, target) }
-                val captionDeferred = async { translateScheduler.translate(current.illust.caption, target) }
+                val captionDeferred = async {
+                    translateRichSegments(parseHtmlSegments(current.illust.caption)) { text ->
+                        translateBlock(text)
+                    }
+                }
                 titleDeferred.await() to captionDeferred.await()
             }
 
-            if (titleResult is TranslateResult.Failure || captionResult is TranslateResult.Failure) {
+            if (titleResult is TranslateResult.Failure || captionSegments == null) {
                 postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.ai_translate_failed)))
                 reduce { state.copy(translating = false) }
             } else {
@@ -97,7 +111,7 @@ class IllustDetailViewModel(private val illustId: Int) :
                         translating = false,
                         translated = true,
                         titleTranslation = (titleResult as TranslateResult.Success).text.translationDisplayText(),
-                        captionTranslation = (captionResult as TranslateResult.Success).text.translationDisplayText(),
+                        captionTranslation = captionSegments,
                     )
                 }
             }
@@ -359,7 +373,7 @@ sealed class IllustDetailViewState {
         val translated: Boolean = false,
         val translating: Boolean = false,
         val titleTranslation: String? = null,
-        val captionTranslation: String? = null,
+        val captionTranslation: List<RichSegment>? = null,
     ) :
         IllustDetailViewState() {
         constructor(illust: Illust, itemInViewLater: Boolean, data: Uri) : this(illust, itemInViewLater, listOf(data))

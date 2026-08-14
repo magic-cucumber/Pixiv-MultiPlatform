@@ -75,11 +75,15 @@ import top.kagg886.pmf.translate.TranslateScheduler
 import top.kagg886.pmf.translate.isAiTranslateEnabled
 import top.kagg886.pmf.translate.isIdentityTranslation
 import top.kagg886.pmf.translate.translationDisplayText
+import top.kagg886.pmf.translate.translationDisplayTextOrNull
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.util.NovelNodeElement
+import top.kagg886.pmf.ui.util.RichSegment
 import top.kagg886.pmf.ui.util.buildPageIndex
 import top.kagg886.pmf.ui.util.buildPageText
 import top.kagg886.pmf.ui.util.container
+import top.kagg886.pmf.ui.util.parseHtmlSegments
+import top.kagg886.pmf.ui.util.translateRichSegments
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
 
@@ -711,31 +715,44 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         runOn<NovelDetailViewState.Success> {
             val current = state
             if (current.introTranslating) return@runOn
-            if (current.introTranslations.isNotEmpty()) {
-                reduce { state.copy(introTranslations = emptyMap()) }
+            if (current.introTitleTranslation != null || current.introCaptionTranslation != null) {
+                reduce {
+                    state.copy(
+                        introTitleTranslation = null,
+                        introCaptionTranslation = null,
+                    )
+                }
                 return@runOn
             }
             if (!isAiTranslateEnabled()) return@runOn
 
             reduce { state.copy(introTranslating = true) }
             val target = LanguageDetector.targetLanguageName()
-            val (titleResult, captionResult) = coroutineScope {
+
+            suspend fun translateBlock(text: String): String? {
+                val result = translateScheduler.translate(text, target)
+                return (result as? TranslateResult.Success)?.text?.translationDisplayTextOrNull()
+            }
+
+            val (titleResult, captionSegments) = coroutineScope {
                 val titleDeferred = async { translateScheduler.translate(current.novel.title, target) }
-                val captionDeferred = async { translateScheduler.translate(current.novel.caption, target) }
+                val captionDeferred = async {
+                    translateRichSegments(parseHtmlSegments(current.novel.caption)) { text ->
+                        translateBlock(text)
+                    }
+                }
                 titleDeferred.await() to captionDeferred.await()
             }
 
-            if (titleResult is TranslateResult.Failure || captionResult is TranslateResult.Failure) {
+            if (titleResult is TranslateResult.Failure || captionSegments == null) {
                 postSideEffect(NovelDetailSideEffect.Toast(getString(Res.string.ai_translate_failed)))
                 reduce { state.copy(introTranslating = false) }
             } else {
                 reduce {
                     state.copy(
                         introTranslating = false,
-                        introTranslations = mapOf(
-                            "title" to (titleResult as TranslateResult.Success).text.translationDisplayText(),
-                            "caption" to (captionResult as TranslateResult.Success).text.translationDisplayText(),
-                        ),
+                        introTitleTranslation = (titleResult as TranslateResult.Success).text.translationDisplayText(),
+                        introCaptionTranslation = captionSegments,
                     )
                 }
             }
@@ -757,7 +774,8 @@ sealed class NovelDetailViewState {
         val pageTranslations: Map<Int, PageTranslationState> = emptyMap(),
         // 当前视口最靠前的含文本页号；-1 表示尚未确定（供加载覆盖层判断）
         val currentPage: Int = -1,
-        val introTranslations: Map<String, String> = emptyMap(),
+        val introTitleTranslation: String? = null,
+        val introCaptionTranslation: List<RichSegment>? = null,
         val introTranslating: Boolean = false,
     ) : NovelDetailViewState()
 }

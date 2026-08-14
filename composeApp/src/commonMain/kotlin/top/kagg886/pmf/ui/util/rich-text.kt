@@ -22,10 +22,6 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.toUri
-import com.fleeksoft.ksoup.Ksoup
-import com.fleeksoft.ksoup.nodes.Element
-import com.fleeksoft.ksoup.nodes.Node
-import com.fleeksoft.ksoup.nodes.TextNode
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 import kotlin.time.Clock
@@ -424,6 +420,26 @@ fun RichText(
 
 private const val LOOKAHEAD_LINES = 3
 
+/** 把富文本片段还原为带链接/加粗/换行的 [AnnotatedString]，链接可点击。 */
+fun buildRichAnnotatedString(
+    segments: List<RichSegment>,
+    colors: ColorScheme,
+): AnnotatedString = buildAnnotatedString {
+    for (segment in segments) {
+        when (segment) {
+            is RichSegment.Text -> append(segment.text)
+
+            is RichSegment.Bold -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(segment.text)
+            }
+
+            is RichSegment.Link -> withLink(colors, segment.url, segment.display)
+
+            is RichSegment.Break -> appendLine()
+        }
+    }
+}
+
 @Composable
 fun HTMLRichText(
     html: String,
@@ -432,47 +448,9 @@ fun HTMLRichText(
     style: TextStyle = LocalTextStyle.current,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dom = remember(html) {
-        Ksoup.parse(html).body().childNodes()
-    }
-
-    fun AnnotatedString.Builder.appendHTMLNode(nodes: List<Node>) {
-        for (node in nodes) {
-            when (node) {
-                is TextNode -> append(node.text())
-
-                is Element -> {
-                    when (node.tagName()) {
-                        "strong" -> {
-                            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                                if (node.childNodes().isNotEmpty()) {
-                                    appendHTMLNode(node.childNodes())
-                                    return@withStyle
-                                }
-                                append(node.text())
-                            }
-                        }
-
-                        "br" -> appendLine()
-
-                        "a" -> withLink(
-                            scheme,
-                            node.attr("href"),
-                            node.text(),
-                        )
-
-                        else -> append(node.html())
-                    }
-                }
-
-                else -> append(node.outerHtml())
-            }
-        }
-    }
+    val segments = remember(html) { parseHtmlSegments(html) }
     Text(
-        buildAnnotatedString {
-            appendHTMLNode(dom)
-        },
+        buildRichAnnotatedString(segments, scheme),
         style = style,
         color = color,
         modifier = modifier,

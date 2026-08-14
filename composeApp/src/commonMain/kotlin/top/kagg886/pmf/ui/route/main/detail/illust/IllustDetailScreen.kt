@@ -662,7 +662,10 @@ private fun IllustPreview(
                                     if (state.translated && state.captionTranslation != null) {
                                         SelectionContainer {
                                             Text(
-                                                text = state.captionTranslation,
+                                                text = buildRichAnnotatedString(
+                                                    state.captionTranslation,
+                                                    MaterialTheme.colorScheme,
+                                                ),
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 color = ListItemDefaults.colors().supportingTextColor,
                                             )

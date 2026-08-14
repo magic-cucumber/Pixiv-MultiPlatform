@@ -125,6 +125,7 @@ import top.kagg886.pmf.ui.util.HTMLRichText
 import top.kagg886.pmf.ui.util.KeyListenerFromGlobalPipe
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.RichText
+import top.kagg886.pmf.ui.util.buildRichAnnotatedString
 import top.kagg886.pmf.ui.util.globalViewModel
 import top.kagg886.pmf.ui.util.keyboardScrollerController
 import top.kagg886.pmf.ui.util.removeLastOrNullWorkaround
@@ -251,7 +252,7 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                         contentDescription = null,
                                     )
                                     Spacer(Modifier.height(8.dp))
-                                    val introTitle = state.introTranslations["title"] ?: state.novel.title
+                                    val introTitle = state.introTitleTranslation ?: state.novel.title
                                     Text(
                                         text = buildAnnotatedString {
                                             withClickable(
@@ -303,10 +304,15 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                 verticalAlignment = Alignment.Bottom,
                                             ) {
                                                 Box(Modifier.weight(1f)) {
-                                                    val introCaption = state.introTranslations["caption"]
+                                                    val introCaption = state.introCaptionTranslation
                                                     if (introCaption != null) {
                                                         SelectionContainer {
-                                                            Text(introCaption)
+                                                            Text(
+                                                                text = buildRichAnnotatedString(
+                                                                    introCaption,
+                                                                    MaterialTheme.colorScheme,
+                                                                ),
+                                                            )
                                                         }
                                                     } else {
                                                         SelectionContainer {
@@ -320,7 +326,10 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                         }
                                                     }
                                                 }
-                                                if (state.introTranslations.isNotEmpty() ||
+                                                val introTranslated =
+                                                    state.introTitleTranslation != null ||
+                                                        state.introCaptionTranslation != null
+                                                if (introTranslated ||
                                                     state.introTranslating ||
                                                     (
                                                         isAiTranslateEnabled() &&
@@ -328,7 +337,7 @@ private fun NovelPreviewContent(id: Long, model: NovelDetailViewModel, state: No
                                                         )
                                                 ) {
                                                     AiTranslateButton(
-                                                        translated = state.introTranslations.isNotEmpty(),
+                                                        translated = introTranslated,
                                                         translating = state.introTranslating,
                                                         modifier = Modifier.padding(start = 8.dp),
                                                         iconSize = 18.dp,
