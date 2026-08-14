@@ -22,6 +22,7 @@ import top.kagg886.pmf.translate.TranslateResult
 import top.kagg886.pmf.translate.TranslateScheduler
 import top.kagg886.pmf.translate.isAiTranslateEnabled
 import top.kagg886.pmf.translate.translationDisplayText
+import top.kagg886.pmf.util.logger
 
 abstract class CommentViewModel(private val id: Long) :
     ContainerHost<CommentViewState, CommentSideEffect>,
@@ -55,17 +56,20 @@ abstract class CommentViewModel(private val id: Long) :
             if (!isAiTranslateEnabled()) return@runOn
 
             reduce { state.setTranslating(id, true) }
+            logger.i { "ai translate comment: id=$id start, textLen=${comment.comment.length}" }
             val result = translateScheduler.translate(
                 comment.comment,
                 LanguageDetector.targetLanguageName(),
             )
             when (result) {
                 is TranslateResult.Success -> reduce {
+                    logger.i { "ai translate comment: id=$id success" }
                     state.setTranslating(id, false)
                         .withTranslation(id, result.text.translationDisplayText())
                 }
 
                 is TranslateResult.Failure -> {
+                    logger.w { "ai translate comment: id=$id failed" }
                     postSideEffect(CommentSideEffect.Toast(getString(Res.string.ai_translate_failed)))
                     reduce { state.setTranslating(id, false) }
                 }

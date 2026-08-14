@@ -95,7 +95,10 @@ class TranslateScheduler(
             withTimeout(timeout) {
                 val translated = translator.translate(text, targetLang)
                 when {
-                    translated.isBlank() -> TranslateResult.Failure(text)
+                    translated.isBlank() -> {
+                        logger.w { "ai translate returned blank content, textLen=${text.length}" }
+                        TranslateResult.Failure(text)
+                    }
 
                     // 模型"回显原文"：与原文相同的输出视为失败，绝不缓存
                     isIdentityTranslation(text, translated) -> {
@@ -121,8 +124,12 @@ class TranslateScheduler(
     suspend fun translate(text: String, targetLang: String): TranslateResult {
         if (text.isBlank()) return TranslateResult.Success(text)
         val key = cacheKey(text, targetLang)
-        cachedOrNull(key, text, targetLang)?.let { return TranslateResult.Success(it) }
+        cachedOrNull(key, text, targetLang)?.let {
+            logger.d { "ai translate cache hit, textLen=${text.length}, target=$targetLang" }
+            return TranslateResult.Success(it)
+        }
 
+        logger.i { "ai translate start, textLen=${text.length}, target=$targetLang" }
         val (deferred, isCreator) = lock.withLock {
             inFlight[key]?.let { it to false } ?: run {
                 val created = scope.async { translateInternal(text, targetLang) }
@@ -141,6 +148,9 @@ class TranslateScheduler(
         }
         if (result is TranslateResult.Success) {
             storeResult(key, text, targetLang, result.text)
+            logger.i { "ai translate success, textLen=${text.length}, resultLen=${result.text.length}" }
+        } else {
+            logger.w { "ai translate failure, textLen=${text.length}, target=$targetLang" }
         }
         return result
     }
@@ -156,10 +166,12 @@ class TranslateScheduler(
         }
         val key = cacheKey(text, targetLang)
         cachedOrNull(key, text, targetLang)?.let {
+            logger.d { "ai translate stream cache hit, textLen=${text.length}, target=$targetLang" }
             emit(TranslateResult.Success(it))
             return@flow
         }
 
+        logger.i { "ai translate stream start, textLen=${text.length}, target=$targetLang" }
         val session = lock.withLock {
             streamSessions.getOrPut(key) { startStreamSession(text, targetLang, key) }
         }
@@ -249,7 +261,10 @@ class TranslateScheduler(
             }
         }
         when {
-            builder.isEmpty() -> TranslateResult.Failure(text)
+            builder.isEmpty() -> {
+                logger.w { "ai translate stream returned no content, textLen=${text.length}" }
+                TranslateResult.Failure(text)
+            }
 
             // 模型"回显原文"：累积结果与原文相同视为失败，绝不缓存
             isIdentityTranslation(text, builder.toString()) -> {
