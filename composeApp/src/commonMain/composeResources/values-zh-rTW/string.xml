@@ -19,6 +19,8 @@
     <string name="ai_translate_prompt">翻譯 Prompt</string>
     <string name="ai_translate_cache">啟用翻譯快取</string>
     <string name="ai_translate_cache_description">快取已翻譯的內容，避免重複請求</string>
+    <string name="ai_translate_paragraph_context">啟用段落上下文</string>
+    <string name="ai_translate_paragraph_context_description">翻譯小說正文時攜帶整段原文作為上下文，提升翻譯品質；關閉後按句子單獨翻譯</string>
     <string name="ai_translate_settings">AI 翻譯支援設定</string>
     <string name="ai_translate_show_original">查看原文</string>
     <string name="ai_translate_translate">AI 翻譯</string>

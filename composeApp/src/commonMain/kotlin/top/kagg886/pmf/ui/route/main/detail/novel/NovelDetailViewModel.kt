@@ -14,6 +14,7 @@ import kotlin.collections.set
 import kotlin.time.Clock
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -75,6 +76,7 @@ import top.kagg886.pmf.translate.isAiTranslateEnabled
 import top.kagg886.pmf.translate.translationDisplayText
 import top.kagg886.pmf.translate.translationDisplayTextOrNull
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
+import top.kagg886.pmf.ui.util.NovelFragmentSpan
 import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.NovelSentenceChunk
 import top.kagg886.pmf.ui.util.NovelSentenceSpan
@@ -82,8 +84,9 @@ import top.kagg886.pmf.ui.util.RichSegment
 import top.kagg886.pmf.ui.util.buildNovelSentenceChunks
 import top.kagg886.pmf.ui.util.buildNovelSentenceIndex
 import top.kagg886.pmf.ui.util.container
-import top.kagg886.pmf.ui.util.mergeSentenceStates
+import top.kagg886.pmf.ui.util.mergeFragmentStates
 import top.kagg886.pmf.ui.util.parseHtmlSegments
+import top.kagg886.pmf.ui.util.stripNovelChunkContext
 import top.kagg886.pmf.ui.util.translateRichSegments
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
@@ -99,7 +102,11 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
     private val translateScheduler by inject<TranslateScheduler>()
     private val translationMutex = Mutex()
     private val activeSentenceEpochs = mutableMapOf<Int, Int>()
+
+    /** 自动重试计数：每片段每 epoch 至多自动重试一次，防止与模型反复不一致时死循环。 */
+    private val autoRetryCounts = mutableMapOf<Int, Int>()
     private var translationEpoch = 0
+    private var fragmentByIdCache: Map<Int, NovelFragmentSpan> = emptyMap()
     private var sentenceByIdCache: Map<Int, NovelSentenceSpan> = emptyMap()
 
     private fun CombinedText.toPlainString() = this.joinToString("") { it.text }
@@ -334,6 +341,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         val nodes = nodeMap.toList().sortedBy { it.first }.map { it.second }
         val sentenceIndex = buildNovelSentenceIndex(nodes)
         sentenceByIdCache = sentenceIndex.associateBy { it.id }
+        fragmentByIdCache = sentenceIndex.flatMap { it.fragments }.associateBy { it.id }
 
         reduce {
             NovelDetailViewState.Success(
@@ -576,22 +584,28 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         runOn<NovelDetailViewState.Success> {
             if (state.translationMode) {
                 translationEpoch++
-                translationMutex.withLock { activeSentenceEpochs.clear() }
+                translationMutex.withLock {
+                    activeSentenceEpochs.clear()
+                    autoRetryCounts.clear()
+                }
+                // 保留 sentenceTranslations：关闭时渲染层本就显示原文，
+                // 重新开启后已完成的译文立即恢复显示，不再重新请求（避免再次失败回到红色）
                 reduce {
                     state.copy(
                         translationMode = false,
-                        sentenceTranslations = emptyMap(),
                     )
                 }
                 return@runOn
             }
             if (!isAiTranslateEnabled()) return@runOn
             translationEpoch++
-            translationMutex.withLock { activeSentenceEpochs.clear() }
+            translationMutex.withLock {
+                activeSentenceEpochs.clear()
+                autoRetryCounts.clear()
+            }
             reduce {
                 state.copy(
                     translationMode = true,
-                    sentenceTranslations = emptyMap(),
                 )
             }
         }
@@ -606,24 +620,30 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
      * 翻译在 [viewModelScope] 中异步进行、不阻塞本次 intent。
      */
     @OptIn(OrbitExperimental::class)
-    fun onVisibleSentencesChanged(visibleSentences: Set<Int>) = intent {
+    fun onVisibleSentencesChanged(visibleFragmentIds: Set<Int>) = intent {
         runOn<NovelDetailViewState.Success> {
             val current = state
             if (!current.translationMode) return@runOn
 
-            val byId = sentenceByIdCache
+            val byId = fragmentByIdCache
             val (epoch, chunks) = translationMutex.withLock {
                 val epoch = translationEpoch
-                val pending = visibleSentences.filter { sentenceId ->
-                    val translation = state.sentenceTranslations[sentenceId]
-                    sentenceId in byId &&
-                        sentenceId !in activeSentenceEpochs &&
+                val pending = visibleFragmentIds.filter { fragmentId ->
+                    val translation = state.sentenceTranslations[fragmentId]
+                    fragmentId in byId &&
+                        fragmentId !in activeSentenceEpochs &&
                         (translation == null || translation is SentenceTranslationState.Pending)
                 }
-                val chunks = buildNovelSentenceChunks(byId, pending.toSet())
+                val chunks = buildNovelSentenceChunks(
+                    byId,
+                    sentenceByIdCache,
+                    current.novelNodeTexts(),
+                    pending.toSet(),
+                    withContext = AppConfig.aiTranslateParagraphContext,
+                )
                 for (chunk in chunks) {
-                    for (sentenceId in chunk.sentenceIds) {
-                        activeSentenceEpochs[sentenceId] = epoch
+                    for (fragmentId in chunk.fragmentIds) {
+                        activeSentenceEpochs[fragmentId] = epoch
                     }
                 }
                 epoch to chunks
@@ -631,19 +651,19 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
 
             if (chunks.isEmpty()) return@runOn
 
-            logger.i { "ai translate novel: visibleSentences=$visibleSentences, chunks=${chunks.size}" }
+            logger.i { "ai translate novel: visibleFragments=$visibleFragmentIds, chunks=${chunks.size}" }
             reduce {
                 if (!state.translationMode) return@reduce state
-                // 单次构建新 map（O(N+K)），避免逐句 map + 造成 O(K·N) 复制
+                // 单次构建新 map（O(N+K)），避免逐片段 map + 造成 O(K·N) 复制
                 state.copy(
                     sentenceTranslations =
-                    buildMap(state.sentenceTranslations.size + chunks.sumOf { it.sentenceIds.size }) {
+                    buildMap(state.sentenceTranslations.size + chunks.sumOf { it.fragmentIds.size }) {
                         putAll(state.sentenceTranslations)
                         for (chunk in chunks) {
-                            for (sentenceId in chunk.sentenceIds) {
-                                val old = state.sentenceTranslations[sentenceId]
+                            for (fragmentId in chunk.fragmentIds) {
+                                val old = state.sentenceTranslations[fragmentId]
                                 if (old == null || old is SentenceTranslationState.Pending) {
-                                    put(sentenceId, SentenceTranslationState.Pending)
+                                    put(fragmentId, SentenceTranslationState.Pending)
                                 }
                             }
                         }
@@ -654,20 +674,42 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         }
     }
 
-    /** 点击失败句（红色原文）后重试该句。 */
+    /** 点击失败/回显片段（无译文可切换）后重试该片段。 */
     @OptIn(OrbitExperimental::class)
-    fun retrySentence(sentenceId: Int) = intent {
+    fun retrySentence(fragmentId: Int): Job = intent {
         runOn<NovelDetailViewState.Success> {
             if (!state.translationMode) return@runOn
-            if (state.sentenceTranslations[sentenceId] !is SentenceTranslationState.Failed) return@runOn
+            val fragment = fragmentByIdCache[fragmentId] ?: return@runOn
+            val currentState = state.sentenceTranslations[fragmentId]
+            val isEcho =
+                currentState is SentenceTranslationState.Complete &&
+                    currentState.translatedText == fragment.original
+            if (currentState !is SentenceTranslationState.Failed && !isEcho) return@runOn
 
-            val byId = sentenceByIdCache
             val (epoch, chunks) = translationMutex.withLock {
-                if (sentenceId in activeSentenceEpochs) return@withLock translationEpoch to emptyList()
+                if (fragmentId in activeSentenceEpochs) return@withLock translationEpoch to emptyList()
                 val epoch = translationEpoch
-                val chunks = buildNovelSentenceChunks(byId, setOf(sentenceId), maxSentencesPerChunk = 1)
+                // 重试 = 重译该片段所属整句（句内全部片段 + 段落上下文）。
+                // 不要用"单片段 + 句上下文"：模型会把整句含义套到该片段上（如
+                // `あなたな、好きです` 上下文 + 单行 `あなたな` → 模型输出整句译义"我喜欢你"）。
+                val sentenceFragments =
+                    fragmentByIdCache.values.filter { it.sentenceId == fragment.sentenceId }
+                val chunks =
+                    buildNovelSentenceChunks(
+                        fragmentByIdCache,
+                        sentenceByIdCache,
+                        state.novelNodeTexts(),
+                        sentenceFragments.map { it.id }.toSet(),
+                        maxSentencesPerChunk = 1,
+                        withContext = AppConfig.aiTranslateParagraphContext,
+                    ).map { chunk ->
+                        // 保护句内其它已成功的片段：整句重译失败时不被连坐标红
+                        chunk.copy(
+                            preserve = chunk.fragmentIds.filter { it != fragmentId }.toSet(),
+                        )
+                    }
                 for (chunk in chunks) {
-                    for (id in chunk.sentenceIds) {
+                    for (id in chunk.fragmentIds) {
                         activeSentenceEpochs[id] = epoch
                     }
                 }
@@ -678,11 +720,12 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
 
             reduce {
                 if (!state.translationMode) return@reduce state
+                // 只把点击的片段标 Pending；同句其它片段由最终合并刷新
                 state.copy(
-                    sentenceTranslations = state.sentenceTranslations + (sentenceId to SentenceTranslationState.Pending),
+                    sentenceTranslations = state.sentenceTranslations + (fragmentId to SentenceTranslationState.Pending),
                 )
             }
-            logger.i { "ai translate novel retry: sentence=$sentenceId" }
+            logger.i { "ai translate novel retry: fragment=$fragmentId (sentence ${fragment.sentenceId})" }
             launchNovelTranslationChunks(chunks, LanguageDetector.targetLanguageName(), epoch)
         }
     }
@@ -696,7 +739,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         chunks: List<NovelSentenceChunk>,
         target: String,
         epoch: Int,
-    ) = intent {
+    ): Job = intent {
         runOn<NovelDetailViewState.Success> {
             suspend fun flushChunk(
                 chunk: NovelSentenceChunk,
@@ -707,7 +750,13 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                     if (!state.translationMode || epoch != translationEpoch) return@reduce state
                     state.copy(
                         sentenceTranslations =
-                        mergeSentenceStates(state.sentenceTranslations, chunk, lines, final),
+                        mergeFragmentStates(
+                            state.sentenceTranslations,
+                            chunk,
+                            lines,
+                            final,
+                            chunk.preserve,
+                        ),
                     )
                 }
             }
@@ -719,7 +768,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                     var lastFlushTime = 0L
                     try {
                         logger.i {
-                            "ai translate novel chunk: sentences=${chunk.sentenceIds.size}, textLen=${chunk.sourceText.length}"
+                            "ai translate novel chunk: ${chunk.fragmentIds.size} fragments, textLen=${chunk.sourceText.length}"
                         }
                         translateScheduler.translateStream(chunk.sourceText, target).collect { result ->
                             when (result) {
@@ -728,10 +777,13 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                                     val now = Clock.System.now().toEpochMilliseconds()
                                     if (now - lastFlushTime >= STREAM_FLUSH_INTERVAL_MS) {
                                         lastFlushTime = now
-                                        // 流式输出为纯文本：仅把已经闭合的译文行合并上屏
+                                        // 流式输出：先剥离模型回显的上下文块，
+                                        // 再把已闭合的译文行按位置合并上屏
                                         flushChunk(
                                             chunk,
-                                            IncrementalSentenceParser.extractSentences(result.text),
+                                            IncrementalSentenceParser.extractSentences(
+                                                stripNovelChunkContext(result.text),
+                                            ),
                                             final = false,
                                         )
                                     }
@@ -751,16 +803,57 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                             if (streamFailed || lastAccumulated == null) {
                                 null
                             } else {
-                                SentenceTranslationParser.parseForAlignment(lastAccumulated)
+                                SentenceTranslationParser.parseForAlignment(
+                                    stripNovelChunkContext(lastAccumulated),
+                                )
                             }
                         flushChunk(chunk, finalLines, final = true)
+                        // 失败原因日志：便于排查模型行为（空流/超时 vs 行数不匹配 vs 片段级失败）
+                        val failReason =
+                            when {
+                                finalLines == null ->
+                                    if (streamFailed) "streamFailedOrEmpty" else "noFinalText"
+
+                                finalLines.filter { it.isNotBlank() }.size != chunk.fragmentIds.size ->
+                                    "lineCountMismatch(${finalLines.size}/${chunk.fragmentIds.size})"
+
+                                else -> "perFragment"
+                            }
                         logger.i {
-                            "ai translate novel chunk finished: valid=${finalLines?.size ?: 0}/${chunk.sentenceIds.size}"
+                            "ai translate novel chunk finished: valid=${finalLines?.size ?: 0}/${chunk.fragmentIds.size} " +
+                                "fragments, reason=$failReason"
                         }
                         translationMutex.withLock {
-                            for (sentenceId in chunk.sentenceIds) {
-                                if (activeSentenceEpochs[sentenceId] == epoch) {
-                                    activeSentenceEpochs.remove(sentenceId)
+                            for (fragmentId in chunk.fragmentIds) {
+                                if (activeSentenceEpochs[fragmentId] == epoch) {
+                                    activeSentenceEpochs.remove(fragmentId)
+                                }
+                            }
+                        }
+                        // 失败片段自动重试：最终合并后本 chunk 标为 Failed 的片段逐片段重试一次
+                        // （每片段每 epoch 至多一次）。片段级失败（模型合并/漏译/回显等）不影响
+                        // 其它片段——部分成功，仅对失败片段单独重试。
+                        val failedIds = chunk.fragmentIds.filter { id ->
+                            state.sentenceTranslations[id] is SentenceTranslationState.Failed
+                        }
+                        if (failedIds.isNotEmpty()) {
+                            // 锁内完成 epoch/模式预检与重试预算检查，避免与切换翻译模式交错写入竞态
+                            val retriable = translationMutex.withLock {
+                                if (!state.translationMode || epoch != translationEpoch) {
+                                    emptyList()
+                                } else {
+                                    takeRetryBudget(failedIds, autoRetryCounts)
+                                }
+                            }
+                            if (retriable.isNotEmpty()) {
+                                logger.w {
+                                    "ai translate novel chunk failed fragments, auto retry: " +
+                                        "${retriable.size}/${chunk.fragmentIds.size} reason=$failReason"
+                                }
+                                // 分批延迟启动，避免系统性失败时重试会话集中涌入调度器队列
+                                for ((index, fragmentId) in retriable.withIndex()) {
+                                    if (index > 0) delay(AUTO_RETRY_STAGGER_MS)
+                                    retrySentence(fragmentId)
                                 }
                             }
                         }
@@ -821,6 +914,31 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
     }
 }
 
+/** 正文节点 → 节点全文映射，供段落上下文 chunk 协议使用（Plain/Title 才参与翻译）。 */
+private fun NovelDetailViewState.Success.novelNodeTexts(): Map<Int, String> = nodeMap.mapIndexedNotNull { index, node ->
+    when (node) {
+        is NovelNodeElement.Plain -> index to node.text
+        is NovelNodeElement.Title -> index to node.text
+        else -> null
+    }
+}.toMap()
+
+/**
+ * 自动重试预算选择：返回预算内（尚未重试过）的失败片段，并把它们标记为已用预算
+ * （每片段每 epoch 至多自动重试一次，防止与模型反复不一致时死循环）。
+ */
+internal fun takeRetryBudget(
+    failedIds: List<Int>,
+    retryCounts: MutableMap<Int, Int>,
+): List<Int> = failedIds.filter { id ->
+    if (retryCounts.getOrDefault(id, 0) == 0) {
+        retryCounts[id] = 1
+        true
+    } else {
+        false
+    }
+}
+
 sealed class NovelDetailViewState {
     data class Loading(val text: MutableStateFlow<String>) : NovelDetailViewState()
     data class Error(val cause: String) : NovelDetailViewState()
@@ -851,3 +969,6 @@ sealed class NovelDetailSideEffect {
 
 /** 流式译文合并进状态的最小间隔：超过该间隔才合并一次，避免逐 token 触发整篇 AnnotatedString 重建。 */
 private const val STREAM_FLUSH_INTERVAL_MS = 100L
+
+/** 自动重试启动间隔：分批延迟启动，避免失败会话集中涌入调度器队列。 */
+private const val AUTO_RETRY_STAGGER_MS = 250L

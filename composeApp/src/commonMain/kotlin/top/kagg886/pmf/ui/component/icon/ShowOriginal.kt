@@ -24,7 +24,7 @@ val ShowOriginal: ImageVector = Builder(
     path(
         fill = null,
         stroke = SolidColor(Color.Black),
-        strokeLineWidth = 24.0f,
+        strokeLineWidth = 20.0f,
         strokeLineCap = RoundCap,
         strokeLineJoin = RoundJoin,
         strokeLineMiter = 4.0f,

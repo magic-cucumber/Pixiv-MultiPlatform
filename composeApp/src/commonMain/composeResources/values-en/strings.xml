@@ -19,6 +19,8 @@
     <string name="ai_translate_prompt">Translation Prompt</string>
     <string name="ai_translate_cache">Enable Translation Cache</string>
     <string name="ai_translate_cache_description">Cache translated content to avoid repeated requests</string>
+    <string name="ai_translate_paragraph_context">Enable Paragraph Context</string>
+    <string name="ai_translate_paragraph_context_description">Include the full paragraph as context when translating novel body text for better quality; turn off to translate sentence by sentence</string>
     <string name="ai_translate_settings">AI Translation Settings</string>
     <string name="ai_translate_show_original">Show Original</string>
     <string name="ai_translate_translate">AI Translate</string>

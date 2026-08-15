@@ -121,19 +121,24 @@ fun RichText(
     val defaultTextStyle = LocalTextStyle.current
 
     val density = LocalDensity.current
-    val sentenceSpans = remember(state) {
+    val sentenceIndex = remember(state) {
         buildNovelSentenceIndex(state)
     }
-    val sentencesByNode = remember(sentenceSpans, state) {
-        sentenceSpans.groupBy { it.nodeIndex }.mapValues { (nodeIndex, spans) ->
-            val text =
-                when (val node = state.getOrNull(nodeIndex)) {
-                    is NovelNodeElement.Plain -> node.text
-                    is NovelNodeElement.Title -> node.text
-                    else -> ""
-                }
-            positionNovelSentences(text, spans)
-        }
+    // 折叠后的节点文本与片段位置一起缓存，翻译路径渲染时直接复用，避免每次流式 flush 重复折叠
+    val fragmentsByNode = remember(sentenceIndex, state) {
+        sentenceIndex
+            .flatMap { it.fragments }
+            .groupBy { it.nodeIndex }
+            .mapValues { (nodeIndex, fragments) ->
+                val text =
+                    when (val node = state.getOrNull(nodeIndex)) {
+                        is NovelNodeElement.Plain -> node.text
+                        is NovelNodeElement.Title -> node.text
+                        else -> ""
+                    }
+                val prepared = collapseBigLines(text)
+                PositionedNode(prepared, positionNovelFragments(prepared, fragments))
+            }
     }
     var screenWidth by remember {
         mutableStateOf(0.sp)
@@ -230,62 +235,78 @@ fun RichText(
             onRetrySentence,
         ) {
             val builder = AnnotatedString.Builder()
-            val sentenceRanges = mutableListOf<SentenceRange>()
+            val fragmentRanges = mutableListOf<FragmentRange>()
 
-            fun AnnotatedString.Builder.appendSentence(
-                sentence: NovelSentenceSpan,
-                sentenceState: SentenceTranslationState?,
+            fun AnnotatedString.Builder.appendFragment(
+                fragment: NovelFragmentSpan,
+                fragmentState: SentenceTranslationState?,
             ) {
-                val showOriginal = sentence.id in toggledSentences
+                val showOriginal = fragment.id in toggledSentences
                 val translatedText =
-                    when (sentenceState) {
-                        is SentenceTranslationState.Complete -> sentenceState.translatedText
-                        is SentenceTranslationState.Translating -> sentenceState.translatedText
+                    when (fragmentState) {
+                        is SentenceTranslationState.Complete -> fragmentState.translatedText
+                        is SentenceTranslationState.Translating -> fragmentState.translatedText
                         else -> ""
                     }
                 val displayText =
                     if (showOriginal || translatedText.isBlank()) {
-                        sentence.original
+                        fragment.original
                     } else {
                         translatedText
                     }
                 val displayColor =
                     when {
                         showOriginal -> null
-                        sentenceState is SentenceTranslationState.Failed -> failureColor
-                        sentenceState is SentenceTranslationState.Translating -> translatingColor
+
+                        fragmentState is SentenceTranslationState.Failed -> failureColor
+
+                        // Pending/Translating：正在请求或流式翻译中，着色标识"未就绪"，
+                        // 与已翻译/原文区分（懒加载时整页会呈现"已译 + 加载中"的混合）
+                        fragmentState is SentenceTranslationState.Pending ||
+                            fragmentState is SentenceTranslationState.Translating -> translatingColor
+
                         else -> null
                     }
                 val start = builder.length
+                // 回显片段（译文 == 原文，如专名被模型保持）：显示原文，点击动作 = 重试
+                // （没有译文可切换，重试给用户"再试一次拿真译文"的出路）
+                val isEcho =
+                    fragmentState is SentenceTranslationState.Complete &&
+                        fragmentState.translatedText == fragment.original
                 val clickable =
-                    sentenceState is SentenceTranslationState.Complete ||
-                        (sentenceState is SentenceTranslationState.Translating && translatedText.isNotBlank())
-                if (sentenceState is SentenceTranslationState.Failed) {
-                    // 失败句显示淡红原文，点击后重新发起翻译
+                    fragmentState is SentenceTranslationState.Complete ||
+                        (fragmentState is SentenceTranslationState.Translating && translatedText.isNotBlank())
+                if (fragmentState is SentenceTranslationState.Failed) {
+                    // 失败片段显示淡红原文，点击后重新发起翻译
                     withStyle(SpanStyle(color = displayColor ?: failureColor)) {
                         withClickable(colors, displayText) {
-                            onRetrySentence(sentence.id)
+                            onRetrySentence(fragment.id)
                         }
+                    }
+                } else if (isEcho) {
+                    // 回显不标红，但点击重试（而非切换——切换无可见变化）
+                    withClickable(colors, displayText) {
+                        onRetrySentence(fragment.id)
                     }
                 } else if (clickable) {
                     if (displayColor != null) {
                         withStyle(SpanStyle(color = displayColor)) {
                             withClickable(colors, displayText) {
                                 toggledSentences =
-                                    if (sentence.id in toggledSentences) {
-                                        toggledSentences - sentence.id
+                                    if (fragment.id in toggledSentences) {
+                                        toggledSentences - fragment.id
                                     } else {
-                                        toggledSentences + sentence.id
+                                        toggledSentences + fragment.id
                                     }
                             }
                         }
                     } else {
                         withClickable(colors, displayText) {
                             toggledSentences =
-                                if (sentence.id in toggledSentences) {
-                                    toggledSentences - sentence.id
+                                if (fragment.id in toggledSentences) {
+                                    toggledSentences - fragment.id
                                 } else {
-                                    toggledSentences + sentence.id
+                                    toggledSentences + fragment.id
                                 }
                         }
                     }
@@ -298,56 +319,49 @@ fun RichText(
                         append(displayText)
                     }
                 }
-                sentenceRanges += SentenceRange(start, builder.length, sentence.id)
+                fragmentRanges += FragmentRange(start, builder.length, fragment.id)
             }
 
-            fun AnnotatedString.Builder.appendPositionedSentencesWithAutoTypo(
+            fun AnnotatedString.Builder.appendPositionedFragmentsWithAutoTypo(
                 sourceText: String,
-                sentences: List<PositionedNovelSentence>,
+                fragments: List<PositionedNovelFragment>,
             ) {
                 val isAndroid = currentPlatform is Platform.Android
-                var lineStart = 0
-                while (lineStart <= sourceText.length) {
-                    val newlineIndex = sourceText.indexOf('\n', lineStart)
-                    val lineEnd = if (newlineIndex < 0) sourceText.length else newlineIndex
-                    val line = sourceText.substring(lineStart, lineEnd)
-                    if (line.isBlank()) {
+                // 与原文 autoTypo 路径共用同一行预处理（折叠空行、丢弃空行、trim），保证排版一致
+                for (line in autoTypoLines(sourceText)) {
+                    if (!isAndroid) {
+                        // 与原文 autoTypo 排版一致：桌面端每行前保留 8 个空格缩进
                         append('\n')
-                    } else {
-                        if (!isAndroid) {
-                            // 与原文 autoTypo 排版一致：桌面端每行前保留 8 个空格缩进
-                            append('\n')
-                            append("        ")
-                        }
-                        var cursor = lineStart
-                        var appendedSentence = false
-                        for (position in sentences) {
-                            if (position.end <= lineStart) continue
-                            if (position.start >= lineEnd) break
-                            if (appendedSentence) {
-                                val gapEnd = minOf(position.start, lineEnd)
-                                if (gapEnd > cursor) {
-                                    append(sourceText.substring(cursor, gapEnd))
-                                }
-                            } else {
-                                // 去掉行首空白，但保留行首的轻小说装饰标点（如 ……⌋）
-                                val leadEnd = minOf(position.start, lineEnd)
-                                val lead = sourceText.substring(lineStart, leadEnd).trimStart()
-                                if (lead.isNotEmpty()) {
-                                    append(lead)
-                                }
-                            }
-                            appendSentence(position.sentence, sentenceTranslations[position.sentence.id])
-                            cursor = maxOf(position.end, lineStart)
-                            appendedSentence = true
-                        }
-                        if (!appendedSentence) {
-                            append(line.trim())
-                        }
-                        append('\n')
+                        append("        ")
                     }
-                    if (newlineIndex < 0) break
-                    lineStart = newlineIndex + 1
+                    var cursor = line.start
+                    var appendedFragment = false
+                    for (position in fragments) {
+                        if (position.end <= line.start) continue
+                        if (position.start >= line.end) break
+                        if (appendedFragment) {
+                            val gapEnd = minOf(position.start, line.end)
+                            if (gapEnd > cursor) {
+                                append(sourceText.substring(cursor, gapEnd))
+                            }
+                        } else {
+                            // 去掉行首空白，但保留行首的轻小说装饰标点（如 ……⌋）
+                            val leadEnd = minOf(position.start, line.end)
+                            val lead = sourceText.substring(line.start, leadEnd).trimStart()
+                            if (lead.isNotEmpty()) {
+                                append(lead)
+                            }
+                        }
+                        appendFragment(position.fragment, sentenceTranslations[position.fragment.id])
+                        cursor = maxOf(position.end, line.start)
+                        appendedFragment = true
+                    }
+                    if (!appendedFragment) {
+                        append(line.text)
+                    } else if (cursor < line.end) {
+                        append(sourceText.substring(cursor, line.end))
+                    }
+                    append('\n')
                 }
             }
 
@@ -363,9 +377,8 @@ fun RichText(
                     return
                 }
 
-                fun String.replaceBigLines() = replace(Regex("(\\s*\\r?\\n){2,}\\n"), "\n")
                 if (AppConfig.autoTypo) {
-                    with(text.replaceBigLines().lines()) {
+                    with(collapseBigLines(text).lines()) {
                         filter { it.isNotBlank() }.map {
                             if (currentPlatform is Platform.Android) {
                                 return@map it.trim()
@@ -382,19 +395,22 @@ fun RichText(
             }
 
             fun AnnotatedString.Builder.appendTextNode(text: String, index: Int, title: Boolean) {
-                val sentences = sentencesByNode[index]
-                if (translationMode && !sentences.isNullOrEmpty()) {
-                    fun appendPositionedSentences() {
+                val positioned = fragmentsByNode[index]
+                if (translationMode && positioned != null && positioned.sentences.isNotEmpty()) {
+                    // 复用 remember 中已折叠的文本与片段位置，避免每次流式 flush 重复折叠
+                    val prepared = positioned.text
+                    val fragments = positioned.sentences
+                    fun appendPositionedFragments() {
                         var cursor = 0
-                        for (position in sentences) {
+                        for (position in fragments) {
                             if (position.start > cursor) {
-                                append(text.substring(cursor, position.start))
+                                append(prepared.substring(cursor, position.start))
                             }
-                            appendSentence(position.sentence, sentenceTranslations[position.sentence.id])
+                            appendFragment(position.fragment, sentenceTranslations[position.fragment.id])
                             cursor = position.end
                         }
-                        if (cursor < text.length) {
-                            append(text.substring(cursor))
+                        if (cursor < prepared.length) {
+                            append(prepared.substring(cursor))
                         }
                     }
 
@@ -402,14 +418,14 @@ fun RichText(
                         appendLine()
                         withStyle(ParagraphStyle(textIndent = TextIndent(firstLine = 0.sp))) {
                             withStyle(SpanStyle(fontWeight = FontWeight.Bold, fontSize = textSize * 1.5)) {
-                                appendPositionedSentences()
+                                appendPositionedFragments()
                             }
                         }
                         appendLine()
                     } else if (AppConfig.autoTypo) {
-                        appendPositionedSentencesWithAutoTypo(text, sentences)
+                        appendPositionedFragmentsWithAutoTypo(prepared, fragments)
                     } else {
-                        appendPositionedSentences()
+                        appendPositionedFragments()
                     }
                     return
                 }
@@ -459,22 +475,22 @@ fun RichText(
                     }
                 }
             }
-            builder.toAnnotatedString() to sentenceRanges
+            builder.toAnnotatedString() to fragmentRanges
         }
     val annotateString = annotatedState.first
-    val sentenceRanges = annotatedState.second
+    val fragmentRanges = annotatedState.second
 
     val currentOnVisibleSentencesChanged by rememberUpdatedState(onVisibleSentencesChanged)
     val currentViewportHeightPx by rememberUpdatedState(viewportHeightPx)
-    // 句区间会随译文长度变化而变化；通过 rememberUpdatedState 在 snapshotFlow 内追踪读取，
-    // 避免把 sentenceRanges 放进 LaunchedEffect key 导致每次流式更新都重启 effect。
-    val currentSentenceRanges by rememberUpdatedState(sentenceRanges)
+    // 片段区间会随译文长度变化而变化；通过 rememberUpdatedState 在 snapshotFlow 内追踪读取，
+    // 避免把 fragmentRanges 放进 LaunchedEffect key 导致每次流式更新都重启 effect。
+    val currentFragmentRanges by rememberUpdatedState(fragmentRanges)
     LaunchedEffect(scrollState, translationMode) {
         val scroll = scrollState ?: return@LaunchedEffect
         snapshotFlow {
             val layout = layoutResult
             val viewport = currentViewportHeightPx
-            val ranges = currentSentenceRanges
+            val ranges = currentFragmentRanges
             if (layout == null || layout.lineCount <= 0 || viewport <= 0 || !translationMode) {
                 emptySet<Int>()
             } else {
@@ -490,7 +506,7 @@ fun RichText(
                         if (range.end <= range.start) continue
                         if (range.start > windowEnd) break
                         if (range.end >= windowStart) {
-                            add(range.sentenceId)
+                            add(range.fragmentId)
                         }
                     }
                 }
@@ -533,31 +549,70 @@ fun RichText(
     )
 }
 
-private data class SentenceRange(
+private data class FragmentRange(
     val start: Int,
     val end: Int,
-    val sentenceId: Int,
+    val fragmentId: Int,
 )
 
-internal data class PositionedNovelSentence(
-    val sentence: NovelSentenceSpan,
+internal data class PositionedNovelFragment(
+    val fragment: NovelFragmentSpan,
     val start: Int,
     val end: Int,
 )
 
-/** 把切句结果定位回原文，保证翻译模式未翻译/占位时仍按原文格式渲染。 */
-internal fun positionNovelSentences(
+/** 节点级翻译渲染缓存：折叠后的节点文本与片段位置（避免每次流式 flush 重复折叠）。 */
+internal data class PositionedNode(
+    val text: String,
+    val sentences: List<PositionedNovelFragment>,
+)
+
+/** 把切块结果定位回原文，保证翻译模式未翻译/占位时仍按原文格式渲染。 */
+internal fun positionNovelFragments(
     text: String,
-    sentences: List<NovelSentenceSpan>,
-): List<PositionedNovelSentence> {
-    val result = mutableListOf<PositionedNovelSentence>()
+    fragments: List<NovelFragmentSpan>,
+): List<PositionedNovelFragment> {
+    val result = mutableListOf<PositionedNovelFragment>()
     var searchFrom = 0
-    for (sentence in sentences) {
-        val start = text.indexOf(sentence.original, searchFrom)
+    for (fragment in fragments) {
+        val start = text.indexOf(fragment.original, searchFrom)
         if (start < 0) return emptyList()
-        val end = start + sentence.original.length
-        result += PositionedNovelSentence(sentence, start, end)
+        val end = start + fragment.original.length
+        result += PositionedNovelFragment(fragment, start, end)
         searchFrom = end
+    }
+    return result
+}
+
+/** 折叠 3 个及以上连续换行（含周围空白）为单个换行，用于 autoTypo 排版。 */
+internal fun collapseBigLines(text: String): String = text.replace(Regex("(\\s*\\r?\\n){2,}\\n"), "\n")
+
+/** autoTypo 行预处理结果：[text] 为 trim 后的行文本，[start]/[end] 为行在原文中的偏移。 */
+internal data class AutoTypoLine(
+    val text: String,
+    val start: Int,
+    val end: Int,
+)
+
+/**
+ * autoTypo 模式的共享行预处理：折叠 3+ 连续换行、丢弃空行、逐行 trim。
+ *
+ * 原文渲染路径（[RichText] 的 appendOriginalText）与翻译渲染路径
+ * （appendPositionedSentencesWithAutoTypo）共用本函数，保证两种模式下
+ * 行间距、段落空行与缩进完全一致；偏移用于把句子定位回原文。
+ */
+internal fun autoTypoLines(sourceText: String): List<AutoTypoLine> {
+    val result = mutableListOf<AutoTypoLine>()
+    var start = 0
+    while (start <= sourceText.length) {
+        val newlineIndex = sourceText.indexOf('\n', start)
+        val end = if (newlineIndex < 0) sourceText.length else newlineIndex
+        val trimmed = sourceText.substring(start, end).trim()
+        if (trimmed.isNotEmpty()) {
+            result += AutoTypoLine(trimmed, start, end)
+        }
+        if (newlineIndex < 0) break
+        start = newlineIndex + 1
     }
     return result
 }

@@ -175,6 +175,32 @@ class TranslateSchedulerTest {
     }
 
     @Test
+    fun testMaskSecretReplacesApiKeyWithStars() {
+        val previous = AppConfig.deepseekApiKey
+        try {
+            AppConfig.deepseekApiKey = "sk-test-secret-key-123"
+            assertEquals("req *** tail", maskSecret("req sk-test-secret-key-123 tail"))
+            assertTrue(!maskSecret("http error: sk-test-secret-key-123").contains("sk-test-secret-key-123"))
+            assertTrue(maskSecret("http error: sk-test-secret-key-123").contains("***"))
+        } finally {
+            AppConfig.deepseekApiKey = previous
+        }
+    }
+
+    @Test
+    fun testMaskSecretShortKeyOrBlankIsUnchanged() {
+        val previous = AppConfig.deepseekApiKey
+        try {
+            AppConfig.deepseekApiKey = "ab"
+            assertEquals("ab", maskSecret("ab"), "过短的 key 不打码，避免误伤正常文本")
+            AppConfig.deepseekApiKey = ""
+            assertEquals("plain text", maskSecret("plain text"))
+        } finally {
+            AppConfig.deepseekApiKey = previous
+        }
+    }
+
+    @Test
     fun testDefaultPromptUsesLineProtocolInsteadOfJson() {
         val prompt = AppConfig.DEFAULT_AI_TRANSLATE_PROMPT
         assertTrue(prompt.contains("one translated sentence per line"))
@@ -206,8 +232,9 @@ class TranslateSchedulerTest {
             listOf("Hello world.", "How are you?"),
             SentenceSegmenter.split("Hello world. How are you?"),
         )
+        // 顿号/分号是语块分隔符而非句末，不再切句（避免日文被切成无上下文的碎片）
         assertEquals(
-            listOf("第一句。", "第二句！", "第三句", "第四句；", "第五句"),
+            listOf("第一句。", "第二句！", "第三句", "第四句；第五句"),
             SentenceSegmenter.split("第一句。第二句！第三句\n第四句；第五句"),
         )
         assertTrue(SentenceSegmenter.split("3.14 is a number").size == 1)
@@ -220,13 +247,13 @@ class TranslateSchedulerTest {
             listOf("はい……", "いいえ。"),
             SentenceSegmenter.split("はい……\nいいえ。"),
         )
-        // "、" 与 "？！" 一样作为语块边界；标点自身会作为纯标点片段被后续过滤
+        // 逗号不切句：`こんにちは、世界。` 应整体作为一句翻译，保留内部逗号上下文
         assertEquals(
-            listOf("こんにちは。", "、", "世界"),
+            listOf("こんにちは。", "、世界"),
             SentenceSegmenter.split("こんにちは。、世界"),
         )
         assertEquals(
-            listOf("こんにちは、", "世界。"),
+            listOf("こんにちは、世界。"),
             SentenceSegmenter.split("こんにちは、世界。"),
         )
     }

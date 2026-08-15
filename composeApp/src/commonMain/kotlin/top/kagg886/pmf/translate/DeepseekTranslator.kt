@@ -6,6 +6,7 @@ import io.github.hatoyuze.deepseek.protocol.api.collectResponse
 import io.github.hatoyuze.deepseek.protocol.api.entity.ResponseFormat
 import io.github.hatoyuze.deepseek.protocol.api.entity.ThinkingMode
 import io.github.hatoyuze.deepseek.protocol.api.statelessDeepseek
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
@@ -76,7 +77,13 @@ class DeepseekTranslator : Translator {
 
     override suspend fun translate(text: String, targetLang: String): String {
         val c = currentClient(targetLang)
+        val startedAt = Clock.System.now()
         val response = c.chatStream(text).collectResponse()
+        logger.i {
+            "deepseek request: model=${AppConfig.aiTranslateModel} target=$targetLang " +
+                "textLen=${text.length} durationMs=${(Clock.System.now() - startedAt).inWholeMilliseconds} " +
+                "req=${maskSecret(text.take(40))} resp=${maskSecret(response.content.take(40))}"
+        }
         // 空内容如实返回（由 TranslateScheduler 判为 Failure），
         // 绝不把原文当作"译文"回退——否则会被当作成功结果写入缓存，导致后续永远显示原文。
         return response.content

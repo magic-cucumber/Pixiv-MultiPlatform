@@ -1,5 +1,6 @@
 package top.kagg886.pmf.translate
 
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
@@ -31,6 +32,18 @@ sealed interface TranslateResult {
 
 /** 是否已开启 AI 翻译且配置了 API Key。 */
 fun isAiTranslateEnabled(): Boolean = AppConfig.aiTranslateEnabled && AppConfig.deepseekApiKey.isNotBlank()
+
+/**
+ * 日志打码：把配置的 API Key 替换为 `***`，避免密钥经异常消息/请求内容泄漏到日志。
+ */
+internal fun maskSecret(text: String): String {
+    val key = AppConfig.deepseekApiKey
+    return if (key.isNotBlank() && key.length >= 4) {
+        text.replace(key, "***")
+    } else {
+        text
+    }
+}
 
 /**
  * 翻译调度器：限制并发、按原文 single-flight 去重、会话级 LRU 缓存，
@@ -94,9 +107,15 @@ class TranslateScheduler(
     }
 
     private suspend fun translateInternal(text: String, targetLang: String): TranslateResult = try {
+        val startedAt = Clock.System.now()
         semaphore.withPermit {
             withTimeout(timeout) {
                 val translated = translator.translate(text, targetLang)
+                val durationMs = (Clock.System.now() - startedAt).inWholeMilliseconds
+                logger.i {
+                    "ai translate done: textLen=${text.length} resultLen=${translated.length} " +
+                        "durationMs=$durationMs req=${maskSecret(text.take(40))}"
+                }
                 when {
                     translated.isBlank() -> {
                         logger.w { "ai translate returned blank content, textLen=${text.length}" }
@@ -114,12 +133,12 @@ class TranslateScheduler(
             }
         }
     } catch (e: TimeoutCancellationException) {
-        logger.w { "ai translate timeout after ${timeout.inWholeSeconds}s" }
+        logger.w { "ai translate timeout after ${timeout.inWholeSeconds}s, textLen=${text.length}" }
         TranslateResult.Failure(text)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        logger.e(e) { "ai translate failed: ${e.message}" }
+        logger.e(e) { "ai translate failed: ${maskSecret(e.message ?: "")}" }
         TranslateResult.Failure(text)
     }
 
@@ -253,6 +272,7 @@ class TranslateScheduler(
         emit: suspend (TranslateResult) -> Unit,
     ): TranslateResult = try {
         val builder = StringBuilder()
+        val startedAt = Clock.System.now()
         semaphore.withPermit {
             withTimeout(timeout) {
                 translator.translateStream(text, targetLang).collect { chunk ->
@@ -262,6 +282,11 @@ class TranslateScheduler(
                     }
                 }
             }
+        }
+        val durationMs = (Clock.System.now() - startedAt).inWholeMilliseconds
+        logger.i {
+            "ai translate stream done: textLen=${text.length} resultLen=${builder.length} " +
+                "durationMs=$durationMs req=${maskSecret(text.take(40))}"
         }
         when {
             builder.isEmpty() -> {
@@ -278,12 +303,12 @@ class TranslateScheduler(
             else -> TranslateResult.Success(builder.toString())
         }
     } catch (e: TimeoutCancellationException) {
-        logger.w { "ai translate stream timeout after ${timeout.inWholeSeconds}s" }
+        logger.w { "ai translate stream timeout after ${timeout.inWholeSeconds}s, textLen=${text.length}" }
         TranslateResult.Failure(text)
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        logger.e(e) { "ai translate stream failed: ${e.message}" }
+        logger.e(e) { "ai translate stream failed: ${maskSecret(e.message ?: "")}" }
         TranslateResult.Failure(text)
     }
 }

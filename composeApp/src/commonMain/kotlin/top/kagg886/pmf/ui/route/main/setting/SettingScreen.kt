@@ -858,6 +858,23 @@ fun SettingScreen() {
                         },
                     )
 
+                    var aiTranslateParagraphContext by remember {
+                        mutableStateOf(AppConfig.aiTranslateParagraphContext)
+                    }
+                    LaunchedEffect(aiTranslateParagraphContext) {
+                        AppConfig.aiTranslateParagraphContext = aiTranslateParagraphContext
+                    }
+                    SettingsSwitch(
+                        state = aiTranslateParagraphContext,
+                        title = { Text(stringResource(Res.string.ai_translate_paragraph_context)) },
+                        subtitle = {
+                            Text(stringResource(Res.string.ai_translate_paragraph_context_description))
+                        },
+                        onCheckedChange = {
+                            aiTranslateParagraphContext = it
+                        },
+                    )
+
                     var aiTranslateModel by remember {
                         mutableStateOf(AppConfig.aiTranslateModel)
                     }

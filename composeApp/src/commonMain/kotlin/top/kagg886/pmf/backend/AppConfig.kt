@@ -72,6 +72,7 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
     var aiTranslateProperNouns by string("ai_translate_proper_nouns", DEFAULT_AI_TRANSLATE_PROPER_NOUNS)
     var aiTranslateModel by string("ai_translate_model", "deepseek-v4-flash")
     var aiTranslateCacheEnabled by boolean("ai_translate_cache_enabled", true)
+    var aiTranslateParagraphContext by boolean("ai_translate_paragraph_context", true)
 
     const val DEFAULT_AI_TRANSLATE_PROMPT =
         "You are a professional translator. Translate the user-provided text into %lang%. " +
