@@ -2,6 +2,7 @@ package top.kagg886.pmf.translate
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.atomicfu.atomic
@@ -174,6 +175,28 @@ class TranslateSchedulerTest {
     }
 
     @Test
+    fun testDefaultPromptUsesLineProtocolInsteadOfJson() {
+        val prompt = AppConfig.DEFAULT_AI_TRANSLATE_PROMPT
+        assertTrue(prompt.contains("one translated sentence per line"))
+        assertTrue(prompt.contains("punctuation"))
+        assertTrue(prompt.contains("line breaks"))
+        assertFalse(prompt.contains("JSON object"))
+        assertFalse(prompt.contains("{\"sentences\""))
+    }
+
+    @Test
+    fun testLegacyJsonPromptIsMigratedToLineProtocol() {
+        val previous = AppConfig.aiTranslatePrompt
+        try {
+            AppConfig.aiTranslatePrompt = AppConfig.LEGACY_JSON_AI_TRANSLATE_PROMPT
+            AppConfig.migrateLegacyAiTranslatePrompt()
+            assertEquals(AppConfig.DEFAULT_AI_TRANSLATE_PROMPT, AppConfig.aiTranslatePrompt)
+        } finally {
+            AppConfig.aiTranslatePrompt = previous
+        }
+    }
+
+    @Test
     fun testSentenceSegmenterSplitsCjkAndEnglish() {
         assertEquals(
             listOf("こんにちは。", "元気ですか？"),
@@ -188,26 +211,41 @@ class TranslateSchedulerTest {
             SentenceSegmenter.split("第一句。第二句！第三句\n第四句；第五句"),
         )
         assertTrue(SentenceSegmenter.split("3.14 is a number").size == 1)
+        // 日本轻小说常见标点：连续省略号与地板括号/闭引号应并入前句
+        assertEquals(
+            listOf("「はい……⌋」"),
+            SentenceSegmenter.split("「はい……⌋」"),
+        )
+        assertEquals(
+            listOf("はい……", "いいえ。"),
+            SentenceSegmenter.split("はい……\nいいえ。"),
+        )
+        // "、" 与 "？！" 一样作为语块边界；标点自身会作为纯标点片段被后续过滤
+        assertEquals(
+            listOf("こんにちは。", "、", "世界"),
+            SentenceSegmenter.split("こんにちは。、世界"),
+        )
+        assertEquals(
+            listOf("こんにちは、", "世界。"),
+            SentenceSegmenter.split("こんにちは、世界。"),
+        )
     }
 
     @Test
-    fun testSentenceTranslationParserAcceptsObjectArrayAndFences() {
+    fun testSentenceTranslationParserAcceptsLineProtocolAndFences() {
         assertEquals(
             listOf("你好", "世界"),
-            SentenceTranslationParser.parse("""{"sentences":["你好","世界"]}"""),
+            SentenceTranslationParser.parse("你好\n世界"),
         )
         assertEquals(
             listOf("你好", "世界"),
             SentenceTranslationParser.parse(
-                """```json
-                {"sentences":["你好","世界"]}
+                """```text
+                你好
+                世界
                 ```
                 """.trimIndent(),
             ),
-        )
-        assertEquals(
-            listOf("你好", "世界"),
-            SentenceTranslationParser.parse("""["你好","世界"]"""),
         )
         assertEquals(
             listOf("plain fallback"),
@@ -279,6 +317,33 @@ class TranslateSchedulerTest {
         assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
         assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
         assertEquals(2, calls, "回显原文的结果不应被缓存")
+    }
+
+    @Test
+    fun testStreamDeltaChunksAreAccumulatedOnlyOnce() = runBlocking {
+        val translator = object : Translator {
+            override suspend fun translate(text: String, targetLang: String): String = "unused"
+
+            override fun translateStream(text: String, targetLang: String): Flow<String> = flow {
+                emit("我")
+                emit("是")
+                emit("Deepseek")
+                emit("了")
+            }
+        }
+        val scheduler = TranslateScheduler(translator)
+
+        val results = scheduler.translateStream("hello", "中文").toList()
+
+        assertEquals(
+            listOf(
+                TranslateResult.Success("我"),
+                TranslateResult.Success("我是"),
+                TranslateResult.Success("我是Deepseek"),
+                TranslateResult.Success("我是Deepseek了"),
+            ),
+            results,
+        )
     }
 
     @Test

@@ -13,6 +13,7 @@ import korlibs.time.seconds
 import kotlin.collections.set
 import kotlin.time.Clock
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -66,10 +67,8 @@ import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.translate.IncrementalSentenceParser
 import top.kagg886.pmf.translate.LanguageDetector
-import top.kagg886.pmf.translate.PageTranslationState
-import top.kagg886.pmf.translate.SentencePair
-import top.kagg886.pmf.translate.SentenceSegmenter
 import top.kagg886.pmf.translate.SentenceTranslationParser
+import top.kagg886.pmf.translate.SentenceTranslationState
 import top.kagg886.pmf.translate.TranslateResult
 import top.kagg886.pmf.translate.TranslateScheduler
 import top.kagg886.pmf.translate.isAiTranslateEnabled
@@ -78,11 +77,14 @@ import top.kagg886.pmf.translate.translationDisplayText
 import top.kagg886.pmf.translate.translationDisplayTextOrNull
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
 import top.kagg886.pmf.ui.util.NovelNodeElement
+import top.kagg886.pmf.ui.util.NovelSentenceChunk
+import top.kagg886.pmf.ui.util.NovelSentenceSpan
 import top.kagg886.pmf.ui.util.RichSegment
-import top.kagg886.pmf.ui.util.buildPageIndex
-import top.kagg886.pmf.ui.util.buildPageText
+import top.kagg886.pmf.ui.util.buildNovelSentenceChunks
+import top.kagg886.pmf.ui.util.buildNovelSentenceIndex
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.ui.util.parseHtmlSegments
+import top.kagg886.pmf.ui.util.reattachNovelSentencePunctuation
 import top.kagg886.pmf.ui.util.translateRichSegments
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
@@ -97,7 +99,10 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
     private val database by inject<AppDatabase>()
     private val translateScheduler by inject<TranslateScheduler>()
     private val translationMutex = Mutex()
-    private val activePages = mutableSetOf<Int>()
+    private val activeSentenceEpochs = mutableMapOf<Int, Int>()
+    private var translationEpoch = 0
+    private var sentenceIndexCache: List<NovelSentenceSpan> = emptyList()
+    private var sentenceByIdCache: Map<Int, NovelSentenceSpan> = emptyMap()
 
     private fun CombinedText.toPlainString() = this.joinToString("") { it.text }
 
@@ -328,14 +333,19 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             WatchLaterType.NOVEL,
             detail.id.toLong(),
         )
+        val nodes = nodeMap.toList().sortedBy { it.first }.map { it.second }
+        val sentenceIndex = buildNovelSentenceIndex(nodes)
+        sentenceIndexCache = sentenceIndex
+        sentenceByIdCache = sentenceIndex.associateBy { it.id }
 
         reduce {
             NovelDetailViewState.Success(
                 detail,
                 content,
-                nodeMap.toList().sortedBy { it.first }.map { it.second },
+                nodes,
                 seriesInfo = seriesInfo,
                 itemInViewLater = itemInViewLater,
+                sentenceIndex = sentenceIndex,
             )
         }
         if (AppConfig.recordNovelHistory) {
@@ -563,146 +573,256 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         postSideEffect(NovelDetailSideEffect.NavigateIllustDetail(IllustDetailRoute(illust.id)))
     }
 
-    /** 切换正文翻译模式；开启后由 [onVisiblePagesChanged] 懒触发可见页翻译。 */
+    /** 切换正文翻译模式；开启后由 [onVisibleSentencesChanged] 懒触发可见句翻译。 */
     @OptIn(OrbitExperimental::class)
     fun toggleTranslateNovel() = intent {
         runOn<NovelDetailViewState.Success> {
             if (state.translationMode) {
+                translationEpoch++
+                translationMutex.withLock { activeSentenceEpochs.clear() }
                 reduce {
                     state.copy(
                         translationMode = false,
-                        pageTranslations = emptyMap(),
-                        currentPage = -1,
+                        sentenceTranslations = emptyMap(),
                     )
                 }
                 return@runOn
             }
             if (!isAiTranslateEnabled()) return@runOn
-            reduce { state.copy(translationMode = true, currentPage = -1) }
+            translationEpoch++
+            translationMutex.withLock { activeSentenceEpochs.clear() }
+            reduce {
+                state.copy(
+                    translationMode = true,
+                    sentenceTranslations = emptyMap(),
+                )
+            }
         }
     }
 
     /**
-     * 可见页懒翻译：仅翻译"当前页 + 延后 [LOOKAHEAD_PAGES] 页"，
-     * 进行中的页由 [activePages] 去重；失败页标 [PageTranslationState.Failed]（淡红原文）且不自动重试。
+     * 可见句懒翻译。可见窗口已经由 UI 换算为"当前视口行 + 延后 2 页行数"对应的句子集合；
+     * 这里把集合组装成小分段逐个交给 AI，进行中的句由 [activeSentenceEpochs] 去重。
      *
-     * 翻译在 [viewModelScope] 中异步进行、不阻塞本次 intent，
-     * 避免滚动触发的新请求被上一批翻译串行等待而影响操作。
+     * 分段创建后先标记 [SentenceTranslationState.Pending]（此时顶栏才显示请求等待动画），
+     * 收到首个流式事件后转为 [SentenceTranslationState.Translating]。
+     * 翻译在 [viewModelScope] 中异步进行、不阻塞本次 intent。
      */
     @OptIn(OrbitExperimental::class)
-    fun onVisiblePagesChanged(visiblePages: Set<Int>) = intent {
+    fun onVisibleSentencesChanged(visibleSentences: Set<Int>) = intent {
         runOn<NovelDetailViewState.Success> {
             val current = state
             if (!current.translationMode) return@runOn
-            val pageIndex = buildPageIndex(current.nodeMap)
 
-            // 当前页 = 可见且含文本的页中最靠前的一页；无文本页不参与翻译也不显示加载态
-            val currentPage = visiblePages
-                .filter { buildPageText(current.nodeMap, pageIndex, it).isNotBlank() }
-                .minOrNull() ?: -1
+            val index = sentenceIndexCache.ifEmpty { current.sentenceIndex }
+            val byId = sentenceByIdCache.ifEmpty { index.associateBy { it.id } }
+            val (epoch, chunks) = translationMutex.withLock {
+                val epoch = translationEpoch
+                val pending = visibleSentences.filter { sentenceId ->
+                    val translation = state.sentenceTranslations[sentenceId]
+                    sentenceId in byId &&
+                        sentenceId !in activeSentenceEpochs &&
+                        (translation == null || translation is SentenceTranslationState.Pending)
+                }
+                val chunks = buildNovelSentenceChunks(index, pending.toSet())
+                for (chunk in chunks) {
+                    for (sentenceId in chunk.sentenceIds) {
+                        activeSentenceEpochs[sentenceId] = epoch
+                    }
+                }
+                epoch to chunks
+            }
 
-            val toStart = translationMutex.withLock {
-                if (currentPage < 0) {
-                    emptyList()
-                } else {
-                    (currentPage..currentPage + LOOKAHEAD_PAGES)
-                        .filter { page ->
-                            val translation = current.pageTranslations[page]
-                            page !in activePages &&
-                                (translation == null || translation is PageTranslationState.Pending) &&
-                                buildPageText(current.nodeMap, pageIndex, page).isNotBlank()
+            if (chunks.isEmpty()) return@runOn
+
+            logger.i { "ai translate novel: visibleSentences=$visibleSentences, chunks=${chunks.size}" }
+            reduce {
+                if (!state.translationMode) return@reduce state
+                var translations = state.sentenceTranslations
+                for (chunk in chunks) {
+                    for (sentenceId in chunk.sentenceIds) {
+                        val old = translations[sentenceId]
+                        if (old == null || old is SentenceTranslationState.Pending) {
+                            translations = translations + (sentenceId to SentenceTranslationState.Pending)
                         }
-                        .also { activePages += it }
+                    }
                 }
+                state.copy(sentenceTranslations = translations)
+            }
+            launchNovelTranslationChunks(chunks, LanguageDetector.targetLanguageName(), epoch)
+        }
+    }
+
+    /** 点击失败句（红色原文）后重试该句。 */
+    @OptIn(OrbitExperimental::class)
+    fun retrySentence(sentenceId: Int) = intent {
+        runOn<NovelDetailViewState.Success> {
+            if (!state.translationMode) return@runOn
+            if (state.sentenceTranslations[sentenceId] !is SentenceTranslationState.Failed) return@runOn
+
+            val current = state
+            val index = sentenceIndexCache.ifEmpty { current.sentenceIndex }
+            val (epoch, chunks) = translationMutex.withLock {
+                if (sentenceId in activeSentenceEpochs) return@withLock translationEpoch to emptyList()
+                val epoch = translationEpoch
+                val chunks = buildNovelSentenceChunks(index, setOf(sentenceId), maxSentencesPerChunk = 1)
+                for (chunk in chunks) {
+                    for (id in chunk.sentenceIds) {
+                        activeSentenceEpochs[id] = epoch
+                    }
+                }
+                epoch to chunks
             }
 
-            if (currentPage != current.currentPage) {
-                reduce {
-                    if (!state.translationMode) return@reduce state
-                    state.copy(currentPage = currentPage)
-                }
+            if (chunks.isEmpty()) return@runOn
+
+            reduce {
+                if (!state.translationMode) return@reduce state
+                state.copy(
+                    sentenceTranslations = state.sentenceTranslations + (sentenceId to SentenceTranslationState.Pending),
+                )
             }
+            logger.i { "ai translate novel retry: sentence=$sentenceId" }
+            launchNovelTranslationChunks(chunks, LanguageDetector.targetLanguageName(), epoch)
+        }
+    }
 
-            if (toStart.isEmpty()) return@runOn
-
-            logger.i { "ai translate novel: currentPage=$currentPage, toStart=$toStart" }
-            val target = LanguageDetector.targetLanguageName()
-            for (page in toStart) {
+    /**
+     * 启动若干句子分段的流式翻译。进入 Pending 后调用；
+     * 首个流式事件到达前顶栏显示等待动画，之后只更新句子状态。
+     */
+    @OptIn(OrbitExperimental::class)
+    private fun launchNovelTranslationChunks(
+        chunks: List<NovelSentenceChunk>,
+        target: String,
+        epoch: Int,
+    ) = intent {
+        runOn<NovelDetailViewState.Success> {
+            for (chunk in chunks) {
                 viewModelScope.launch {
-                    var pageFailed = false
+                    var streamStarted = false
+                    var streamFailed = false
+                    var lastText: String? = null
+                    val sentenceSpans = chunk.sentences
                     try {
-                        val pageText = buildPageText(current.nodeMap, pageIndex, page)
-                        var lastText: String? = null
-                        logger.i { "ai translate novel: page=$page start, textLen=${pageText.length}" }
-                        reduce {
-                            if (!state.translationMode) return@reduce state
-                            state.copy(
-                                pageTranslations =
-                                state.pageTranslations + (page to PageTranslationState.Translating("")),
-                            )
+                        logger.i {
+                            "ai translate novel chunk: sentences=${chunk.sentenceIds.size}, textLen=${chunk.sourceText.length}"
                         }
-                        translateScheduler.translateStream(pageText, target).collect { result ->
+                        translateScheduler.translateStream(chunk.sourceText, target).collect { result ->
                             when (result) {
                                 is TranslateResult.Success -> {
+                                    if (!streamStarted) {
+                                        streamStarted = true
+                                        reduce {
+                                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
+                                            var translations = state.sentenceTranslations
+                                            for (sentenceId in chunk.sentenceIds) {
+                                                val old = translations[sentenceId]
+                                                if (old == null || old is SentenceTranslationState.Pending) {
+                                                    translations = translations + (sentenceId to SentenceTranslationState.Translating(""))
+                                                }
+                                            }
+                                            state.copy(sentenceTranslations = translations)
+                                        }
+                                    }
                                     lastText = result.text
-                                    // 流式输出是残缺 JSON：只把已闭合的句子提取上屏，
-                                    // 绝不把原始/未闭合的 JSON 显示给用户
-                                    val streamedSentences =
-                                        IncrementalSentenceParser.extractSentences(result.text)
-                                            .joinToString("\n")
+                                    // 流式输出为纯文本：仅把已经闭合的译文行上屏，最后一行等换行/结束符到达后才展示
+                                    val streamedSentences = IncrementalSentenceParser.extractSentences(result.text)
+                                    if (streamedSentences.isEmpty()) return@collect
                                     reduce {
-                                        if (!state.translationMode) return@reduce state
-                                        state.copy(
-                                            pageTranslations =
-                                            state.pageTranslations +
-                                                (page to PageTranslationState.Translating(streamedSentences)),
-                                        )
+                                        if (!state.translationMode || epoch != translationEpoch) return@reduce state
+                                        var translations = state.sentenceTranslations
+                                        for ((index, sentenceId) in chunk.sentenceIds.withIndex()) {
+                                            val translated = streamedSentences.getOrNull(index) ?: continue
+                                            if (translated.isBlank()) continue
+                                            val source = sentenceSpans.getOrNull(index)?.translationSource.orEmpty()
+                                            if (isIdentityTranslation(source, translated)) continue
+                                            val old = translations[sentenceId]
+                                            if (old !is SentenceTranslationState.Complete) {
+                                                val display = sentenceSpans.getOrNull(index)
+                                                    ?.let { reattachNovelSentencePunctuation(it, translated) }
+                                                    ?: translated
+                                                translations = translations + (sentenceId to SentenceTranslationState.Translating(display))
+                                            }
+                                        }
+                                        state.copy(sentenceTranslations = translations)
                                     }
                                 }
 
-                                is TranslateResult.Failure -> pageFailed = true
+                                is TranslateResult.Failure -> {
+                                    if (!streamStarted) {
+                                        streamStarted = true
+                                        reduce {
+                                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
+                                            var translations = state.sentenceTranslations
+                                            for (sentenceId in chunk.sentenceIds) {
+                                                val old = translations[sentenceId]
+                                                if (old == null || old is SentenceTranslationState.Pending) {
+                                                    translations = translations + (sentenceId to SentenceTranslationState.Translating(""))
+                                                }
+                                            }
+                                            state.copy(sentenceTranslations = translations)
+                                        }
+                                    }
+                                    streamFailed = true
+                                }
                             }
                         }
+
                         val finalText = lastText
-                        if (pageFailed || finalText == null) {
-                            logger.w { "ai translate novel: page=$page failed (stream failure)" }
-                            reduce {
-                                if (!state.translationMode) return@reduce state
-                                state.copy(
-                                    pageTranslations = state.pageTranslations + (page to PageTranslationState.Failed),
-                                )
-                            }
-                        } else {
-                            val originalSentences = SentenceSegmenter.split(pageText)
-                            // 严格解析：非 JSON / 空数组 / 回显原文一律视为失败，
-                            // 避免把原始 JSON 或原文当作译文展示
-                            val translatedSentences = SentenceTranslationParser.parseStrict(finalText)
-                            if (translatedSentences == null ||
-                                isIdentityTranslation(pageText, translatedSentences.joinToString("\n"))
-                            ) {
-                                logger.w { "ai translate novel: page=$page failed (unparseable or identity)" }
-                                reduce {
-                                    if (!state.translationMode) return@reduce state
-                                    state.copy(
-                                        pageTranslations = state.pageTranslations + (page to PageTranslationState.Failed),
-                                    )
-                                }
+                        val translatedLines =
+                            if (streamFailed || finalText == null) {
+                                null
                             } else {
-                                val pairs =
-                                    SentenceTranslationParser.align(originalSentences, translatedSentences)
-                                        ?: listOf(SentencePair(pageText, translatedSentences.joinToString("\n")))
-                                logger.i { "ai translate novel: page=$page success, pairs=${pairs.size}" }
-                                reduce {
-                                    if (!state.translationMode) return@reduce state
-                                    state.copy(
-                                        pageTranslations =
-                                        state.pageTranslations + (page to PageTranslationState.Complete(pairs)),
-                                    )
-                                }
+                                SentenceTranslationParser.parseForAlignment(finalText)
                             }
+                        reduce {
+                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
+                            var translations = state.sentenceTranslations
+                            for ((index, sentenceId) in chunk.sentenceIds.withIndex()) {
+                                val translated = translatedLines?.getOrNull(index)
+                                val source = sentenceSpans.getOrNull(index)?.translationSource.orEmpty()
+                                val valid =
+                                    translated != null &&
+                                        translated.isNotBlank() &&
+                                        !isIdentityTranslation(source, translated)
+                                translations =
+                                    translations +
+                                    (
+                                        sentenceId to
+                                            if (valid) {
+                                                val display = sentenceSpans.getOrNull(index)
+                                                    ?.let { reattachNovelSentencePunctuation(it, translated) }
+                                                    ?: translated
+                                                SentenceTranslationState.Complete(display)
+                                            } else {
+                                                SentenceTranslationState.Failed
+                                            }
+                                        )
+                            }
+                            logger.i { "ai translate novel chunk finished: valid=${translatedLines?.size ?: 0}/${chunk.sentenceIds.size}" }
+                            state.copy(sentenceTranslations = translations)
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        logger.e(e) { "ai translate novel chunk failed: ${e.message}" }
+                        reduce {
+                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
+                            var translations = state.sentenceTranslations
+                            for (sentenceId in chunk.sentenceIds) {
+                                translations = translations + (sentenceId to SentenceTranslationState.Failed)
+                            }
+                            state.copy(sentenceTranslations = translations)
                         }
                     } finally {
-                        translationMutex.withLock { activePages -= page }
+                        translationMutex.withLock {
+                            for (sentenceId in chunk.sentenceIds) {
+                                if (activeSentenceEpochs[sentenceId] == epoch) {
+                                    activeSentenceEpochs.remove(sentenceId)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -771,9 +891,8 @@ sealed class NovelDetailViewState {
 
         val itemInViewLater: Boolean,
         val translationMode: Boolean = false,
-        val pageTranslations: Map<Int, PageTranslationState> = emptyMap(),
-        // 当前视口最靠前的含文本页号；-1 表示尚未确定（供加载覆盖层判断）
-        val currentPage: Int = -1,
+        val sentenceTranslations: Map<Int, SentenceTranslationState> = emptyMap(),
+        val sentenceIndex: List<NovelSentenceSpan> = emptyList(),
         val introTitleTranslation: String? = null,
         val introCaptionTranslation: List<RichSegment>? = null,
         val introTranslating: Boolean = false,
@@ -788,6 +907,3 @@ sealed class NovelDetailSideEffect {
 
     data object NavigateBack : NovelDetailSideEffect()
 }
-
-/** 懒翻译时在当前页基础上向后预取的页数。 */
-private const val LOOKAHEAD_PAGES = 2

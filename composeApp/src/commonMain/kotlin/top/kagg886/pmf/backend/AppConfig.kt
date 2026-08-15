@@ -75,6 +75,27 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
 
     const val DEFAULT_AI_TRANSLATE_PROMPT =
         "You are a professional translator. Translate the user-provided text into %lang%. " +
+            "Preserve the original meaning, tone, punctuation, line breaks, and formatting. " +
+            "Split the source text into sentences and translate sentence by sentence. " +
+            "Keep every punctuation mark and blank line exactly as in the source. " +
+            "Do not invent sentence-ending punctuation or surrounding quotation marks when they are absent. " +
+            "Return only the translations, one translated sentence per line, " +
+            "in exactly the same order and line count. " +
+            "Do not return JSON, numbering, quotation marks around sentences, markdown, or any extra text.\n" +
+            "你是一名专业翻译。请将用户提供的文本翻译成%lang%。" +
+            "保留原意、语气、标点、换行与格式；不要增删标点、自行补句末标点或合并句子。" +
+            "把源文本按句拆分并逐句翻译，只返回译文：" +
+            "每行一句译文，顺序、标点、空行与原文完全一致。" +
+            "不要返回 JSON、编号、句子引号、Markdown 或任何多余内容。"
+
+    const val DEFAULT_AI_TRANSLATE_PROPER_NOUNS =
+        "Proper nouns (character names, work titles, place names) should keep the original form " +
+            "or use the commonly accepted translation; do not translate them literally.\n" +
+            "人名、作品名、地名等专有名词保持原文或使用通行的译法，不要直译。"
+
+    /** 旧版本持久化的 JSON prompt；检测到时迁移为按行返回的纯文本 prompt。 */
+    const val LEGACY_JSON_AI_TRANSLATE_PROMPT =
+        "You are a professional translator. Translate the user-provided text into %lang%. " +
             "Preserve the original meaning, tone and formatting. " +
             "Split the source text into sentences and translate sentence by sentence, " +
             "keeping the same order and sentence count. " +
@@ -85,10 +106,11 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
             "只返回 JSON 对象：{\"sentences\": [\"译文1\", \"译文2\", ...]}，" +
             "不要添加任何解释、Markdown 或多余内容。"
 
-    const val DEFAULT_AI_TRANSLATE_PROPER_NOUNS =
-        "Proper nouns (character names, work titles, place names) should keep the original form " +
-            "or use the commonly accepted translation; do not translate them literally.\n" +
-            "人名、作品名、地名等专有名词保持原文或使用通行的译法，不要直译。"
+    fun migrateLegacyAiTranslatePrompt() {
+        if (aiTranslatePrompt == LEGACY_JSON_AI_TRANSLATE_PROMPT) {
+            aiTranslatePrompt = DEFAULT_AI_TRANSLATE_PROMPT
+        }
+    }
 
     @Serializable
     enum class LanguageSettings(val tag: StringResource, val locale: Locale) {

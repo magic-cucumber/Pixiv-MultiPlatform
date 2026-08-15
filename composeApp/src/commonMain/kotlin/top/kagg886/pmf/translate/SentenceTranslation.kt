@@ -1,78 +1,46 @@
 package top.kagg886.pmf.translate
 
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.contentOrNull
-
 /** 一句原文与对应译文。 */
 data class SentencePair(
     val original: String,
     val translated: String,
 )
 
-/** 模型返回的句对句 JSON 结构。 */
-@Serializable
-data class SentenceTranslationPayload(
-    val sentences: List<String> = emptyList(),
-)
-
 /**
- * 解析并对齐模型的句对句翻译结果。
+ * 解析模型按行返回的句译文。
  *
- * 解析容忍裸数组与 {"sentences": [...]} 两种形态及 ```json 代码块包裹；
- * 解析失败时回退为整段文本（单句），对齐数量不一致时返回 null，由调用方降级。
+ * 小说翻译采用"每行一句"纯文本协议：源句按行送入 AI，模型逐行返回译文。
+ * 行协议在流式场景下每遇到一个换行即可闭合一句，避免 JSON 在流未结束时无法解析的问题。
  */
 object SentenceTranslationParser {
+    /** 解析完整译文：去代码块围栏后按非空行返回；空白输入返回空列表。 */
     fun parse(raw: String): List<String> {
-        val cleaned = raw.trim()
-            .removeSurrounding("```json", "```")
-            .removeSurrounding("```")
-            .trim()
-        if (cleaned.isEmpty()) return emptyList()
-        val parsed = runCatching {
-            val element = Json.parseToJsonElement(cleaned)
-            val array =
-                when (element) {
-                    is JsonObject -> element["sentences"] as? JsonArray
-                    is JsonArray -> element
-                    else -> null
-                }
-            array?.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
-                ?.map { it.trim() }
-                ?.filter { it.isNotEmpty() }
-        }.getOrNull()
-        return parsed?.takeIf { it.isNotEmpty() } ?: listOf(cleaned)
+        val cleaned = stripCodeFences(raw)
+        if (cleaned.isBlank() || looksLikeJsonPayload(cleaned)) return emptyList()
+        return cleaned.lines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
     }
 
+    /** 严格解析：至少返回一个非空行；空白或无法解析时返回 null。 */
+    fun parseStrict(raw: String): List<String>? = parse(raw).takeIf { it.isNotEmpty() }
+
     /**
-     * 严格解析：仅接受合法的 JSON 句子数组（对象或裸数组形态），
-     * 解析失败、句子数组为空时返回 null——绝不回退为原始文本。
+     * 面向句对齐的完整解析：去掉首尾空行，但保留中间空行。
      *
-     * 用于小说页的最终结果：模型返回残缺/非 JSON 时由调用方标为失败，
-     * 避免把原始 JSON 文本当作译文展示。
+     * 模型漏译某句时对应位置为空字符串，调用方可把该句判为失败，
+     * 避免后续译文前移配对到错误的原句。
      */
-    fun parseStrict(raw: String): List<String>? {
-        val cleaned = raw.trim()
-            .removeSurrounding("```json", "```")
-            .removeSurrounding("```")
-            .trim()
-        if (cleaned.isEmpty()) return null
-        val parsed = runCatching {
-            val element = Json.parseToJsonElement(cleaned)
-            val array =
-                when (element) {
-                    is JsonObject -> element["sentences"] as? JsonArray
-                    is JsonArray -> element
-                    else -> null
-                } ?: return@runCatching null
-            array.mapNotNull { (it as? JsonPrimitive)?.contentOrNull }
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-        }.getOrNull()
-        return parsed?.takeIf { it.isNotEmpty() }
+    fun parseForAlignment(raw: String): List<String>? {
+        val cleaned = stripCodeFences(raw)
+        if (cleaned.isBlank() || looksLikeJsonPayload(cleaned)) return null
+        val lines = cleaned.lines()
+        val first = lines.indexOfFirst { it.isNotBlank() && !isCodeFenceLine(it) }
+        if (first < 0) return null
+        val last = lines.indexOfLast { it.isNotBlank() && !isCodeFenceLine(it) }
+        return lines.subList(first, last + 1).map { line ->
+            if (isCodeFenceLine(line)) "" else line.trim()
+        }
     }
 
     fun align(original: List<String>, translated: List<String>): List<SentencePair>? {
@@ -83,117 +51,33 @@ object SentenceTranslationParser {
 }
 
 /**
- * 增量解析流式 JSON（`{"sentences":[...]}` 或裸数组）中已经完整闭合的句子字符串。
+ * 增量解析流式按行译文。
  *
- * 模型逐 token 累积的残缺 JSON 作为输入；本解析器只输出已闭合的字符串字面量，
- * 未闭合的尾串、未闭合的数组/对象、尾随垃圾一律忽略——GUI 层据此逐句展示流式译文，
- * 绝不把残缺 JSON 原文上屏。完整 JSON 的提取结果与 [SentenceTranslationParser.parse] 一致。
+ * 输入是模型逐 token 累积的纯文本；只有已经出现换行、完整闭合的行才会被输出，
+ * 当前未闭合的最后一行保留在缓冲区等待后续 token。这样 GUI 可逐句上屏，
+ * 不会把尚未完成的句子显示给用户。
  */
 object IncrementalSentenceParser {
     fun extractSentences(partial: String): List<String> {
-        val trimmed = partial.trim()
-            .removeSurrounding("```json", "```")
-            .removeSurrounding("```")
-            .trim()
-        if (trimmed.isEmpty()) return emptyList()
+        // 结尾换行是"最后一句已闭合"的依据，不能在清理围栏时被 trim 掉
+        val hasClosingLineBreak =
+            partial.trimStart().endsWith('\n') || partial.trimStart().endsWith("\r\n")
+        val cleaned = stripCodeFences(partial)
+        if (cleaned.isBlank() || looksLikeJsonPayload(cleaned)) return emptyList()
 
-        var index = 0
-        val len = trimmed.length
-
-        // 定位数组起始 '['：对象形态需先找到 "sentences" 键
-        when (trimmed[index]) {
-            '{' -> {
-                index++
-                val key = "\"sentences\""
-                val keyIndex = trimmed.indexOf(key, index)
-                if (keyIndex < 0) return emptyList()
-                index = keyIndex + key.length
-                while (index < len && trimmed[index].isWhitespace()) index++
-                if (index >= len || trimmed[index] != ':') return emptyList()
-                index++
-                while (index < len && trimmed[index].isWhitespace()) index++
-            }
-
-            '[' -> {}
-
-            else -> return emptyList()
+        val lines = cleaned.lines()
+        val complete = when {
+            hasClosingLineBreak -> lines
+            lines.size <= 1 -> emptyList()
+            else -> lines.dropLast(1)
         }
-        // index 现在指向数组起始 '['
-        if (index >= len || trimmed[index] != '[') return emptyList()
-        index++
-
-        val result = mutableListOf<String>()
-        while (index < len) {
-            while (index < len && trimmed[index].isWhitespace()) index++
-            if (index >= len) break
-            when (trimmed[index]) {
-                ',' -> index++
-
-                ']', '}' -> break
-
-                '"' -> {
-                    val sb = StringBuilder()
-                    index++ // 跳过开引号
-                    var closed = false
-                    while (index < len) {
-                        val c = trimmed[index]
-                        if (c == '\\') {
-                            // 处理 JSON 转义；残缺的转义序列视为未闭合
-                            if (index + 1 >= len) {
-                                index = len
-                                break
-                            }
-                            val esc = trimmed[index + 1]
-                            when (esc) {
-                                'n' -> sb.append('\n')
-
-                                't' -> sb.append('\t')
-
-                                'r' -> sb.append('\r')
-
-                                '"' -> sb.append('"')
-
-                                '\\' -> sb.append('\\')
-
-                                '/' -> sb.append('/')
-
-                                'u' -> {
-                                    if (index + 5 < len) {
-                                        val hex = trimmed.substring(index + 2, index + 6)
-                                        val code = hex.toIntOrNull(16)
-                                        if (code != null) {
-                                            sb.append(code.toChar())
-                                            index += 6
-                                            continue
-                                        }
-                                    }
-                                    sb.append('u')
-                                    index += 2
-                                    continue
-                                }
-
-                                else -> sb.append(esc)
-                            }
-                            index += 2
-                        } else if (c == '"') {
-                            closed = true
-                            index++
-                            break
-                        } else {
-                            sb.append(c)
-                            index++
-                        }
-                    }
-                    if (closed && sb.isNotEmpty()) {
-                        result += sb.toString()
-                    }
-                    // 未闭合的字符串不输出
-                }
-
-                else -> index++ // 忽略意外字符
-            }
+        val first = complete.indexOfFirst { it.isNotBlank() && !isCodeFenceLine(it) }
+        if (first < 0) return emptyList()
+        val last = complete.indexOfLast { it.isNotBlank() && !isCodeFenceLine(it) }
+        // 保留中间空行，供调用方按位置对齐；只去掉首尾空白/围栏行。
+        return complete.subList(first, last + 1).map { line ->
+            if (isCodeFenceLine(line)) "" else line.trim()
         }
-        return result
     }
 }
 
@@ -206,8 +90,52 @@ fun isIdentityTranslation(original: String, translated: String): Boolean {
 
 private val WHITESPACE_REGEX = Regex("\\s+")
 
-/** 非小说场景的整块展示：解析句子后按行拼接，避免把 JSON 原文直接展示给用户。 */
-fun String.translationDisplayText(): String = SentenceTranslationParser.parse(this).joinToString("\n")
+/** 移除首尾的 Markdown 代码块围栏。 */
+internal fun stripCodeFences(raw: String): String {
+    // 只去除首部空白，保留尾部换行供流式解析判断行是否闭合。
+    var text = raw.trimStart()
+    if (!text.startsWith("```")) return text
+
+    val firstLineBreak = text.indexOf('\n')
+    if (firstLineBreak >= 0) {
+        text = text.substring(firstLineBreak + 1)
+    } else {
+        // 流式场景：围栏刚开始但还没有换行，内容视为空。
+        return ""
+    }
+    text = text.trimStart('\n', '\r')
+    return removeTrailingCodeFence(text)
+}
+
+private fun removeTrailingCodeFence(text: String): String {
+    val trimmedEnd = text.trimEnd()
+    if (!trimmedEnd.endsWith("```")) return text
+    return trimmedEnd.dropLast(3).trimEnd()
+}
+
+/** 识别旧版 JSON 协议输出，宁可判失败也不把 JSON 原文展示给用户。 */
+private fun looksLikeJsonPayload(text: String): Boolean {
+    val trimmed = text.trim()
+    return trimmed.startsWith("{\"") ||
+        (
+            trimmed.startsWith("{") &&
+                trimmed.contains("\"sentences\"")
+            ) ||
+        trimmed.startsWith("[\"") ||
+        (
+            trimmed.startsWith("[") &&
+                trimmed.endsWith("]") &&
+                trimmed.contains("\",\"")
+            )
+}
+
+private fun isCodeFenceLine(line: String): Boolean {
+    val trimmed = line.trim()
+    return trimmed == "```" || trimmed.startsWith("```")
+}
+
+/** 非小说场景的整块展示：保留译文内部的空行，只去掉首尾空行。 */
+fun String.translationDisplayText(): String = SentenceTranslationParser.parseForAlignment(this)?.joinToString("\n").orEmpty()
 
 /** [translationDisplayText] 的判空版本：展示文本为空白时返回 null，供调用方按失败处理。 */
 fun String.translationDisplayTextOrNull(): String? = translationDisplayText().takeIf { it.isNotBlank() }

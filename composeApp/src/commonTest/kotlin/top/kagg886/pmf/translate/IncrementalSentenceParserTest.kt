@@ -6,114 +6,68 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * 流式 JSON 增量提取与严格解析的用例。
+ * 流式"每行一句"协议的增量提取与完整解析用例。
  *
- * 覆盖小说正文流式翻译场景：模型逐 token 输出残缺 JSON 时，
- * 只提取已闭合的句子字符串，绝不把原始 JSON 上屏。
+ * 模型逐 token 输出纯文本时，只有已经出现换行的行才会被提取；
+ * 未闭合的最后一行保留在缓冲区，不提前上屏。
  */
 class IncrementalSentenceParserTest {
 
     // ---- IncrementalSentenceParser.extractSentences ----
 
     @Test
-    fun testCompleteJsonObject() {
+    fun testCompleteLines() {
         assertEquals(
-            listOf("你好", "世界"),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["你好","世界"]}"""),
+            listOf("第一句", "第二句"),
+            IncrementalSentenceParser.extractSentences("第一句\n第二句\n"),
         )
     }
 
     @Test
-    fun testCompleteBareArray() {
+    fun testUnclosedLastLineIsKeptInBuffer() {
         assertEquals(
-            listOf("a", "b"),
-            IncrementalSentenceParser.extractSentences("""["a","b"]"""),
+            listOf("第一句"),
+            IncrementalSentenceParser.extractSentences("第一句\n第二句还没"),
         )
     }
 
     @Test
-    fun testUnclosedArrayKeepsClosedSentences() {
-        assertEquals(
-            listOf("你好", "世界"),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["你好","世界""""),
-        )
-    }
-
-    @Test
-    fun testTrailingCommaKeepsClosedSentences() {
-        assertEquals(
-            listOf("你好"),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["你好","""),
-        )
-    }
-
-    @Test
-    fun testUnterminatedStringIsNotEmitted() {
+    fun testFirstLineIsNotEmittedBeforeNewline() {
         assertEquals(
             emptyList(),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["你好"""),
+            IncrementalSentenceParser.extractSentences("第一句还没"),
         )
     }
 
     @Test
-    fun testPartialPrefixBeforeArrayIsEmpty() {
+    fun testTrailingNewlineClosesCurrentLine() {
         assertEquals(
-            emptyList(),
-            IncrementalSentenceParser.extractSentences("""{"sent"""),
+            listOf("第一句"),
+            IncrementalSentenceParser.extractSentences("第一句\n"),
         )
     }
 
     @Test
-    fun testEscapedQuoteInsideSentence() {
+    fun testBlankLinesArePreservedForSentenceAlignment() {
         assertEquals(
-            listOf("he said \"hi\""),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["he said \"hi\""]}"""),
+            listOf("第一句", "", "第二句"),
+            IncrementalSentenceParser.extractSentences("第一句\n\n第二句\n"),
         )
     }
 
     @Test
-    fun testEscapedBackslash() {
+    fun testCodeFenceStartIsNotShown() {
         assertEquals(
-            listOf("a\\b"),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["a\\b"]}"""),
+            listOf("第一句"),
+            IncrementalSentenceParser.extractSentences("```text\n第一句\n第二句还没"),
         )
     }
 
     @Test
-    fun testEscapedNewline() {
+    fun testCompleteCodeFenceWrapper() {
         assertEquals(
-            listOf("第一句\n第二句"),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["第一句\n第二句"]}"""),
-        )
-    }
-
-    @Test
-    fun testCodeFenceWrapper() {
-        assertEquals(
-            listOf("a", "b"),
-            IncrementalSentenceParser.extractSentences(
-                """
-                ```json
-                {"sentences":["a","b"]}
-                ```
-                """.trimIndent(),
-            ),
-        )
-    }
-
-    @Test
-    fun testTrailingGarbageAfterArray() {
-        assertEquals(
-            listOf("a"),
-            IncrementalSentenceParser.extractSentences("""{"sentences":["a"]} extra garbage"""),
-        )
-    }
-
-    @Test
-    fun testNonJsonStreamIsEmpty() {
-        assertEquals(
-            emptyList(),
-            IncrementalSentenceParser.extractSentences("正在翻译中……"),
+            listOf("第一句", "第二句"),
+            IncrementalSentenceParser.extractSentences("```text\n第一句\n第二句\n```\n"),
         )
     }
 
@@ -123,8 +77,8 @@ class IncrementalSentenceParserTest {
     }
 
     @Test
-    fun testExtractMatchesParseOnCompleteJson() {
-        val full = """{"sentences":["你好","世界"]}"""
+    fun testExtractMatchesParseOnCompleteLines() {
+        val full = "第一句\n第二句\n"
         assertEquals(
             SentenceTranslationParser.parse(full),
             IncrementalSentenceParser.extractSentences(full),
@@ -134,31 +88,54 @@ class IncrementalSentenceParserTest {
     // ---- SentenceTranslationParser.parseStrict ----
 
     @Test
-    fun testParseStrictAcceptsObjectAndArray() {
+    fun testParseStrictAcceptsPlainLines() {
         assertEquals(
-            listOf("你好", "世界"),
-            SentenceTranslationParser.parseStrict("""{"sentences":["你好","世界"]}"""),
-        )
-        assertEquals(
-            listOf("a", "b"),
-            SentenceTranslationParser.parseStrict("""["a","b"]"""),
+            listOf("第一句", "第二句"),
+            SentenceTranslationParser.parseStrict("第一句\n第二句"),
         )
     }
 
     @Test
-    fun testParseStrictRejectsPlainText() {
-        assertNull(SentenceTranslationParser.parseStrict("plain fallback text"))
+    fun testParseStrictIgnoresBlankLines() {
+        assertEquals(
+            listOf("第一句"),
+            SentenceTranslationParser.parseStrict("\n第一句\n\n"),
+        )
     }
 
     @Test
-    fun testParseStrictRejectsTruncatedJson() {
-        // 截断的 JSON（maxTokens 截断或流未闭合）不得回退为原文
-        assertNull(SentenceTranslationParser.parseStrict("""{"sentences":["你好""""))
+    fun testParseStrictRejectsBlankText() {
+        assertNull(SentenceTranslationParser.parseStrict(""))
+        assertNull(SentenceTranslationParser.parseStrict(" \n\t"))
     }
 
     @Test
-    fun testParseStrictRejectsEmptyArray() {
-        assertNull(SentenceTranslationParser.parseStrict("""{"sentences":[]}"""))
+    fun testParseForAlignmentPreservesMissingSentenceLine() {
+        assertEquals(
+            listOf("第一句", "", "第三句"),
+            SentenceTranslationParser.parseForAlignment("第一句\n\n第三句"),
+        )
+        assertNull(SentenceTranslationParser.parseForAlignment("\n\n"))
+        assertNull(SentenceTranslationParser.parseForAlignment("""{"sentences":["你好"]}"""))
+    }
+
+    @Test
+    fun testLegacyJsonPayloadIsRejectedInsteadOfBeingShown() {
+        assertNull(SentenceTranslationParser.parseStrict("""{"sentences":["你好","世界"]}"""))
+        assertNull(SentenceTranslationParser.parseStrict("""["你好","世界"]"""))
+        assertEquals(emptyList(), IncrementalSentenceParser.extractSentences("""{"sentences":["你好""""))
+    }
+
+    @Test
+    fun testParseRemovesCodeFence() {
+        assertEquals(
+            listOf("第一句", "第二句"),
+            SentenceTranslationParser.parse("```text\n第一句\n第二句\n```"),
+        )
+        assertEquals(
+            listOf("第一句", "第二句"),
+            SentenceTranslationParser.parse("```text\n第一句\n第二句\n```\n"),
+        )
     }
 
     // ---- isIdentityTranslation / translationDisplayTextOrNull ----
@@ -174,6 +151,14 @@ class IncrementalSentenceParserTest {
     fun testTranslationDisplayTextOrNullReturnsNullWhenBlank() {
         assertNull("".translationDisplayTextOrNull())
         assertNull("   ".translationDisplayTextOrNull())
-        assertEquals("你好", """{"sentences":["你好"]}""".translationDisplayTextOrNull())
+        assertEquals("你好", "你好\n".translationDisplayTextOrNull())
+    }
+
+    @Test
+    fun testTranslationDisplayTextPreservesBlankLinesAndPunctuation() {
+        assertEquals(
+            "你好，世界！\n\n再见。",
+            "你好，世界！\n\n再见。".translationDisplayText(),
+        )
     }
 }

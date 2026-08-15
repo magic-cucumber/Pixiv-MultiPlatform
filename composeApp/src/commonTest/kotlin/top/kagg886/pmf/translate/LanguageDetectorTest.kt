@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import top.kagg886.pmf.backend.AppConfig
 
 class LanguageDetectorTest {
     private val zh = Locale("zh-CN")
@@ -68,9 +69,30 @@ class LanguageDetectorTest {
     }
 
     @Test
+    fun testJapaneseKokujiAndSymbolsAreForeignForChineseUi() {
+        assertTrue(LanguageDetector.isForeign("峠道", zh))
+        assertTrue(LanguageDetector.isForeign("人々", zh))
+        assertTrue(LanguageDetector.isForeign("ヶ月", zh))
+        assertTrue(LanguageDetector.isForeign("働", zh))
+    }
+
+    @Test
     fun testTargetLanguageName() {
         assertEquals("中文", LanguageDetector.targetLanguageName(zh))
         assertEquals("繁體中文", LanguageDetector.targetLanguageName(zhTw))
         assertEquals("English", LanguageDetector.targetLanguageName(en))
+    }
+
+    @Test
+    fun testTargetLanguageUsesAppLanguageSetting() {
+        val previous = AppConfig.locale
+        try {
+            AppConfig.locale = AppConfig.LanguageSettings.ZHTW
+            assertEquals("繁體中文", LanguageDetector.targetLanguageName())
+            AppConfig.locale = AppConfig.LanguageSettings.EN
+            assertEquals("English", LanguageDetector.targetLanguageName())
+        } finally {
+            AppConfig.locale = previous
+        }
     }
 }

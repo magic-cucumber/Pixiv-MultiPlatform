@@ -472,6 +472,9 @@ fun setupEnv() {
     // init logger
     initFileLogger()
 
+    // 旧版本可能持久化了 JSON prompt；任何翻译发生前先迁移到按行协议
+    AppConfig.migrateLegacyAiTranslatePrompt()
+
     // init koin
     startKoin {
         logger(

@@ -813,6 +813,7 @@ fun SettingScreen() {
                     )
 
                     var aiTranslatePrompt by remember {
+                        AppConfig.migrateLegacyAiTranslatePrompt()
                         mutableStateOf(AppConfig.aiTranslatePrompt)
                     }
                     LaunchedEffect(aiTranslatePrompt) {

@@ -52,7 +52,10 @@ class TranslateScheduler(
     private val streamSessions = mutableMapOf<String, StreamSession>()
 
     /** 配置指纹：prompt/专名要求/模型/目标语言任一变化都会使旧缓存失效。 */
-    private fun configFingerprint(targetLang: String): String = translationHash("${AppConfig.aiTranslatePrompt}|${AppConfig.aiTranslateProperNouns}|${AppConfig.aiTranslateModel}|$targetLang")
+    private fun configFingerprint(targetLang: String): String {
+        AppConfig.migrateLegacyAiTranslatePrompt()
+        return translationHash("${AppConfig.aiTranslatePrompt}|${AppConfig.aiTranslateProperNouns}|${AppConfig.aiTranslateModel}|$targetLang")
+    }
 
     private fun cacheKey(text: String, targetLang: String) = "$targetLang|${configFingerprint(targetLang)}|${text.trim()}"
 

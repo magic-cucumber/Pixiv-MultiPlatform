@@ -18,7 +18,8 @@ import top.kagg886.pmf.util.logger
  *
  * (apiKey, prompt, modelId) 任一变化时在 [Mutex] 保护下重建底层客户端；
  * 日志仅输出"已配置/未配置"与模型名，绝不打印密钥。始终关闭 ThinkingMode，
- * 并要求模型按句对句的 JSON 结构返回，供 [SentenceTranslationParser] 对齐。
+ * 使用纯文本响应格式：模型按句返回、每行一句译文，便于流式场景逐行闭合上屏，
+ * 避免 JSON 在流未结束时无法闭合解析的问题。
  */
 class DeepseekTranslator : Translator {
     private val mutex = Mutex()
@@ -29,6 +30,7 @@ class DeepseekTranslator : Translator {
     private var client: StatelessDeepseek? = null
 
     private fun buildPrompt(targetLang: String): String {
+        AppConfig.migrateLegacyAiTranslatePrompt()
         val prompt = AppConfig.aiTranslatePrompt.replace("%lang%", targetLang)
         val properNouns = AppConfig.aiTranslateProperNouns.trim()
         return if (properNouns.isEmpty()) prompt else "$prompt\n$properNouns"
@@ -63,7 +65,7 @@ class DeepseekTranslator : Translator {
                         thinkingMode = ThinkingMode.Disabled
                         temperature = 0.3
                         maxTokens = 4096
-                        responseFormat = ResponseFormat.JSON_OBJECT
+                        responseFormat = ResponseFormat.TEXT
                         includeUsage = false
                     }
                 }
@@ -82,12 +84,20 @@ class DeepseekTranslator : Translator {
 
     override fun translateStream(text: String, targetLang: String): Flow<String> = flow {
         val c = currentClient(targetLang)
-        val builder = StringBuilder()
-        c.chatStream(text).collect { chunk ->
-            if (chunk is ChatChunk.ContentDelta && chunk.content.isNotEmpty()) {
-                builder.append(chunk.content)
-                emit(builder.toString())
-            }
+        c.chatStream(text).contentDeltas().collect { emit(it) }
+    }
+}
+
+/**
+ * 把 DeepSeek 聊天流转换为纯内容 delta。
+ *
+ * 每个事件只发射本次新增内容；历史累积由 [TranslateScheduler] 完成，
+ * 避免下游再次 append 时出现"我/我是/我是Deepseek..."这类重复前缀。
+ */
+internal fun Flow<ChatChunk>.contentDeltas(): Flow<String> = flow {
+    collect { chunk ->
+        if (chunk is ChatChunk.ContentDelta && chunk.content.isNotEmpty()) {
+            emit(chunk.content)
         }
     }
 }
