@@ -87,6 +87,37 @@ class TranslateSchedulerTest {
     }
 
     @Test
+    fun testConfigDrivenConcurrencyFollowsSetting() = runBlocking {
+        val previous = AppConfig.aiTranslateMaxConcurrency
+        try {
+            AppConfig.aiTranslateMaxConcurrency = 1
+            val translator = FakeTranslator(delayMillis = 20)
+            val scheduler = TranslateScheduler(translator, maxConcurrency = 2, configDrivenConcurrency = true)
+
+            val results = (0..5).map { i ->
+                async { scheduler.translate("text$i", "中文") }
+            }.awaitAll()
+
+            assertTrue(
+                translator.maxConcurrent.value <= 1,
+                "配置驱动并发应跟随设置（设为 1 时最大并发 <= 1，实际 ${translator.maxConcurrent.value}）",
+            )
+            assertTrue(results.all { it is TranslateResult.Success })
+
+            // 修改设置后新一批请求应使用新上限
+            translator.maxConcurrent.value = 0
+            AppConfig.aiTranslateMaxConcurrency = 3
+            val results2 = (0..5).map { i ->
+                async { scheduler.translate("more$i", "中文") }
+            }.awaitAll()
+            assertTrue(results2.all { it is TranslateResult.Success })
+            assertTrue(translator.maxConcurrent.value <= 3, "提高并发后应 <= 3")
+        } finally {
+            AppConfig.aiTranslateMaxConcurrency = previous
+        }
+    }
+
+    @Test
     fun testSingleFlightDedup() = runBlocking {
         val translator = FakeTranslator(delayMillis = 50)
         val scheduler = TranslateScheduler(translator, maxConcurrency = 2)
@@ -118,6 +149,229 @@ class TranslateSchedulerTest {
         val result = scheduler.translate("hello", "中文")
 
         assertEquals(TranslateResult.Failure("hello"), result)
+    }
+
+    @Test
+    fun testTransientFailureIsRetriedAndSucceeds() = runBlocking {
+        var calls = 0
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    calls++
+                    if (calls == 1) throw IllegalStateException("network hiccup")
+                    return "translated"
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit("translated") }
+            }
+        val scheduler = TranslateScheduler(translator, retryAttempts = 2, retryBackoff = 1.milliseconds)
+
+        val result = scheduler.translate("hello", "中文")
+
+        assertEquals(TranslateResult.Success("translated"), result)
+        assertEquals(2, calls, "首次瞬态失败应自动重试一次")
+    }
+
+    @Test
+    fun testTransientFailureRetryExhausted() = runBlocking {
+        var calls = 0
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    calls++
+                    throw IllegalStateException("always down")
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow { throw IllegalStateException("always down") }
+            }
+        val scheduler = TranslateScheduler(translator, retryAttempts = 3, retryBackoff = 1.milliseconds)
+
+        val result = scheduler.translate("hello", "中文")
+
+        assertEquals(TranslateResult.Failure("hello"), result)
+        assertEquals(3, calls, "重试次数用尽后应失败，共尝试 3 次")
+    }
+
+    @Test
+    fun testIdentityEchoRetriesWithinAttemptsAndFails() = runBlocking {
+        // 模型回显原文（非确定性）：尝试次数内重试；次数用尽后判失败
+        var calls = 0
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    calls++
+                    return text // 始终回显原文
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit(text) }
+            }
+        val scheduler = TranslateScheduler(translator, retryAttempts = 3, retryBackoff = 1.milliseconds)
+
+        assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
+        assertEquals(3, calls, "回显原文应在尝试次数内重试，次数用尽后失败")
+    }
+
+    @Test
+    fun testIdentityEchoRecoversOnSecondAttempt() = runBlocking {
+        // 实测场景：模型偶发整段回显，二次请求正确翻译——回显应触发重试并恢复
+        var calls = 0
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    calls++
+                    return if (calls == 1) text else "翻译结果"
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit(if (calls == 1) text else "翻译结果") }
+            }
+        val scheduler = TranslateScheduler(translator, retryAttempts = 2, retryBackoff = 1.milliseconds)
+
+        assertEquals(TranslateResult.Success("翻译结果"), scheduler.translate("サマポケ、夜の部に参加しました。", "中文"))
+        assertEquals(2, calls, "首次回显应自动重试并成功")
+    }
+
+    @Test
+    fun testBlankIsNotRetried() = runBlocking {
+        var calls = 0
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    calls++
+                    return "" // 空内容：确定性失败，不应重试
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow {}
+            }
+        val scheduler = TranslateScheduler(translator, retryAttempts = 3, retryBackoff = 1.milliseconds)
+
+        assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
+        assertEquals(1, calls, "空内容不应触发重试")
+    }
+
+    @Test
+    fun testRetryLaneBypassesNormalQueue() = runBlocking {
+        // 普通通道并发=1：慢请求占满普通信号量；重试走专用通道，不应排队等待
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    delay(if (text == "slow") 500 else 50)
+                    return "ok-$text"
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit("ok-$text") }
+            }
+        val scheduler = TranslateScheduler(translator, maxConcurrency = 1, retryConcurrency = 1)
+
+        val normal = async { scheduler.translate("slow", "中文") }
+        delay(100) // 慢请求已占用普通信号量（500ms 后释放）
+        val retry = async { scheduler.translateRetry("retry", "中文") }
+
+        // 若重试排队等普通信号量，200ms 内必然超时；专用通道应立即完成
+        val retryResult = withTimeout(200) { retry.await() }
+        assertEquals(TranslateResult.Success("ok-retry"), retryResult)
+        assertEquals(TranslateResult.Success("ok-slow"), normal.await())
+    }
+
+    @Test
+    fun testRetryLaneRespectsOwnConcurrency() = runBlocking {
+        val concurrent = atomic(0)
+        val maxConcurrent = atomic(0)
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    val now = concurrent.incrementAndGet()
+                    maxConcurrent.value = maxOf(maxConcurrent.value, now)
+                    delay(100)
+                    concurrent.decrementAndGet()
+                    return "ok"
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit("ok") }
+            }
+        val scheduler = TranslateScheduler(translator, maxConcurrency = 4, retryConcurrency = 1)
+
+        (0..3).map { async { scheduler.translateRetry("t$it", "中文") } }.awaitAll()
+
+        assertTrue(maxConcurrent.value <= 1, "重试通道并发应受 retryConcurrency 限制（实际 ${maxConcurrent.value}）")
+    }
+
+    @Test
+    fun testStreamRetryLaneIsAvailable() = runBlocking {
+        // 流式重试通道：普通流占满普通信号量时，重试流仍可立即发起并完成
+        val translator =
+            object : Translator {
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow {
+                    delay(if (text == "slow") 500 else 30)
+                    emit("ok-$text")
+                }
+
+                override suspend fun translate(text: String, targetLang: String): String = "unused"
+            }
+        val scheduler = TranslateScheduler(translator, maxConcurrency = 1, retryConcurrency = 1)
+
+        val normal = async { scheduler.translateStream("slow", "中文").toList() }
+        delay(100)
+        val retry = async { scheduler.translateStreamRetry("retry", "中文").toList() }
+
+        val retryResult = withTimeout(200) { retry.await() }
+        assertTrue(retryResult.last() is TranslateResult.Success, "重试流应立即完成")
+        assertEquals(TranslateResult.Success("ok-slow"), normal.await().last())
+    }
+
+    @Test
+    fun testRetryBypassesCacheAlwaysCallsApi() = runBlocking {
+        // 修复：重试必须真实发起请求——即使同文本已被普通请求缓存（且结果可能被 VM 判为失败）
+        var calls = 0
+        val translator =
+            object : Translator {
+                override suspend fun translate(text: String, targetLang: String): String {
+                    calls++
+                    return "cached-result-$calls"
+                }
+
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit("stream-$calls") }
+            }
+        val scheduler = TranslateScheduler(translator)
+
+        // 普通请求写入缓存
+        assertEquals(TranslateResult.Success("cached-result-1"), scheduler.translate("same", "中文"))
+        assertEquals(1, calls)
+        // 普通请求命中缓存，不再调用翻译器
+        assertEquals(TranslateResult.Success("cached-result-1"), scheduler.translate("same", "中文"))
+        assertEquals(1, calls, "普通请求应命中缓存")
+        // 重试绕过缓存读取：即使文本相同也重新调用翻译器
+        assertEquals(TranslateResult.Success("cached-result-2"), scheduler.translateRetry("same", "中文"))
+        assertEquals(2, calls, "重试应绕过缓存读取真实发起请求")
+        // 重试成功后结果写回缓存：后续普通请求命中，不再调用翻译器
+        assertEquals(TranslateResult.Success("cached-result-2"), scheduler.translate("same", "中文"))
+        assertEquals(2, calls, "重试成功写回缓存后普通请求应命中")
+    }
+
+    @Test
+    fun testStreamRetryBypassesCacheAlwaysCallsApi() = runBlocking {
+        var streamCalls = 0
+        val translator =
+            object : Translator {
+                override fun translateStream(text: String, targetLang: String): Flow<String> = flow {
+                    streamCalls++
+                    emit("r$streamCalls")
+                }
+
+                override suspend fun translate(text: String, targetLang: String): String = "unused"
+            }
+        val scheduler = TranslateScheduler(translator)
+
+        val first = scheduler.translateStream("same", "中文").toList()
+        assertEquals(TranslateResult.Success("r1"), first.last())
+        // 普通流命中缓存
+        scheduler.translateStream("same", "中文").toList()
+        assertEquals(1, streamCalls, "普通流第二次应命中缓存")
+        // 重试流绕过缓存读取
+        scheduler.translateStreamRetry("same", "中文").toList()
+        assertEquals(2, streamCalls, "重试流应绕过缓存读取真实发起请求")
+        // 重试成功写回缓存：后续普通流命中，不再调用翻译器
+        scheduler.translateStream("same", "中文").toList()
+        assertEquals(2, streamCalls, "重试成功写回缓存后普通流应命中")
     }
 
     @Test
@@ -339,7 +593,8 @@ class TranslateSchedulerTest {
 
             override fun translateStream(text: String, targetLang: String): Flow<String> = flow { emit(text) }
         }
-        val scheduler = TranslateScheduler(translator)
+        // 本测试只验证"回显失败不缓存"；回显重试行为由其它用例覆盖，这里固定单次尝试
+        val scheduler = TranslateScheduler(translator, retryAttempts = 1)
 
         assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))
         assertEquals(TranslateResult.Failure("hello"), scheduler.translate("hello", "中文"))

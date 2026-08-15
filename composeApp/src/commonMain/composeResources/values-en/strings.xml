@@ -21,6 +21,10 @@
     <string name="ai_translate_cache_description">Cache translated content to avoid repeated requests</string>
     <string name="ai_translate_paragraph_context">Enable Paragraph Context</string>
     <string name="ai_translate_paragraph_context_description">Include the full paragraph as context when translating novel body text for better quality; turn off to translate sentence by sentence</string>
+    <string name="ai_translate_max_concurrency">Max Concurrent Requests</string>
+    <string name="ai_translate_max_concurrency_description">Maximum simultaneous AI translation requests (1-8). Higher values translate pages faster but consume more quota; takes effect immediately</string>
+    <string name="ai_translate_retry_attempts">Retry Attempts</string>
+    <string name="ai_translate_retry_attempts_description">Total attempts (1-3, including the first) when a request fails on transient network errors or timeouts, with linear backoff; takes effect immediately</string>
     <string name="ai_translate_settings">AI Translation Settings</string>
     <string name="ai_translate_show_original">Show Original</string>
     <string name="ai_translate_translate">AI Translate</string>

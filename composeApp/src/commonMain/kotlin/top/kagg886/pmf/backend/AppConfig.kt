@@ -73,6 +73,8 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
     var aiTranslateModel by string("ai_translate_model", "deepseek-v4-flash")
     var aiTranslateCacheEnabled by boolean("ai_translate_cache_enabled", true)
     var aiTranslateParagraphContext by boolean("ai_translate_paragraph_context", true)
+    var aiTranslateMaxConcurrency by int("ai_translate_max_concurrency", 2)
+    var aiTranslateRetryAttempts by int("ai_translate_retry_attempts", 2)
 
     const val DEFAULT_AI_TRANSLATE_PROMPT =
         "You are a professional translator. Translate the user-provided text into %lang%. " +
@@ -80,11 +82,15 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
             "Split the source text into sentences and translate sentence by sentence. " +
             "Keep every punctuation mark and blank line exactly as in the source. " +
             "Do not invent sentence-ending punctuation or surrounding quotation marks when they are absent. " +
+            "Do not add any symbols that are not present in the source, such as book-title marks 《》, quotation marks, or brackets. " +
+            "Never return the source text unchanged: even when it contains proper nouns, translate every translatable part. " +
             "Return only the translations, one translated sentence per line, " +
             "in exactly the same order and line count. " +
             "Do not return JSON, numbering, quotation marks around sentences, markdown, or any extra text.\n" +
             "你是一名专业翻译。请将用户提供的文本翻译成%lang%。" +
             "保留原意、语气、标点、换行与格式；不要增删标点、自行补句末标点或合并句子。" +
+            "不要添加原文中没有的符号（如书名号《》、引号、括号等）。" +
+            "不要整段原样返回原文：即使包含专有名词，也要把可翻译的部分翻译出来。" +
             "把源文本按句拆分并逐句翻译，只返回译文：" +
             "每行一句译文，顺序、标点、空行与原文完全一致。" +
             "不要返回 JSON、编号、句子引号、Markdown 或任何多余内容。"

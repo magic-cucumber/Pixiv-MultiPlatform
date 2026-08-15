@@ -21,6 +21,10 @@
     <string name="ai_translate_cache_description">快取已翻譯的內容，避免重複請求</string>
     <string name="ai_translate_paragraph_context">啟用段落上下文</string>
     <string name="ai_translate_paragraph_context_description">翻譯小說正文時攜帶整段原文作為上下文，提升翻譯品質；關閉後按句子單獨翻譯</string>
+    <string name="ai_translate_max_concurrency">最大並發請求數</string>
+    <string name="ai_translate_max_concurrency_description">同時進行的 AI 翻譯請求上限（1-8），調高可加快整頁翻譯、消耗更多額度；修改即時生效</string>
+    <string name="ai_translate_retry_attempts">失敗重試次數</string>
+    <string name="ai_translate_retry_attempts_description">網路異常/逾時等瞬態失敗時自動重試的總嘗試次數（1-3，含首次），線性退避重試；修改即時生效</string>
     <string name="ai_translate_settings">AI 翻譯支援設定</string>
     <string name="ai_translate_show_original">查看原文</string>
     <string name="ai_translate_translate">AI 翻譯</string>

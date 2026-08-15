@@ -606,7 +606,15 @@ fun setupEnv() {
                 }
 
                 single<TranslateCache> { RoomTranslateCache(get<AppDatabase>().aiTranslateCacheDAO()) }
-                single { TranslateScheduler(DeepseekTranslator(), get<TranslateCache>()) }
+                // configDrivenConcurrency：并发上限与重试次数随设置动态调整（修改即时生效）
+                single {
+                    TranslateScheduler(
+                        DeepseekTranslator(),
+                        get<TranslateCache>(),
+                        retryAttempts = AppConfig.aiTranslateRetryAttempts,
+                        configDrivenConcurrency = true,
+                    )
+                }
 
                 single { DownloadScreenModel() }
                 single { UpdateCheckViewModel() }

@@ -875,6 +875,40 @@ fun SettingScreen() {
                         },
                     )
 
+                    var aiTranslateMaxConcurrency by remember {
+                        mutableStateOf(AppConfig.aiTranslateMaxConcurrency)
+                    }
+                    LaunchedEffect(aiTranslateMaxConcurrency) {
+                        AppConfig.aiTranslateMaxConcurrency = aiTranslateMaxConcurrency
+                    }
+                    SettingsDropdownMenu(
+                        title = { Text(stringResource(Res.string.ai_translate_max_concurrency)) },
+                        subTitle = { Text(stringResource(Res.string.ai_translate_max_concurrency_description)) },
+                        current = aiTranslateMaxConcurrency,
+                        data = (1..8).toList(),
+                        optionsFormat = { it.toString() },
+                        onSelected = {
+                            aiTranslateMaxConcurrency = it
+                        },
+                    )
+
+                    var aiTranslateRetryAttempts by remember {
+                        mutableStateOf(AppConfig.aiTranslateRetryAttempts)
+                    }
+                    LaunchedEffect(aiTranslateRetryAttempts) {
+                        AppConfig.aiTranslateRetryAttempts = aiTranslateRetryAttempts
+                    }
+                    SettingsDropdownMenu(
+                        title = { Text(stringResource(Res.string.ai_translate_retry_attempts)) },
+                        subTitle = { Text(stringResource(Res.string.ai_translate_retry_attempts_description)) },
+                        current = aiTranslateRetryAttempts,
+                        data = (1..3).toList(),
+                        optionsFormat = { it.toString() },
+                        onSelected = {
+                            aiTranslateRetryAttempts = it
+                        },
+                    )
+
                     var aiTranslateModel by remember {
                         mutableStateOf(AppConfig.aiTranslateModel)
                     }
