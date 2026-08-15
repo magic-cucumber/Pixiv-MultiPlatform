@@ -1,6 +1,8 @@
 package top.kagg886.pmf.ui.util
 
 import top.kagg886.pmf.translate.SentenceSegmenter
+import top.kagg886.pmf.translate.SentenceTranslationState
+import top.kagg886.pmf.translate.isIdentityTranslation
 
 /** 句首/句尾标点拆分结果；[core] 才是真正需要交给 AI 翻译的文本。 */
 data class SentencePunctuationParts(
@@ -122,9 +124,15 @@ fun buildNovelSentenceChunks(
     index: List<NovelSentenceSpan>,
     sentenceIds: Set<Int>,
     maxSentencesPerChunk: Int = NOVEL_TRANSLATION_CHUNK_SIZE,
+): List<NovelSentenceChunk> = buildNovelSentenceChunks(index.associateBy { it.id }, sentenceIds, maxSentencesPerChunk)
+
+/** [buildNovelSentenceChunks] 的 byId 版本：调用方已有 [Map]<id, span> 时避免每次 O(index) 重建。 */
+fun buildNovelSentenceChunks(
+    byId: Map<Int, NovelSentenceSpan>,
+    sentenceIds: Set<Int>,
+    maxSentencesPerChunk: Int = NOVEL_TRANSLATION_CHUNK_SIZE,
 ): List<NovelSentenceChunk> {
     require(maxSentencesPerChunk > 0) { "maxSentencesPerChunk must be positive" }
-    val byId = index.associateBy { it.id }
     return sentenceIds
         .sorted()
         .mapNotNull { byId[it] }
@@ -137,4 +145,71 @@ fun buildNovelSentenceChunks(
             )
         }
         .filter { it.sourceText.isNotBlank() }
+}
+
+/**
+ * 把一段句子的最新翻译结果合并进全局状态 map（单次构建，O(N+K)）。
+ *
+ * - [lines] 为 null（流失败/无最终文本）：本 chunk 全部标 [SentenceTranslationState.Failed]；
+ * - [final] = true：按位置对齐，有效行标 Complete（拼回标点），缺失/空/回显标 Failed；
+ * - [final] = false（流式中间状态）：有完整行的句子标 Translating（拼回标点），
+ *   其余仍为 Pending 的句子转为 Translating("") 占位，已进入 Translating/Complete 的保持原状。
+ */
+fun mergeSentenceStates(
+    old: Map<Int, SentenceTranslationState>,
+    chunk: NovelSentenceChunk,
+    lines: List<String>?,
+    final: Boolean,
+): Map<Int, SentenceTranslationState> {
+    val capacity = old.size + chunk.sentenceIds.size
+    if (lines == null) {
+        return buildMap(capacity) {
+            putAll(old)
+            for (sentenceId in chunk.sentenceIds) {
+                put(sentenceId, SentenceTranslationState.Failed)
+            }
+        }
+    }
+    return buildMap(capacity) {
+        putAll(old)
+        for ((index, sentenceId) in chunk.sentenceIds.withIndex()) {
+            val span = chunk.sentences.getOrNull(index)
+            val translated = lines.getOrNull(index)
+            if (final) {
+                val source = span?.translationSource.orEmpty()
+                val valid =
+                    translated != null &&
+                        translated.isNotBlank() &&
+                        !isIdentityTranslation(source, translated)
+                put(
+                    sentenceId,
+                    if (valid) {
+                        val display =
+                            span?.let { reattachNovelSentencePunctuation(it, translated) }
+                                ?: translated
+                        SentenceTranslationState.Complete(display)
+                    } else {
+                        SentenceTranslationState.Failed
+                    },
+                )
+            } else {
+                val source = span?.translationSource.orEmpty()
+                val usable =
+                    translated != null &&
+                        translated.isNotBlank() &&
+                        !isIdentityTranslation(source, translated)
+                val oldState = old[sentenceId]
+                if (oldState is SentenceTranslationState.Complete) {
+                    // 已完成的句子保持 Complete，不被流式中间态降级
+                } else if (usable) {
+                    val display =
+                        span?.let { reattachNovelSentencePunctuation(it, translated) }
+                            ?: translated
+                    put(sentenceId, SentenceTranslationState.Translating(display))
+                } else if (oldState == null || oldState is SentenceTranslationState.Pending) {
+                    put(sentenceId, SentenceTranslationState.Translating(""))
+                }
+            }
+        }
+    }
 }

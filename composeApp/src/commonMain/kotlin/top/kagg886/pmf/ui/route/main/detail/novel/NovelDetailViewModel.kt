@@ -72,7 +72,6 @@ import top.kagg886.pmf.translate.SentenceTranslationState
 import top.kagg886.pmf.translate.TranslateResult
 import top.kagg886.pmf.translate.TranslateScheduler
 import top.kagg886.pmf.translate.isAiTranslateEnabled
-import top.kagg886.pmf.translate.isIdentityTranslation
 import top.kagg886.pmf.translate.translationDisplayText
 import top.kagg886.pmf.translate.translationDisplayTextOrNull
 import top.kagg886.pmf.ui.route.main.detail.illust.IllustDetailRoute
@@ -83,8 +82,8 @@ import top.kagg886.pmf.ui.util.RichSegment
 import top.kagg886.pmf.ui.util.buildNovelSentenceChunks
 import top.kagg886.pmf.ui.util.buildNovelSentenceIndex
 import top.kagg886.pmf.ui.util.container
+import top.kagg886.pmf.ui.util.mergeSentenceStates
 import top.kagg886.pmf.ui.util.parseHtmlSegments
-import top.kagg886.pmf.ui.util.reattachNovelSentencePunctuation
 import top.kagg886.pmf.ui.util.translateRichSegments
 import top.kagg886.pmf.util.getString
 import top.kagg886.pmf.util.logger
@@ -101,7 +100,6 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
     private val translationMutex = Mutex()
     private val activeSentenceEpochs = mutableMapOf<Int, Int>()
     private var translationEpoch = 0
-    private var sentenceIndexCache: List<NovelSentenceSpan> = emptyList()
     private var sentenceByIdCache: Map<Int, NovelSentenceSpan> = emptyMap()
 
     private fun CombinedText.toPlainString() = this.joinToString("") { it.text }
@@ -335,7 +333,6 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         )
         val nodes = nodeMap.toList().sortedBy { it.first }.map { it.second }
         val sentenceIndex = buildNovelSentenceIndex(nodes)
-        sentenceIndexCache = sentenceIndex
         sentenceByIdCache = sentenceIndex.associateBy { it.id }
 
         reduce {
@@ -614,8 +611,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             val current = state
             if (!current.translationMode) return@runOn
 
-            val index = sentenceIndexCache.ifEmpty { current.sentenceIndex }
-            val byId = sentenceByIdCache.ifEmpty { index.associateBy { it.id } }
+            val byId = sentenceByIdCache
             val (epoch, chunks) = translationMutex.withLock {
                 val epoch = translationEpoch
                 val pending = visibleSentences.filter { sentenceId ->
@@ -624,7 +620,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                         sentenceId !in activeSentenceEpochs &&
                         (translation == null || translation is SentenceTranslationState.Pending)
                 }
-                val chunks = buildNovelSentenceChunks(index, pending.toSet())
+                val chunks = buildNovelSentenceChunks(byId, pending.toSet())
                 for (chunk in chunks) {
                     for (sentenceId in chunk.sentenceIds) {
                         activeSentenceEpochs[sentenceId] = epoch
@@ -638,16 +634,21 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             logger.i { "ai translate novel: visibleSentences=$visibleSentences, chunks=${chunks.size}" }
             reduce {
                 if (!state.translationMode) return@reduce state
-                var translations = state.sentenceTranslations
-                for (chunk in chunks) {
-                    for (sentenceId in chunk.sentenceIds) {
-                        val old = translations[sentenceId]
-                        if (old == null || old is SentenceTranslationState.Pending) {
-                            translations = translations + (sentenceId to SentenceTranslationState.Pending)
+                // 单次构建新 map（O(N+K)），避免逐句 map + 造成 O(K·N) 复制
+                state.copy(
+                    sentenceTranslations =
+                    buildMap(state.sentenceTranslations.size + chunks.sumOf { it.sentenceIds.size }) {
+                        putAll(state.sentenceTranslations)
+                        for (chunk in chunks) {
+                            for (sentenceId in chunk.sentenceIds) {
+                                val old = state.sentenceTranslations[sentenceId]
+                                if (old == null || old is SentenceTranslationState.Pending) {
+                                    put(sentenceId, SentenceTranslationState.Pending)
+                                }
+                            }
                         }
-                    }
-                }
-                state.copy(sentenceTranslations = translations)
+                    },
+                )
             }
             launchNovelTranslationChunks(chunks, LanguageDetector.targetLanguageName(), epoch)
         }
@@ -660,12 +661,11 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
             if (!state.translationMode) return@runOn
             if (state.sentenceTranslations[sentenceId] !is SentenceTranslationState.Failed) return@runOn
 
-            val current = state
-            val index = sentenceIndexCache.ifEmpty { current.sentenceIndex }
+            val byId = sentenceByIdCache
             val (epoch, chunks) = translationMutex.withLock {
                 if (sentenceId in activeSentenceEpochs) return@withLock translationEpoch to emptyList()
                 val epoch = translationEpoch
-                val chunks = buildNovelSentenceChunks(index, setOf(sentenceId), maxSentencesPerChunk = 1)
+                val chunks = buildNovelSentenceChunks(byId, setOf(sentenceId), maxSentencesPerChunk = 1)
                 for (chunk in chunks) {
                     for (id in chunk.sentenceIds) {
                         activeSentenceEpochs[id] = epoch
@@ -689,7 +689,7 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
 
     /**
      * 启动若干句子分段的流式翻译。进入 Pending 后调用；
-     * 首个流式事件到达前顶栏显示等待动画，之后只更新句子状态。
+     * 流式增量按 [STREAM_FLUSH_INTERVAL_MS] 节流合并进状态，避免逐 token 触发整篇 AnnotatedString 重建。
      */
     @OptIn(OrbitExperimental::class)
     private fun launchNovelTranslationChunks(
@@ -698,12 +698,25 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
         epoch: Int,
     ) = intent {
         runOn<NovelDetailViewState.Success> {
+            suspend fun flushChunk(
+                chunk: NovelSentenceChunk,
+                lines: List<String>?,
+                final: Boolean,
+            ) {
+                reduce {
+                    if (!state.translationMode || epoch != translationEpoch) return@reduce state
+                    state.copy(
+                        sentenceTranslations =
+                        mergeSentenceStates(state.sentenceTranslations, chunk, lines, final),
+                    )
+                }
+            }
+
             for (chunk in chunks) {
                 viewModelScope.launch {
-                    var streamStarted = false
                     var streamFailed = false
-                    var lastText: String? = null
-                    val sentenceSpans = chunk.sentences
+                    var accumulated: String? = null
+                    var lastFlushTime = 0L
                     try {
                         logger.i {
                             "ai translate novel chunk: sentences=${chunk.sentenceIds.size}, textLen=${chunk.sourceText.length}"
@@ -711,111 +724,39 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                         translateScheduler.translateStream(chunk.sourceText, target).collect { result ->
                             when (result) {
                                 is TranslateResult.Success -> {
-                                    if (!streamStarted) {
-                                        streamStarted = true
-                                        reduce {
-                                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
-                                            var translations = state.sentenceTranslations
-                                            for (sentenceId in chunk.sentenceIds) {
-                                                val old = translations[sentenceId]
-                                                if (old == null || old is SentenceTranslationState.Pending) {
-                                                    translations = translations + (sentenceId to SentenceTranslationState.Translating(""))
-                                                }
-                                            }
-                                            state.copy(sentenceTranslations = translations)
-                                        }
-                                    }
-                                    lastText = result.text
-                                    // 流式输出为纯文本：仅把已经闭合的译文行上屏，最后一行等换行/结束符到达后才展示
-                                    val streamedSentences = IncrementalSentenceParser.extractSentences(result.text)
-                                    if (streamedSentences.isEmpty()) return@collect
-                                    reduce {
-                                        if (!state.translationMode || epoch != translationEpoch) return@reduce state
-                                        var translations = state.sentenceTranslations
-                                        for ((index, sentenceId) in chunk.sentenceIds.withIndex()) {
-                                            val translated = streamedSentences.getOrNull(index) ?: continue
-                                            if (translated.isBlank()) continue
-                                            val source = sentenceSpans.getOrNull(index)?.translationSource.orEmpty()
-                                            if (isIdentityTranslation(source, translated)) continue
-                                            val old = translations[sentenceId]
-                                            if (old !is SentenceTranslationState.Complete) {
-                                                val display = sentenceSpans.getOrNull(index)
-                                                    ?.let { reattachNovelSentencePunctuation(it, translated) }
-                                                    ?: translated
-                                                translations = translations + (sentenceId to SentenceTranslationState.Translating(display))
-                                            }
-                                        }
-                                        state.copy(sentenceTranslations = translations)
-                                    }
-                                }
-
-                                is TranslateResult.Failure -> {
-                                    if (!streamStarted) {
-                                        streamStarted = true
-                                        reduce {
-                                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
-                                            var translations = state.sentenceTranslations
-                                            for (sentenceId in chunk.sentenceIds) {
-                                                val old = translations[sentenceId]
-                                                if (old == null || old is SentenceTranslationState.Pending) {
-                                                    translations = translations + (sentenceId to SentenceTranslationState.Translating(""))
-                                                }
-                                            }
-                                            state.copy(sentenceTranslations = translations)
-                                        }
-                                    }
-                                    streamFailed = true
-                                }
-                            }
-                        }
-
-                        val finalText = lastText
-                        val translatedLines =
-                            if (streamFailed || finalText == null) {
-                                null
-                            } else {
-                                SentenceTranslationParser.parseForAlignment(finalText)
-                            }
-                        reduce {
-                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
-                            var translations = state.sentenceTranslations
-                            for ((index, sentenceId) in chunk.sentenceIds.withIndex()) {
-                                val translated = translatedLines?.getOrNull(index)
-                                val source = sentenceSpans.getOrNull(index)?.translationSource.orEmpty()
-                                val valid =
-                                    translated != null &&
-                                        translated.isNotBlank() &&
-                                        !isIdentityTranslation(source, translated)
-                                translations =
-                                    translations +
-                                    (
-                                        sentenceId to
-                                            if (valid) {
-                                                val display = sentenceSpans.getOrNull(index)
-                                                    ?.let { reattachNovelSentencePunctuation(it, translated) }
-                                                    ?: translated
-                                                SentenceTranslationState.Complete(display)
-                                            } else {
-                                                SentenceTranslationState.Failed
-                                            }
+                                    accumulated = result.text
+                                    val now = Clock.System.now().toEpochMilliseconds()
+                                    if (now - lastFlushTime >= STREAM_FLUSH_INTERVAL_MS) {
+                                        lastFlushTime = now
+                                        // 流式输出为纯文本：仅把已经闭合的译文行合并上屏
+                                        flushChunk(
+                                            chunk,
+                                            IncrementalSentenceParser.extractSentences(result.text),
+                                            final = false,
                                         )
+                                    }
+                                }
+
+                                is TranslateResult.Failure -> streamFailed = true
                             }
-                            logger.i { "ai translate novel chunk finished: valid=${translatedLines?.size ?: 0}/${chunk.sentenceIds.size}" }
-                            state.copy(sentenceTranslations = translations)
                         }
                     } catch (e: CancellationException) {
                         throw e
                     } catch (e: Exception) {
                         logger.e(e) { "ai translate novel chunk failed: ${e.message}" }
-                        reduce {
-                            if (!state.translationMode || epoch != translationEpoch) return@reduce state
-                            var translations = state.sentenceTranslations
-                            for (sentenceId in chunk.sentenceIds) {
-                                translations = translations + (sentenceId to SentenceTranslationState.Failed)
-                            }
-                            state.copy(sentenceTranslations = translations)
-                        }
+                        streamFailed = true
                     } finally {
+                        val lastAccumulated = accumulated
+                        val finalLines =
+                            if (streamFailed || lastAccumulated == null) {
+                                null
+                            } else {
+                                SentenceTranslationParser.parseForAlignment(lastAccumulated)
+                            }
+                        flushChunk(chunk, finalLines, final = true)
+                        logger.i {
+                            "ai translate novel chunk finished: valid=${finalLines?.size ?: 0}/${chunk.sentenceIds.size}"
+                        }
                         translationMutex.withLock {
                             for (sentenceId in chunk.sentenceIds) {
                                 if (activeSentenceEpochs[sentenceId] == epoch) {
@@ -907,3 +848,6 @@ sealed class NovelDetailSideEffect {
 
     data object NavigateBack : NovelDetailSideEffect()
 }
+
+/** 流式译文合并进状态的最小间隔：超过该间隔才合并一次，避免逐 token 触发整篇 AnnotatedString 重建。 */
+private const val STREAM_FLUSH_INTERVAL_MS = 100L

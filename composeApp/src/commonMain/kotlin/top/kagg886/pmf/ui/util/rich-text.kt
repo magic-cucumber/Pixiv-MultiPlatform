@@ -466,13 +466,15 @@ fun RichText(
 
     val currentOnVisibleSentencesChanged by rememberUpdatedState(onVisibleSentencesChanged)
     val currentViewportHeightPx by rememberUpdatedState(viewportHeightPx)
-    // translationMode 与句区间作为 key：模式切换或译文长度变化后重新收集，
-    // 否则可见句集合未变化（distinctUntilChanged 不重发）时不会触发新一轮翻译。
-    LaunchedEffect(scrollState, sentenceRanges, translationMode) {
+    // 句区间会随译文长度变化而变化；通过 rememberUpdatedState 在 snapshotFlow 内追踪读取，
+    // 避免把 sentenceRanges 放进 LaunchedEffect key 导致每次流式更新都重启 effect。
+    val currentSentenceRanges by rememberUpdatedState(sentenceRanges)
+    LaunchedEffect(scrollState, translationMode) {
         val scroll = scrollState ?: return@LaunchedEffect
         snapshotFlow {
             val layout = layoutResult
             val viewport = currentViewportHeightPx
+            val ranges = currentSentenceRanges
             if (layout == null || layout.lineCount <= 0 || viewport <= 0 || !translationMode) {
                 emptySet<Int>()
             } else {
@@ -484,7 +486,7 @@ fun RichText(
                 val windowEnd = layout.getLineEnd(window.last)
                 buildSet {
                     // 区间按正文顺序递增；越过窗口终点后可提前结束，避免长文每次滚动都全量扫描
-                    for (range in sentenceRanges) {
+                    for (range in ranges) {
                         if (range.end <= range.start) continue
                         if (range.start > windowEnd) break
                         if (range.end >= windowStart) {

@@ -417,4 +417,31 @@ class TranslateSchedulerTest {
         val after = withTimeout(5_000) { scheduler.translate("after", "中文") }
         assertEquals(TranslateResult.Success("translated"), after)
     }
+
+    @Test
+    fun testStreamCancellationStormReleasesSessions() = runBlocking {
+        val translator = FakeTranslator(delayMillis = 200)
+        val scheduler = TranslateScheduler(translator, maxConcurrency = 2)
+
+        // 多个收集者并发收集同一原文（single-flight 共享会话），随后批量取消
+        val jobs = (0 until 8).map {
+            async { scheduler.translateStream("same text", "中文").toList() }
+        }
+        jobs.take(6).forEach { it.cancel() }
+
+        // 未被取消的收集者必须在时限内结束（不因其他收集者取消而挂起/泄漏）
+        val results = withTimeout(5_000) { jobs.drop(6).awaitAll() }
+        assertEquals(2, results.size)
+        assertTrue(results.all { it.isNotEmpty() }, "未被取消的流式收集者应正常完成")
+
+        // 同一原文再次收集：命中缓存或新会话均可，关键是必须能正常完成（不挂起）
+        val sameText = withTimeout(5_000) { scheduler.translateStream("same text", "中文").toList() }
+        assertTrue(sameText.isNotEmpty(), "取消风暴后同一原文应能再次收集")
+
+        // 新文本发起请求：证明信号量 permit 与流会话未被取消风暴泄漏
+        val callsBefore = translator.streamCalls.size
+        val fresh = withTimeout(5_000) { scheduler.translateStream("another text", "中文").toList() }
+        assertTrue(fresh.isNotEmpty(), "取消风暴后新文本应能正常完成")
+        assertTrue(translator.streamCalls.size > callsBefore, "取消风暴后新文本应能发起新请求")
+    }
 }

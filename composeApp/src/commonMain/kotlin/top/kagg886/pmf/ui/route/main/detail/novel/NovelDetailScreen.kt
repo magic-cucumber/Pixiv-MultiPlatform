@@ -799,6 +799,10 @@ private fun NovelDetailContent(
 
                     Column(Modifier.verticalScroll(scroll)) {
                         val scope = rememberCoroutineScope()
+                        // 稳定回调引用：避免每次重组产生新 lambda，导致 RichText 的 annotated remember 因
+                        // onRetrySentence key 变化而重建整篇 AnnotatedString。
+                        val onRetrySentence: (Int) -> Unit =
+                            remember(model) { { sentenceId: Int -> model.retrySentence(sentenceId) } }
                         RichText(
                             state = state.nodeMap,
                             sentenceTranslations = state.sentenceTranslations,
@@ -808,9 +812,7 @@ private fun NovelDetailContent(
                             onVisibleSentencesChanged = {
                                 model.onVisibleSentencesChanged(it)
                             },
-                            onRetrySentence = {
-                                model.retrySentence(it)
-                            },
+                            onRetrySentence = onRetrySentence,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 15.dp)
