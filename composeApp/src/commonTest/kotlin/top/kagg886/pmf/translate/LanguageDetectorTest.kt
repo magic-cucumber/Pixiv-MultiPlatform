@@ -78,9 +78,10 @@ class LanguageDetectorTest {
 
     @Test
     fun testTargetLanguageName() {
-        assertEquals("中文", LanguageDetector.targetLanguageName(zh))
+        // 简体目标使用无歧义的"简体中文"，避免模型输出繁体
+        assertEquals("简体中文", LanguageDetector.targetLanguageName(zh))
         assertEquals("繁體中文", LanguageDetector.targetLanguageName(zhTw))
-        assertEquals("English", LanguageDetector.targetLanguageName(en))
+        assertEquals("英文", LanguageDetector.targetLanguageName(en))
     }
 
     @Test
@@ -90,7 +91,7 @@ class LanguageDetectorTest {
             AppConfig.locale = AppConfig.LanguageSettings.ZHTW
             assertEquals("繁體中文", LanguageDetector.targetLanguageName())
             AppConfig.locale = AppConfig.LanguageSettings.EN
-            assertEquals("English", LanguageDetector.targetLanguageName())
+            assertEquals("英文", LanguageDetector.targetLanguageName())
         } finally {
             AppConfig.locale = previous
         }

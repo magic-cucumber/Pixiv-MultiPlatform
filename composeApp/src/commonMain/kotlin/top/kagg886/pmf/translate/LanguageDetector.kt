@@ -29,14 +29,19 @@ object LanguageDetector {
         }
     }
 
-    /** 当前语言设置对应的目标语言展示名。 */
+    /**
+     * 当前语言设置对应的目标语言展示名。
+     *
+     * 简体中文目标使用无歧义的"简体中文"而非"中文"——"中文"对模型有歧义，
+     * 部分模型（如 DeepSeek 系）会默认输出繁体。
+     */
     fun targetLanguageName(locale: Locale = currentLocale()): String = when {
         locale.language.equals("zh", ignoreCase = true) &&
             locale.region.equals("TW", ignoreCase = true) -> "繁體中文"
 
-        locale.language.equals("zh", ignoreCase = true) -> "中文"
+        locale.language.equals("zh", ignoreCase = true) -> "简体中文"
 
-        else -> "English"
+        else -> "英文"
     }
 
     private fun isKana(c: Char): Boolean {
