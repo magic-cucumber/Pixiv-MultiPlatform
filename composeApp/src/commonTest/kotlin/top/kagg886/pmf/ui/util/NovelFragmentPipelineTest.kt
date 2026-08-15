@@ -139,27 +139,25 @@ class NovelFragmentPipelineTest {
     }
 
     @Test
-    fun testRetryReTranslatesWholeSentenceNotSingleFragment() {
-        // 修复：重试 = 重译该片段所属整句（句内全部片段 + 段落上下文），
-        // 避免"单片段 + 句上下文"请求让模型把整句含义套到该片段上（污染）
+    fun testRetryIsSingleFragmentWithoutContext() {
+        // 修复：重试 = 单个失败片段 + 无上下文（1 行输入必然 1 行输出，模型无法合并/漏行），
+        // 且不带上下文避免"句上下文 + 单片段"的整句含义污染；
+        // retry=true 走专用重试通道并绕过调度器缓存（每次点击重试都真实发起请求）。
         val index = buildNovelSentenceIndex(listOf(NovelNodeElement.Plain(excerpt)))
         val fragments = index.flatMap { it.fragments }
         val target = fragments.first { "しろは" in it.translationSource }
-        val sentenceFragments = fragments.filter { it.sentenceId == target.sentenceId }
-        val retryChunks =
-            buildNovelSentenceChunks(
-                fragments.associateBy { it.id },
-                index.associateBy { it.id },
-                mapOf(0 to excerpt),
-                sentenceFragments.map { it.id }.toSet(),
-                maxSentencesPerChunk = 1,
-            )
-        val retryChunk = retryChunks.single()
-        assertTrue(retryChunk.sourceText.contains(NOVEL_CHUNK_MARKER), "重试请求也应含翻译指令")
+        val retrySource =
+            buildNovelSentenceChunkSource(null, listOf(target.translationSource.trim()))
+        assertTrue(retrySource.contains(NOVEL_CHUNK_MARKER), "重试请求应含翻译指令")
+        assertTrue(retrySource.contains(target.translationSource.trim()), "重试请求应含待译片段")
         assertTrue(
-            sentenceFragments.all { retryChunk.sourceText.contains(it.translationSource.trim()) },
-            "重试请求应包含该句的全部片段行（而非单片段）",
+            !retrySource.contains(excerpt.take(30)),
+            "重试请求不应携带段落/句子上下文",
         )
-        assertEquals(sentenceFragments.size, retryChunk.fragmentIds.size)
+        // 行数恒为 1：模型不可能合并出 lineCountMismatch
+        assertEquals(
+            1,
+            retrySource.lines().count { it.isNotBlank() && !it.contains(NOVEL_CHUNK_MARKER) },
+        )
     }
 }

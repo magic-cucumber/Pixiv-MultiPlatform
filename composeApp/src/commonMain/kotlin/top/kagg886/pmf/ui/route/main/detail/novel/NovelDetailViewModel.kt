@@ -81,6 +81,7 @@ import top.kagg886.pmf.ui.util.NovelNodeElement
 import top.kagg886.pmf.ui.util.NovelSentenceChunk
 import top.kagg886.pmf.ui.util.NovelSentenceSpan
 import top.kagg886.pmf.ui.util.RichSegment
+import top.kagg886.pmf.ui.util.buildNovelSentenceChunkSource
 import top.kagg886.pmf.ui.util.buildNovelSentenceChunks
 import top.kagg886.pmf.ui.util.buildNovelSentenceIndex
 import top.kagg886.pmf.ui.util.container
@@ -608,6 +609,20 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                     translationMode = true,
                 )
             }
+            // 重新开启翻译后，自动对失败片段重试（走专用重试通道、单片段即时重试）。
+            // 可见窗口只触发 null/Pending，Failed 需要这里显式拉起。
+            val failedIds =
+                state.sentenceTranslations
+                    .filterValues { it is SentenceTranslationState.Failed }
+                    .keys
+                    .sorted()
+            if (failedIds.isNotEmpty()) {
+                logger.i { "ai translate novel toggle-on auto retry: ${failedIds.size} failed fragments" }
+                for ((index, fragmentId) in failedIds.withIndex()) {
+                    if (index > 0) delay(AUTO_RETRY_STAGGER_MS)
+                    retrySentence(fragmentId)
+                }
+            }
         }
     }
 
@@ -686,47 +701,38 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                     currentState.translatedText == fragment.original
             if (currentState !is SentenceTranslationState.Failed && !isEcho) return@runOn
 
-            val (epoch, chunks) = translationMutex.withLock {
-                if (fragmentId in activeSentenceEpochs) return@withLock translationEpoch to emptyList()
+            val (epoch, chunk) = translationMutex.withLock {
+                if (fragmentId in activeSentenceEpochs) return@withLock translationEpoch to null
                 val epoch = translationEpoch
-                // 重试 = 重译该片段所属整句（句内全部片段 + 段落上下文）。
-                // 不要用"单片段 + 句上下文"：模型会把整句含义套到该片段上（如
-                // `あなたな、好きです` 上下文 + 单行 `あなたな` → 模型输出整句译义"我喜欢你"）。
-                val sentenceFragments =
-                    fragmentByIdCache.values.filter { it.sentenceId == fragment.sentenceId }
-                val chunks =
-                    buildNovelSentenceChunks(
-                        fragmentByIdCache,
-                        sentenceByIdCache,
-                        state.novelNodeTexts(),
-                        sentenceFragments.map { it.id }.toSet(),
-                        maxSentencesPerChunk = 1,
-                        withContext = AppConfig.aiTranslateParagraphContext,
-                    ).map { chunk ->
-                        // 保护句内其它已成功的片段：整句重译失败时不被连坐标红
-                        chunk.copy(
-                            preserve = chunk.fragmentIds.filter { it != fragmentId }.toSet(),
-                        )
-                    }
-                for (chunk in chunks) {
-                    for (id in chunk.fragmentIds) {
-                        activeSentenceEpochs[id] = epoch
-                    }
-                }
-                epoch to chunks
+                // 单失败片段重试：1 行输入必然 1 行输出——模型无法合并/漏行，
+                // 消除整句重译时的 lineCountMismatch 死循环。
+                // 不带上下文：避免"句上下文 + 单片段"让模型把整句含义套到该片段上（污染）。
+                // retry=true 走调度器专用重试通道且绕过缓存：每次重试都真实发起 API 请求。
+                val retryChunk =
+                    NovelSentenceChunk(
+                        fragmentIds = listOf(fragmentId),
+                        sourceText =
+                        buildNovelSentenceChunkSource(
+                            null,
+                            listOf(fragment.translationSource.trim()),
+                        ),
+                        fragments = listOf(fragment),
+                        retry = true,
+                    )
+                activeSentenceEpochs[fragmentId] = epoch
+                epoch to retryChunk
             }
 
-            if (chunks.isEmpty()) return@runOn
+            val retryChunk = chunk ?: return@runOn
 
             reduce {
                 if (!state.translationMode) return@reduce state
-                // 只把点击的片段标 Pending；同句其它片段由最终合并刷新
                 state.copy(
                     sentenceTranslations = state.sentenceTranslations + (fragmentId to SentenceTranslationState.Pending),
                 )
             }
             logger.i { "ai translate novel retry: fragment=$fragmentId (sentence ${fragment.sentenceId})" }
-            launchNovelTranslationChunks(chunks, LanguageDetector.targetLanguageName(), epoch)
+            launchNovelTranslationChunks(listOf(retryChunk), LanguageDetector.targetLanguageName(), epoch)
         }
     }
 
@@ -768,9 +774,17 @@ class NovelDetailViewModel(val id: Long, val seriesInfo: Option<SeriesInfo>) :
                     var lastFlushTime = 0L
                     try {
                         logger.i {
-                            "ai translate novel chunk: ${chunk.fragmentIds.size} fragments, textLen=${chunk.sourceText.length}"
+                            "ai translate novel chunk: ${chunk.fragmentIds.size} fragments, " +
+                                "textLen=${chunk.sourceText.length}, retry=${chunk.retry}"
                         }
-                        translateScheduler.translateStream(chunk.sourceText, target).collect { result ->
+                        // 重试请求走专用通道（独立信号量），即时发起、不被普通请求排队阻塞
+                        val stream =
+                            if (chunk.retry) {
+                                translateScheduler.translateStreamRetry(chunk.sourceText, target)
+                            } else {
+                                translateScheduler.translateStream(chunk.sourceText, target)
+                            }
+                        stream.collect { result ->
                             when (result) {
                                 is TranslateResult.Success -> {
                                     accumulated = result.text
@@ -924,15 +938,18 @@ private fun NovelDetailViewState.Success.novelNodeTexts(): Map<Int, String> = no
 }.toMap()
 
 /**
- * 自动重试预算选择：返回预算内（尚未重试过）的失败片段，并把它们标记为已用预算
- * （每片段每 epoch 至多自动重试一次，防止与模型反复不一致时死循环）。
+ * 自动重试预算选择：返回预算内（尚未达到每 epoch 上限）的失败片段，并累加其重试计数。
+ *
+ * 每片段每 epoch 至多自动重试 [MAX_AUTO_RETRIES_PER_EPOCH] 次，
+ * 防止与模型反复不一致时死循环或无限消耗额度。
  */
 internal fun takeRetryBudget(
     failedIds: List<Int>,
     retryCounts: MutableMap<Int, Int>,
 ): List<Int> = failedIds.filter { id ->
-    if (retryCounts.getOrDefault(id, 0) == 0) {
-        retryCounts[id] = 1
+    val count = retryCounts.getOrDefault(id, 0)
+    if (count < MAX_AUTO_RETRIES_PER_EPOCH) {
+        retryCounts[id] = count + 1
         true
     } else {
         false
@@ -972,3 +989,6 @@ private const val STREAM_FLUSH_INTERVAL_MS = 100L
 
 /** 自动重试启动间隔：分批延迟启动，避免失败会话集中涌入调度器队列。 */
 private const val AUTO_RETRY_STAGGER_MS = 250L
+
+/** 每片段每 epoch 的自动重试次数上限。 */
+private const val MAX_AUTO_RETRIES_PER_EPOCH = 2

@@ -163,6 +163,33 @@ class NovelSentenceIndexTest {
     }
 
     @Test
+    fun testHalfWidthCornerBracketsAreStrippedAndReattached() {
+        // 半角 ｢｣（U+FF62/63）作为句首/句尾标点剥离，不进核心；译文后拼回
+        val index =
+            buildNovelSentenceIndex(
+                listOf(NovelNodeElement.Plain("｢うん…み、みんな…ありがとう…｣")),
+            )
+        val sentence = index.single()
+        assertEquals("｢", sentence.leadingPunctuation)
+        // 对话末尾的 … 与闭括号一起作为句尾标点剥离，渲染时拼回
+        assertEquals("…｣", sentence.trailingPunctuation)
+        assertEquals(listOf("うん…み", "みんな…ありがとう"), sentence.fragments.map { it.original })
+        assertTrue(
+            sentence.fragments.all { "｢" !in it.translationSource && "｣" !in it.translationSource },
+            "半角括号不应进入发给 AI 的核心",
+        )
+        // 句首/句尾括号与尾省略号由渲染层作为间隙拼回（等价于 reattach 结果）
+        assertEquals(
+            "｢嗯、大家谢谢…｣",
+            sentence.leadingPunctuation +
+                reattachNovelFragmentPunctuation(sentence.fragments[0], "嗯") +
+                "、" +
+                reattachNovelFragmentPunctuation(sentence.fragments[1], "大家谢谢") +
+                sentence.trailingPunctuation,
+        )
+    }
+
+    @Test
     fun testPositionNovelFragmentsKeepsDoubleNewlineParagraphBreak() {
         val text = "第一段。\n\n第二段！"
         val fragments = buildNovelSentenceIndex(listOf(NovelNodeElement.Plain(text))).flatMap { it.fragments }

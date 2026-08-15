@@ -79,6 +79,23 @@ class SentenceSegmenterTest {
     }
 
     @Test
+    fun testHalfWidthCornerBracketsAreBracketAware() {
+        // 半角 ｢｣（U+FF62/63）与全角 「」 同样参与括号深度：内部句末标点不切句
+        assertEquals(
+            listOf("｢うん…み、みんな…ありがとう…｣"),
+            SentenceSegmenter.split("｢うん…み、みんな…ありがとう…｣"),
+        )
+        assertEquals(
+            listOf("｢…開けてもいい？｣"),
+            SentenceSegmenter.split("｢…開けてもいい？｣"),
+        )
+        assertEquals(
+            listOf("﹁いいえ。﹂次は？"),
+            SentenceSegmenter.split("﹁いいえ。﹂次は？"),
+        )
+    }
+
+    @Test
     fun testEnglishPeriodOnlyBoundaryAfterWhitespace() {
         assertEquals(1, SentenceSegmenter.split("3.14 is a number").size)
         assertEquals(

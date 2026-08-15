@@ -98,13 +98,15 @@ data class NovelSentenceChunk(
     val contextText: String = "",
     /** 重试场景下受保护的片段：整句重译失败时保留其旧 Complete 状态，避免连坐。 */
     val preserve: Set<Int> = emptySet(),
+    /** 重试请求：走调度器的专用重试通道（独立信号量，不参与普通请求排队）。 */
+    val retry: Boolean = false,
 )
 
 /** 每个请求分段最多包含的句子数（行）。 */
 const val NOVEL_TRANSLATION_CHUNK_SIZE = 6
 
-private val LEADING_PUNCTUATION = "「『（([｛{〈《【〔〖〘〚⌈⌊“‘\"、，".toSet()
-private val TRAILING_PUNCTUATION = "」』）)]｝}〉》】〕〗〙〛⌋⌉”’\"。．.！？!?；;…‥～〜♪♡♥☆★※、，".toSet()
+private val LEADING_PUNCTUATION = "「『（([｛{〈《【〔〖〘〚⌈⌊“‘\"、，｢﹁".toSet()
+private val TRAILING_PUNCTUATION = "」』）)]｝}〉》】〕〗〙〛⌋⌉”’\"。．.！？!?；;…‥～〜♪♡♥☆★※、，｣﹂".toSet()
 
 /** 句内片段分隔符：顿号/逗号/分号。 */
 private val FRAGMENT_SEPARATORS = "、，；;".toSet()
@@ -531,6 +533,7 @@ private val BRACKET_PAIRS =
     listOf(
         '⌈' to '⌋', '⌊' to '⌉',
         '「' to '」', '『' to '』',
+        '｢' to '｣', '﹁' to '﹂',
         '〔' to '〕', '【' to '】', '〖' to '〗',
         '〈' to '〉', '《' to '》',
         '（' to '）', '(' to ')',
