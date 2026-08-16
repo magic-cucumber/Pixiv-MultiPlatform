@@ -876,7 +876,7 @@ fun SettingScreen() {
                             value = aiTranslateApiKey,
                             secret = true,
                             onValueChange = {
-                                aiTranslateApiKey = it
+                                aiTranslateApiKey = it.trim()
                             },
                         )
                     }
