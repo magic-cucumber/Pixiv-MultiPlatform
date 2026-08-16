@@ -62,6 +62,10 @@ import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.shareFile
+import top.kagg886.pmf.translate.TranslateViewModel
+import top.kagg886.pmf.translate.effectiveBaseUrl
+import top.kagg886.pmf.translate.effectiveModel
+import top.kagg886.pmf.translate.presetOf
 import top.kagg886.pmf.ui.component.settings.SettingsDropdownMenu
 import top.kagg886.pmf.ui.component.settings.SettingsFileUpload
 import top.kagg886.pmf.ui.component.settings.SettingsGroup
@@ -85,6 +89,17 @@ import top.kagg886.pmf.util.mb
 import top.kagg886.pmf.util.setText
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.zip
+
+@Composable
+private fun providerName(provider: AppConfig.AiTranslateProvider): String = when (provider) {
+    AppConfig.AiTranslateProvider.OPENAI -> stringResource(Res.string.ai_translate_provider_openai)
+    AppConfig.AiTranslateProvider.DEEPSEEK -> stringResource(Res.string.ai_translate_provider_deepseek)
+    AppConfig.AiTranslateProvider.GLM -> stringResource(Res.string.ai_translate_provider_glm)
+    AppConfig.AiTranslateProvider.ANTHROPIC -> stringResource(Res.string.ai_translate_provider_anthropic)
+    AppConfig.AiTranslateProvider.GOOGLE -> stringResource(Res.string.ai_translate_provider_google)
+    AppConfig.AiTranslateProvider.OLLAMA -> stringResource(Res.string.ai_translate_provider_ollama)
+    AppConfig.AiTranslateProvider.CUSTOM -> stringResource(Res.string.ai_translate_provider_custom)
+}
 
 @Composable
 fun SettingScreen() {
@@ -771,6 +786,218 @@ fun SettingScreen() {
                 value = customShareDomain,
                 onValueChange = { customShareDomain = it },
             )
+        }
+        SettingsGroup(title = { Text(stringResource(Res.string.ai_translate_settings)) }) {
+            // 全局翻译宿主：配置变更后后台预热 koog 客户端，避免下次翻译时才初始化
+            val aiTranslator = globalViewModel<TranslateViewModel>()
+            val prewarmScope = rememberCoroutineScope()
+            var aiTranslateEnabled by remember {
+                mutableStateOf(AppConfig.aiTranslateEnabled)
+            }
+            LaunchedEffect(aiTranslateEnabled) {
+                AppConfig.aiTranslateEnabled = aiTranslateEnabled
+                if (aiTranslateEnabled) {
+                    prewarmScope.launch { aiTranslator.prewarm() }
+                }
+            }
+
+            SettingsSwitch(
+                state = aiTranslateEnabled,
+                title = { Text(stringResource(Res.string.ai_translate_enable)) },
+                subtitle = {
+                    Text(stringResource(Res.string.ai_translate_enable_description))
+                },
+                onCheckedChange = {
+                    aiTranslateEnabled = it
+                },
+            )
+
+            AnimatedVisibility(
+                visible = aiTranslateEnabled,
+                enter = expandVertically(),
+                exit = shrinkVertically(),
+            ) {
+                Column {
+                    var aiTranslateProvider by remember {
+                        mutableStateOf(AppConfig.aiTranslateProvider)
+                    }
+                    LaunchedEffect(aiTranslateProvider) {
+                        AppConfig.aiTranslateProvider = aiTranslateProvider
+                        prewarmScope.launch { aiTranslator.prewarm() }
+                    }
+                    var aiTranslateApiKey by remember {
+                        mutableStateOf(AppConfig.aiTranslateApiKey)
+                    }
+                    LaunchedEffect(aiTranslateApiKey) {
+                        AppConfig.aiTranslateApiKey = aiTranslateApiKey
+                        prewarmScope.launch { aiTranslator.prewarm() }
+                    }
+                    var aiTranslateModel by remember {
+                        mutableStateOf(effectiveModel(aiTranslateProvider, AppConfig.aiTranslateModel))
+                    }
+                    LaunchedEffect(aiTranslateModel) {
+                        AppConfig.aiTranslateModel = aiTranslateModel
+                        prewarmScope.launch { aiTranslator.prewarm() }
+                    }
+                    var aiTranslateBaseUrl by remember {
+                        mutableStateOf(effectiveBaseUrl(aiTranslateProvider, AppConfig.aiTranslateBaseUrl))
+                    }
+                    LaunchedEffect(aiTranslateBaseUrl) {
+                        AppConfig.aiTranslateBaseUrl = aiTranslateBaseUrl
+                        prewarmScope.launch { aiTranslator.prewarm() }
+                    }
+
+                    SettingsDropdownMenu(
+                        title = { Text(stringResource(Res.string.ai_translate_provider)) },
+                        current = aiTranslateProvider,
+                        data = AppConfig.AiTranslateProvider.entries,
+                        optionsFormat = { providerName(it) },
+                        onSelected = { newProvider ->
+                            val oldModel = AppConfig.aiTranslateModel
+                            val oldDefault = presetOf(aiTranslateProvider).defaultModel
+                            val oldBaseDefault = presetOf(aiTranslateProvider).baseUrl
+                            aiTranslateProvider = newProvider
+                            // 模型未自定义（为空或等于旧提供商默认）时切到新提供商默认
+                            if (oldModel.isBlank() || oldModel == oldDefault) {
+                                aiTranslateModel = presetOf(newProvider).defaultModel
+                            }
+                            // Base URL 未自定义（为空或等于旧提供商预设）时切到新提供商预设，
+                            // 避免残留覆盖把密钥发往旧提供商地址
+                            if (AppConfig.aiTranslateBaseUrl.isBlank() || AppConfig.aiTranslateBaseUrl == oldBaseDefault) {
+                                AppConfig.aiTranslateBaseUrl = ""
+                                aiTranslateBaseUrl = presetOf(newProvider).baseUrl
+                            }
+                        },
+                    )
+
+                    if (presetOf(aiTranslateProvider).requiresApiKey) {
+                        SettingsTextField(
+                            title = { Text(stringResource(Res.string.ai_translate_api_key)) },
+                            value = aiTranslateApiKey,
+                            secret = true,
+                            onValueChange = {
+                                aiTranslateApiKey = it.trim()
+                            },
+                        )
+                    }
+
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_model)) },
+                        value = aiTranslateModel,
+                        onValueChange = {
+                            aiTranslateModel = it
+                        },
+                    )
+
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_base_url)) },
+                        subTitle = {
+                            Text(stringResource(Res.string.ai_translate_base_url_description))
+                        },
+                        value = aiTranslateBaseUrl,
+                        onValueChange = {
+                            aiTranslateBaseUrl = it
+                        },
+                    )
+
+                    var aiTranslatePrompt by remember {
+                        AppConfig.migrateLegacyAiTranslatePrompt()
+                        mutableStateOf(AppConfig.aiTranslatePrompt)
+                    }
+                    LaunchedEffect(aiTranslatePrompt) {
+                        AppConfig.aiTranslatePrompt = aiTranslatePrompt
+                    }
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_prompt)) },
+                        value = aiTranslatePrompt,
+                        onValueChange = {
+                            aiTranslatePrompt = it
+                        },
+                    )
+
+                    var aiTranslateProperNouns by remember {
+                        mutableStateOf(AppConfig.aiTranslateProperNouns)
+                    }
+                    LaunchedEffect(aiTranslateProperNouns) {
+                        AppConfig.aiTranslateProperNouns = aiTranslateProperNouns
+                    }
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_proper_nouns)) },
+                        value = aiTranslateProperNouns,
+                        onValueChange = {
+                            aiTranslateProperNouns = it
+                        },
+                    )
+
+                    var aiTranslateCacheEnabled by remember {
+                        mutableStateOf(AppConfig.aiTranslateCacheEnabled)
+                    }
+                    LaunchedEffect(aiTranslateCacheEnabled) {
+                        AppConfig.aiTranslateCacheEnabled = aiTranslateCacheEnabled
+                    }
+                    SettingsSwitch(
+                        state = aiTranslateCacheEnabled,
+                        title = { Text(stringResource(Res.string.ai_translate_cache)) },
+                        subtitle = {
+                            Text(stringResource(Res.string.ai_translate_cache_description))
+                        },
+                        onCheckedChange = {
+                            aiTranslateCacheEnabled = it
+                        },
+                    )
+
+                    var aiTranslateParagraphContext by remember {
+                        mutableStateOf(AppConfig.aiTranslateParagraphContext)
+                    }
+                    LaunchedEffect(aiTranslateParagraphContext) {
+                        AppConfig.aiTranslateParagraphContext = aiTranslateParagraphContext
+                    }
+                    SettingsSwitch(
+                        state = aiTranslateParagraphContext,
+                        title = { Text(stringResource(Res.string.ai_translate_paragraph_context)) },
+                        subtitle = {
+                            Text(stringResource(Res.string.ai_translate_paragraph_context_description))
+                        },
+                        onCheckedChange = {
+                            aiTranslateParagraphContext = it
+                        },
+                    )
+
+                    var aiTranslateMaxConcurrency by remember {
+                        mutableStateOf(AppConfig.aiTranslateMaxConcurrency)
+                    }
+                    LaunchedEffect(aiTranslateMaxConcurrency) {
+                        AppConfig.aiTranslateMaxConcurrency = aiTranslateMaxConcurrency
+                    }
+                    SettingsDropdownMenu(
+                        title = { Text(stringResource(Res.string.ai_translate_max_concurrency)) },
+                        subTitle = { Text(stringResource(Res.string.ai_translate_max_concurrency_description)) },
+                        current = aiTranslateMaxConcurrency,
+                        data = (1..8).toList(),
+                        optionsFormat = { it.toString() },
+                        onSelected = {
+                            aiTranslateMaxConcurrency = it
+                        },
+                    )
+
+                    var aiTranslateRetryAttempts by remember {
+                        mutableStateOf(AppConfig.aiTranslateRetryAttempts)
+                    }
+                    LaunchedEffect(aiTranslateRetryAttempts) {
+                        AppConfig.aiTranslateRetryAttempts = aiTranslateRetryAttempts
+                    }
+                    SettingsDropdownMenu(
+                        title = { Text(stringResource(Res.string.ai_translate_retry_attempts)) },
+                        subTitle = { Text(stringResource(Res.string.ai_translate_retry_attempts_description)) },
+                        current = aiTranslateRetryAttempts,
+                        data = (1..3).toList(),
+                        optionsFormat = { it.toString() },
+                        onSelected = {
+                            aiTranslateRetryAttempts = it
+                        },
+                    )
+                }
+            }
         }
         SettingsGroup(title = { Text(stringResource(Res.string.login_sessions)) }) {
             val clip = LocalClipboard.current

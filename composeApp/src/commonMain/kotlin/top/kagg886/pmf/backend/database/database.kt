@@ -20,6 +20,7 @@ import top.kagg886.pmf.util.absolutePath
         BlackListItem::class,
         IllustGalleryEntity::class,
         IllustGalleryContentImages::class,
+        AiTranslateCacheEntity::class,
     ],
     version = BuildConfig.DATABASE_VERSION,
     autoMigrations = [
@@ -27,6 +28,7 @@ import top.kagg886.pmf.util.absolutePath
         AutoMigration(8, 9),
         AutoMigration(9, 10),
         AutoMigration(10, 11),
+        AutoMigration(11, 12),
     ],
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -41,6 +43,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun blacklistDAO(): BlackListDao
 
     abstract fun illustGalleryDAO(): IllustGalleryDao
+
+    abstract fun aiTranslateCacheDAO(): AiTranslateCacheDao
 }
 
 // The Room compiler generates the `actual` implementations.

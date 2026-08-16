@@ -73,6 +73,9 @@ import org.orbitmvi.orbit.compose.collectSideEffect
 import top.kagg886.pmf.LocalNavBackStack
 import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.LanguageDetector
+import top.kagg886.pmf.translate.isAiTranslateEnabled
+import top.kagg886.pmf.ui.component.AiTranslateButton
 import top.kagg886.pmf.ui.component.BackToTopOrRefreshButton
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.FavoriteButton
@@ -256,41 +259,62 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                         )
                                     },
                                     trailingContent = {
-                                        AnimatedContent(
-                                            targetState = when {
-                                                comment.hasReplies -> -1
-                                                comment == (state as? CommentViewState.Success.HasReply)?.target -> 1
-                                                else -> 0
-                                            },
-                                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                                        ) {
-                                            when (it) {
-                                                -1 -> FavoriteButton(
-                                                    isFavorite = false,
-                                                    nonFavoriteIcon = {
-                                                        Icon(Icons.Default.MoreVert, null)
-                                                    },
-                                                ) {
-                                                    model.loadReply(comment).join()
-                                                }
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            AnimatedContent(
+                                                targetState = when {
+                                                    comment.hasReplies -> -1
+                                                    comment == (state as? CommentViewState.Success.HasReply)?.target -> 1
+                                                    else -> 0
+                                                },
+                                                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                                            ) {
+                                                when (it) {
+                                                    -1 -> FavoriteButton(
+                                                        isFavorite = false,
+                                                        nonFavoriteIcon = {
+                                                            Icon(Icons.Default.MoreVert, null)
+                                                        },
+                                                    ) {
+                                                        model.loadReply(comment).join()
+                                                    }
 
-                                                0 -> FavoriteButton(
-                                                    isFavorite = false,
-                                                    nonFavoriteIcon = {
-                                                        Icon(Icons.Default.Edit, null)
-                                                    },
-                                                ) {
-                                                    model.loadReply(comment).join()
-                                                }
+                                                    0 -> FavoriteButton(
+                                                        isFavorite = false,
+                                                        nonFavoriteIcon = {
+                                                            Icon(Icons.Default.Edit, null)
+                                                        },
+                                                    ) {
+                                                        model.loadReply(comment).join()
+                                                    }
 
-                                                1 -> FavoriteButton(
-                                                    isFavorite = false,
-                                                    nonFavoriteIcon = {
-                                                        Icon(Icons.Default.Close, null)
-                                                    },
-                                                ) {
-                                                    model.clearReply().join()
+                                                    1 -> FavoriteButton(
+                                                        isFavorite = false,
+                                                        nonFavoriteIcon = {
+                                                            Icon(Icons.Default.Close, null)
+                                                        },
+                                                    ) {
+                                                        model.clearReply().join()
+                                                    }
                                                 }
+                                            }
+                                            val translated = comment.id in state.translations
+                                            if (translated ||
+                                                comment.id in state.translating ||
+                                                (
+                                                    comment.stamp == null &&
+                                                        isAiTranslateEnabled() &&
+                                                        LanguageDetector.isForeign(comment.comment)
+                                                    )
+                                            ) {
+                                                AiTranslateButton(
+                                                    translated = translated,
+                                                    translating = comment.id in state.translating,
+                                                    iconSize = 20.dp,
+                                                    touchSize = 30.dp,
+                                                    onClick = {
+                                                        model.translateComment(comment)
+                                                    },
+                                                )
                                             }
                                         }
                                     },
@@ -298,7 +322,10 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                 )
                                 Box(modifier = Modifier.padding(5.dp)) {
                                     if (comment.stamp == null) {
-                                        CommentText(comment = comment.comment, emojis = medias.emojis)
+                                        CommentText(
+                                            comment = state.translations[comment.id] ?: comment.comment,
+                                            emojis = medias.emojis,
+                                        )
                                     } else {
                                         AsyncImage(
                                             model = comment.stamp!!.url,
@@ -327,12 +354,36 @@ private fun CommentPanelContainer(model: CommentViewModel, state: CommentViewSta
                                                 },
                                                 supportingContent = {
                                                     if (item.stamp == null) {
-                                                        CommentText(comment = comment.comment, emojis = medias.emojis)
+                                                        CommentText(
+                                                            comment = state.translations[item.id] ?: item.comment,
+                                                            emojis = medias.emojis,
+                                                        )
                                                     } else {
                                                         AsyncImage(
                                                             model = item.stamp!!.url,
                                                             modifier = Modifier.size(80.dp),
                                                             contentDescription = null,
+                                                        )
+                                                    }
+                                                },
+                                                trailingContent = {
+                                                    val translated = item.id in state.translations
+                                                    if (translated ||
+                                                        item.id in state.translating ||
+                                                        (
+                                                            item.stamp == null &&
+                                                                isAiTranslateEnabled() &&
+                                                                LanguageDetector.isForeign(item.comment)
+                                                            )
+                                                    ) {
+                                                        AiTranslateButton(
+                                                            translated = translated,
+                                                            translating = item.id in state.translating,
+                                                            iconSize = 20.dp,
+                                                            touchSize = 30.dp,
+                                                            onClick = {
+                                                                model.translateComment(item)
+                                                            },
                                                         )
                                                     }
                                                 },
@@ -581,7 +632,11 @@ private val pattern = Regex("\\(([^)]+)\\)")
 @Composable
 private fun CommentText(modifier: Modifier = Modifier, comment: String, emojis: Map<String, Int>) {
     val style = LocalTextStyle.current
-    val state by produceState(AnnotatedString("") to emptyMap<String, InlineTextContent>()) {
+    val state by produceState(
+        AnnotatedString("") to emptyMap<String, InlineTextContent>(),
+        comment,
+        emojis,
+    ) {
         val inlineContentMap = mutableMapOf<String, InlineTextContent>()
         val annotated = buildAnnotatedString {
             var lastIndex = 0
