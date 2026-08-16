@@ -676,7 +676,8 @@ private fun NovelDetailTopAppBar(
                 }
 
                 if (translateVisible) {
-                    IconButton(onClick = onTranslateClick) {
+                    // 加载中动画期间禁用按钮，避免重复点击打断在途翻译
+                    IconButton(onClick = onTranslateClick, enabled = !translating) {
                         if (translating) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),

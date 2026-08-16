@@ -224,11 +224,11 @@ internal fun protectSentenceBrackets(
                     val openToken = allocToken(core[top.sourceIndex].toString())
                     val closeToken = allocToken(c.toString())
                     if (openToken != null && closeToken != null) {
-                        out.setCharAt(top.outIndex, openToken[0])
+                        out.set(top.outIndex, openToken[0])
                         out.append(closeToken)
                     } else {
                         // 超限保护：原样保留括号（退回不保护行为）
-                        out.setCharAt(top.outIndex, core[top.sourceIndex])
+                        out.set(top.outIndex, core[top.sourceIndex])
                         out.append(c)
                     }
                 } else {
@@ -263,7 +263,7 @@ internal fun protectSentenceBrackets(
         if (strippedClose != null && CLOSE_TO_OPEN[strippedClose] == top.open) {
             val openToken = allocToken(core[top.sourceIndex].toString())
             if (openToken != null) {
-                out.setCharAt(top.outIndex, openToken[0])
+                out.set(top.outIndex, openToken[0])
             }
         }
     }

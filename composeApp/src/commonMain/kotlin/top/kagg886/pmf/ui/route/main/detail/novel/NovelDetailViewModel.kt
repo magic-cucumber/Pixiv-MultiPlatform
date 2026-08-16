@@ -947,7 +947,7 @@ internal fun takeRetryBudget(
     failedIds: List<Int>,
     retryCounts: MutableMap<Int, Int>,
 ): List<Int> = failedIds.filter { id ->
-    val count = retryCounts.getOrDefault(id, 0)
+    val count = retryCounts[id] ?: 0
     if (count < MAX_AUTO_RETRIES_PER_EPOCH) {
         retryCounts[id] = count + 1
         true
