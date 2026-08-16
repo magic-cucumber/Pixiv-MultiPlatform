@@ -59,8 +59,8 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.translate.LanguageDetector
 import top.kagg886.pmf.translate.isAiTranslateEnabled
 import top.kagg886.pmf.ui.component.*
+import top.kagg886.pmf.ui.component.AiTranslateButton
 import top.kagg886.pmf.ui.component.dialog.TagFavoriteDialog
-import top.kagg886.pmf.ui.component.icon.AiTranslateButton
 import top.kagg886.pmf.ui.component.icon.Copy
 import top.kagg886.pmf.ui.component.icon.Download
 import top.kagg886.pmf.ui.component.icon.Save

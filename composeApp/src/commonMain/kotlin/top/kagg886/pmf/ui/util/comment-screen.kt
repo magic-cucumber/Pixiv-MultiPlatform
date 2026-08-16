@@ -75,11 +75,11 @@ import top.kagg886.pmf.LocalSnackBarHost
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.translate.LanguageDetector
 import top.kagg886.pmf.translate.isAiTranslateEnabled
+import top.kagg886.pmf.ui.component.AiTranslateButton
 import top.kagg886.pmf.ui.component.BackToTopOrRefreshButton
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.FavoriteButton
 import top.kagg886.pmf.ui.component.Loading
-import top.kagg886.pmf.ui.component.icon.AiTranslateButton
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
 import top.kagg886.pmf.ui.route.main.detail.author.AuthorRoute

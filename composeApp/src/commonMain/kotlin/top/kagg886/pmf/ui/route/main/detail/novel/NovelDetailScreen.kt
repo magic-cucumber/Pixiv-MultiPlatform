@@ -34,7 +34,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -43,7 +42,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.OutlinedCard
@@ -98,6 +96,7 @@ import top.kagg886.pmf.res.*
 import top.kagg886.pmf.translate.LanguageDetector
 import top.kagg886.pmf.translate.SentenceTranslationState
 import top.kagg886.pmf.translate.isAiTranslateEnabled
+import top.kagg886.pmf.ui.component.AiTranslateButton
 import top.kagg886.pmf.ui.component.ErrorPage
 import top.kagg886.pmf.ui.component.FavoriteButton
 import top.kagg886.pmf.ui.component.FavoriteState
@@ -109,9 +108,6 @@ import top.kagg886.pmf.ui.component.collapsable.v3.connectedScroll
 import top.kagg886.pmf.ui.component.collapsable.v3.nestedScrollWorkaround
 import top.kagg886.pmf.ui.component.collapsable.v3.rememberConnectedScrollState
 import top.kagg886.pmf.ui.component.dialog.TagFavoriteDialog
-import top.kagg886.pmf.ui.component.icon.AiTranslateButton
-import top.kagg886.pmf.ui.component.icon.ShowOriginal
-import top.kagg886.pmf.ui.component.icon.Translate
 import top.kagg886.pmf.ui.component.icon.View
 import top.kagg886.pmf.ui.component.scroll.VerticalScrollbar
 import top.kagg886.pmf.ui.component.scroll.rememberScrollbarAdapter
@@ -676,27 +672,11 @@ private fun NovelDetailTopAppBar(
                 }
 
                 if (translateVisible) {
-                    // 加载中动画期间禁用按钮，避免重复点击打断在途翻译
-                    IconButton(onClick = onTranslateClick, enabled = !translating) {
-                        if (translating) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Icon(
-                                imageVector = if (translated) ShowOriginal else Translate,
-                                contentDescription = stringResource(
-                                    if (translated) {
-                                        Res.string.ai_translate_show_original
-                                    } else {
-                                        Res.string.ai_translate_translate
-                                    },
-                                ),
-                                tint = LocalContentColor.current,
-                            )
-                        }
-                    }
+                    AiTranslateButton(
+                        translated = translated,
+                        translating = translating,
+                        onClick = onTranslateClick,
+                    )
                 }
 
                 IconButton(onClick = onDrawerOpen) {
