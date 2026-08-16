@@ -430,27 +430,27 @@ class TranslateSchedulerTest {
 
     @Test
     fun testMaskSecretReplacesApiKeyWithStars() {
-        val previous = AppConfig.deepseekApiKey
+        val previous = AppConfig.aiTranslateApiKey
         try {
-            AppConfig.deepseekApiKey = "sk-test-secret-key-123"
+            AppConfig.aiTranslateApiKey = "sk-test-secret-key-123"
             assertEquals("req *** tail", maskSecret("req sk-test-secret-key-123 tail"))
             assertTrue(!maskSecret("http error: sk-test-secret-key-123").contains("sk-test-secret-key-123"))
             assertTrue(maskSecret("http error: sk-test-secret-key-123").contains("***"))
         } finally {
-            AppConfig.deepseekApiKey = previous
+            AppConfig.aiTranslateApiKey = previous
         }
     }
 
     @Test
     fun testMaskSecretShortKeyOrBlankIsUnchanged() {
-        val previous = AppConfig.deepseekApiKey
+        val previous = AppConfig.aiTranslateApiKey
         try {
-            AppConfig.deepseekApiKey = "ab"
+            AppConfig.aiTranslateApiKey = "ab"
             assertEquals("ab", maskSecret("ab"), "过短的 key 不打码，避免误伤正常文本")
-            AppConfig.deepseekApiKey = ""
+            AppConfig.aiTranslateApiKey = ""
             assertEquals("plain text", maskSecret("plain text"))
         } finally {
-            AppConfig.deepseekApiKey = previous
+            AppConfig.aiTranslateApiKey = previous
         }
     }
 

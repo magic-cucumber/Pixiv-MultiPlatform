@@ -32,13 +32,13 @@ sealed interface TranslateResult {
 }
 
 /** 是否已开启 AI 翻译且配置了 API Key。 */
-fun isAiTranslateEnabled(): Boolean = AppConfig.aiTranslateEnabled && AppConfig.deepseekApiKey.isNotBlank()
+fun isAiTranslateEnabled(): Boolean = AppConfig.aiTranslateEnabled && AppConfig.aiTranslateApiKey.isNotBlank()
 
 /**
  * 日志打码：把配置的 API Key 替换为 `***`，避免密钥经异常消息/请求内容泄漏到日志。
  */
 internal fun maskSecret(text: String): String {
-    val key = AppConfig.deepseekApiKey
+    val key = AppConfig.aiTranslateApiKey
     return if (key.isNotBlank() && key.length >= 4) {
         text.replace(key, "***")
     } else {
@@ -102,10 +102,13 @@ class TranslateScheduler(
     /** 按通道获取许可：重试走专用信号量（即时可发），普通请求走并发限制。 */
     private suspend fun <T> withPermit(retry: Boolean, block: suspend () -> T): T = if (retry) retrySemaphore.withPermit { block() } else withConcurrencyLimit { block() }
 
-    /** 配置指纹：prompt/专名要求/模型/目标语言任一变化都会使旧缓存失效。 */
+    /** 配置指纹：provider/BaseURL/模型/专名要求/目标语言任一变化都会使旧缓存失效。 */
     private fun configFingerprint(targetLang: String): String {
         AppConfig.migrateLegacyAiTranslatePrompt()
-        return translationHash("${AppConfig.aiTranslatePrompt}|${AppConfig.aiTranslateProperNouns}|${AppConfig.aiTranslateModel}|$targetLang")
+        return translationHash(
+            "${AppConfig.aiTranslateProvider}|${AppConfig.aiTranslateBaseUrl}|${AppConfig.aiTranslatePrompt}|" +
+                "${AppConfig.aiTranslateProperNouns}|${AppConfig.aiTranslateModel}|$targetLang",
+        )
     }
 
     private fun cacheKey(text: String, targetLang: String) = "$targetLang|${configFingerprint(targetLang)}|${text.trim()}"

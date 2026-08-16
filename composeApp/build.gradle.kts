@@ -189,8 +189,12 @@ kotlin {
             // logging
             implementation(libs.kermit)
 
-            // ai translate
-            implementation(libs.deepseek.helper)
+            // ai translate (koog)
+            implementation(libs.koog.http.client.ktor)
+            implementation(libs.koog.prompt.executor.clients)
+            implementation(libs.koog.prompt.executor.openai.client)
+            implementation(libs.koog.prompt.executor.anthropic.client)
+            implementation(libs.koog.prompt.executor.ollama.client)
 
             // epub module
             implementation(project(":lib:epub"))

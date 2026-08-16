@@ -66,11 +66,13 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
 
     var customShareDomain by string("custom_share_domain", "https://pixiv.net")
 
-    var deepseekApiKey by string("deepseek_api_key", "")
+    var aiTranslateApiKey by string("ai_translate_api_key", "")
+    var aiTranslateProvider by serializedValue("ai_translate_provider", AiTranslateProvider.DEEPSEEK)
+    var aiTranslateBaseUrl by string("ai_translate_base_url", "")
     var aiTranslateEnabled by boolean("ai_translate_enabled", false)
     var aiTranslatePrompt by string("ai_translate_prompt", DEFAULT_AI_TRANSLATE_PROMPT)
     var aiTranslateProperNouns by string("ai_translate_proper_nouns", DEFAULT_AI_TRANSLATE_PROPER_NOUNS)
-    var aiTranslateModel by string("ai_translate_model", "deepseek-v4-flash")
+    var aiTranslateModel by string("ai_translate_model", "")
     var aiTranslateCacheEnabled by boolean("ai_translate_cache_enabled", true)
     var aiTranslateParagraphContext by boolean("ai_translate_paragraph_context", true)
     var aiTranslateMaxConcurrency by int("ai_translate_max_concurrency", 2)
@@ -117,6 +119,18 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
         if (aiTranslatePrompt == LEGACY_JSON_AI_TRANSLATE_PROMPT) {
             aiTranslatePrompt = DEFAULT_AI_TRANSLATE_PROMPT
         }
+    }
+
+    /** AI 翻译提供商（预设）。 */
+    @Serializable
+    enum class AiTranslateProvider {
+        OPENAI,
+        DEEPSEEK,
+        GLM,
+        ANTHROPIC,
+        GOOGLE,
+        OLLAMA,
+        CUSTOM,
     }
 
     @Serializable

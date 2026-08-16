@@ -9,10 +9,10 @@ chip-textfield = "0.7.2-alpha01"
 coil = "3.5.0"
 compose-multiplatform = "1.12.0-beta01"
 compose-settings = "3.1.0"
-deepseek-helper = "0.2.0"
 filekitCompose = "0.13.0"
 kermit = "2.1.0"
 koin = "4.2.2"
+koog = "1.1.1"
 korlibsIo = "6.0.2"
 kotlin = "2.4.0"
 kotlinx-coroutines = "1.11.0"
@@ -62,12 +62,16 @@ compose-settings-extended = { module = "com.github.alorma.compose-settings:ui-ti
 compose-settings-ui = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "compose-settings" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
 compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
-deepseek-helper = { module = "io.github.hatoyuze:deepseek-helper", version.ref = "deepseek-helper" }
 filekit-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekitCompose" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCompose" }
 kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 koin-compose-navigation3 = { module = "io.insert-koin:koin-compose-navigation3", version.ref = "koin" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+koog-http-client-ktor = { module = "ai.koog:http-client-ktor", version.ref = "koog" }
+koog-prompt-executor-anthropic-client = { module = "ai.koog:prompt-executor-anthropic-client", version.ref = "koog" }
+koog-prompt-executor-clients = { module = "ai.koog:prompt-executor-clients", version.ref = "koog" }
+koog-prompt-executor-ollama-client = { module = "ai.koog:prompt-executor-ollama-client", version.ref = "koog" }
+koog-prompt-executor-openai-client = { module = "ai.koog:prompt-executor-openai-client", version.ref = "koog" }
 korlibs-io = { module = "com.soywiz:korlibs-io", version.ref = "korlibsIo" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }

@@ -9,7 +9,7 @@
     <string name="ai_acceptance">您對 AI 作品的接受程度如何呢？</string>
     <string name="ai_allowed">AI 生成，好耶！</string>
     <string name="ai_blocked">AI，不行！</string>
-    <string name="ai_translate_api_key">DeepSeek API Key</string>
+    <string name="ai_translate_api_key">API Key</string>
     <string name="ai_translate_enable">啟用 AI 翻譯</string>
     <string name="ai_translate_enable_description">在插畫、留言與小說中顯示翻譯按鈕</string>
     <string name="ai_translate_failed">AI 翻譯失敗，請重試</string>

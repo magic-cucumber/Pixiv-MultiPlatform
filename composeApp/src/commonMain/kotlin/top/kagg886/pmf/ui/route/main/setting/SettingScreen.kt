@@ -62,6 +62,10 @@ import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.shareFile
+import top.kagg886.pmf.translate.TranslateViewModel
+import top.kagg886.pmf.translate.effectiveBaseUrl
+import top.kagg886.pmf.translate.effectiveModel
+import top.kagg886.pmf.translate.presetOf
 import top.kagg886.pmf.ui.component.settings.SettingsDropdownMenu
 import top.kagg886.pmf.ui.component.settings.SettingsFileUpload
 import top.kagg886.pmf.ui.component.settings.SettingsGroup
@@ -85,6 +89,17 @@ import top.kagg886.pmf.util.mb
 import top.kagg886.pmf.util.setText
 import top.kagg886.pmf.util.stringResource
 import top.kagg886.pmf.util.zip
+
+@Composable
+private fun providerName(provider: AppConfig.AiTranslateProvider): String = when (provider) {
+    AppConfig.AiTranslateProvider.OPENAI -> stringResource(Res.string.ai_translate_provider_openai)
+    AppConfig.AiTranslateProvider.DEEPSEEK -> stringResource(Res.string.ai_translate_provider_deepseek)
+    AppConfig.AiTranslateProvider.GLM -> stringResource(Res.string.ai_translate_provider_glm)
+    AppConfig.AiTranslateProvider.ANTHROPIC -> stringResource(Res.string.ai_translate_provider_anthropic)
+    AppConfig.AiTranslateProvider.GOOGLE -> stringResource(Res.string.ai_translate_provider_google)
+    AppConfig.AiTranslateProvider.OLLAMA -> stringResource(Res.string.ai_translate_provider_ollama)
+    AppConfig.AiTranslateProvider.CUSTOM -> stringResource(Res.string.ai_translate_provider_custom)
+}
 
 @Composable
 fun SettingScreen() {
@@ -773,11 +788,17 @@ fun SettingScreen() {
             )
         }
         SettingsGroup(title = { Text(stringResource(Res.string.ai_translate_settings)) }) {
+            // 全局翻译宿主：配置变更后后台预热 koog 客户端，避免下次翻译时才初始化
+            val aiTranslator = globalViewModel<TranslateViewModel>()
+            val prewarmScope = rememberCoroutineScope()
             var aiTranslateEnabled by remember {
                 mutableStateOf(AppConfig.aiTranslateEnabled)
             }
             LaunchedEffect(aiTranslateEnabled) {
                 AppConfig.aiTranslateEnabled = aiTranslateEnabled
+                if (aiTranslateEnabled) {
+                    prewarmScope.launch { aiTranslator.prewarm() }
+                }
             }
 
             SettingsSwitch(
@@ -797,18 +818,85 @@ fun SettingScreen() {
                 exit = shrinkVertically(),
             ) {
                 Column {
-                    var deepseekApiKey by remember {
-                        mutableStateOf(AppConfig.deepseekApiKey)
+                    var aiTranslateProvider by remember {
+                        mutableStateOf(AppConfig.aiTranslateProvider)
                     }
-                    LaunchedEffect(deepseekApiKey) {
-                        AppConfig.deepseekApiKey = deepseekApiKey
+                    LaunchedEffect(aiTranslateProvider) {
+                        AppConfig.aiTranslateProvider = aiTranslateProvider
+                        prewarmScope.launch { aiTranslator.prewarm() }
                     }
+                    var aiTranslateApiKey by remember {
+                        mutableStateOf(AppConfig.aiTranslateApiKey)
+                    }
+                    LaunchedEffect(aiTranslateApiKey) {
+                        AppConfig.aiTranslateApiKey = aiTranslateApiKey
+                        prewarmScope.launch { aiTranslator.prewarm() }
+                    }
+                    var aiTranslateModel by remember {
+                        mutableStateOf(effectiveModel(aiTranslateProvider, AppConfig.aiTranslateModel))
+                    }
+                    LaunchedEffect(aiTranslateModel) {
+                        AppConfig.aiTranslateModel = aiTranslateModel
+                        prewarmScope.launch { aiTranslator.prewarm() }
+                    }
+                    var aiTranslateBaseUrl by remember {
+                        mutableStateOf(effectiveBaseUrl(aiTranslateProvider, AppConfig.aiTranslateBaseUrl))
+                    }
+                    LaunchedEffect(aiTranslateBaseUrl) {
+                        AppConfig.aiTranslateBaseUrl = aiTranslateBaseUrl
+                        prewarmScope.launch { aiTranslator.prewarm() }
+                    }
+
+                    SettingsDropdownMenu(
+                        title = { Text(stringResource(Res.string.ai_translate_provider)) },
+                        current = aiTranslateProvider,
+                        data = AppConfig.AiTranslateProvider.entries,
+                        optionsFormat = { providerName(it) },
+                        onSelected = { newProvider ->
+                            val oldModel = AppConfig.aiTranslateModel
+                            val oldDefault = presetOf(aiTranslateProvider).defaultModel
+                            val oldBaseDefault = presetOf(aiTranslateProvider).baseUrl
+                            aiTranslateProvider = newProvider
+                            // 模型未自定义（为空或等于旧提供商默认）时切到新提供商默认
+                            if (oldModel.isBlank() || oldModel == oldDefault) {
+                                aiTranslateModel = presetOf(newProvider).defaultModel
+                            }
+                            // Base URL 未自定义（为空或等于旧提供商预设）时切到新提供商预设，
+                            // 避免残留覆盖把密钥发往旧提供商地址
+                            if (AppConfig.aiTranslateBaseUrl.isBlank() || AppConfig.aiTranslateBaseUrl == oldBaseDefault) {
+                                AppConfig.aiTranslateBaseUrl = ""
+                                aiTranslateBaseUrl = presetOf(newProvider).baseUrl
+                            }
+                        },
+                    )
+
+                    if (presetOf(aiTranslateProvider).requiresApiKey) {
+                        SettingsTextField(
+                            title = { Text(stringResource(Res.string.ai_translate_api_key)) },
+                            value = aiTranslateApiKey,
+                            secret = true,
+                            onValueChange = {
+                                aiTranslateApiKey = it
+                            },
+                        )
+                    }
+
                     SettingsTextField(
-                        title = { Text(stringResource(Res.string.ai_translate_api_key)) },
-                        value = deepseekApiKey,
-                        secret = true,
+                        title = { Text(stringResource(Res.string.ai_translate_model)) },
+                        value = aiTranslateModel,
                         onValueChange = {
-                            deepseekApiKey = it
+                            aiTranslateModel = it
+                        },
+                    )
+
+                    SettingsTextField(
+                        title = { Text(stringResource(Res.string.ai_translate_base_url)) },
+                        subTitle = {
+                            Text(stringResource(Res.string.ai_translate_base_url_description))
+                        },
+                        value = aiTranslateBaseUrl,
+                        onValueChange = {
+                            aiTranslateBaseUrl = it
                         },
                     )
 
@@ -906,22 +994,6 @@ fun SettingScreen() {
                         optionsFormat = { it.toString() },
                         onSelected = {
                             aiTranslateRetryAttempts = it
-                        },
-                    )
-
-                    var aiTranslateModel by remember {
-                        mutableStateOf(AppConfig.aiTranslateModel)
-                    }
-                    LaunchedEffect(aiTranslateModel) {
-                        AppConfig.aiTranslateModel = aiTranslateModel
-                    }
-                    SettingsDropdownMenu(
-                        title = { Text(stringResource(Res.string.ai_translate_model)) },
-                        current = aiTranslateModel,
-                        data = listOf("deepseek-v4-flash", "deepseek-v4-pro"),
-                        optionsFormat = { it },
-                        onSelected = {
-                            aiTranslateModel = it
                         },
                     )
                 }

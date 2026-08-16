@@ -9,7 +9,7 @@
     <string name="ai_acceptance">View AI-generated content?</string>
     <string name="ai_allowed">Yes</string>
     <string name="ai_blocked">No</string>
-    <string name="ai_translate_api_key">DeepSeek API Key</string>
+    <string name="ai_translate_api_key">API Key</string>
     <string name="ai_translate_enable">Enable AI Translation</string>
     <string name="ai_translate_enable_description">Show translation buttons on illustrations, comments and novels</string>
     <string name="ai_translate_failed">AI translation failed, please retry</string>
