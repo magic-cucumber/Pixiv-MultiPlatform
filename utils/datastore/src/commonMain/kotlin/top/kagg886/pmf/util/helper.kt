@@ -52,6 +52,13 @@ public suspend inline fun <reified T : Any> DataStore<Preferences>.get(name: Str
         }
     }
 
+public suspend fun DataStore<Preferences>.remove(name: String) {
+    edit { preferences ->
+        val keys = preferences.asMap().keys.filter { it.name == name }
+        keys.forEach { key -> preferences.remove(key) }
+    }
+}
+
 
 /** Updates one supported preference atomically. */
 public suspend fun <T : Any> DataStore<Preferences>.set(name: String, value: T) {

@@ -2,7 +2,6 @@ package top.kagg886.pmf.util
 
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
-import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -40,6 +39,23 @@ class HelperTest {
     }
 
     @Test
+    fun reifiedFlowOverloadUsesThePersistedValue() = runTest {
+        val dataStore = TestDataStore().also { it.set("name", "saved") }
+
+        val flow = dataStore.flow(backgroundScope, "name") { "default" }
+
+        assertEquals("saved", flow.value)
+    }
+
+    @Test
+    fun getReturnsPersistedValueOrDefault() = runTest {
+        val dataStore = TestDataStore().also { it.set("saved", 7) }
+
+        assertEquals(7, dataStore.get("saved") { 0 })
+        assertEquals(42, dataStore.get("missing") { 42 })
+    }
+
+    @Test
     fun setUpdatesAnExistingFlow() = runTest {
         val dataStore = TestDataStore()
         val flow = dataStore.flow(backgroundScope, "count", Int::class) { 0 }
@@ -57,7 +73,7 @@ class HelperTest {
         val flow = dataStore.flow(backgroundScope, "name", String::class) { "default" }
         runCurrent()
 
-        dataStore.edit { it.remove(stringPreferencesKey("name")) }
+        dataStore.remove("name")
         runCurrent()
 
         assertEquals("default", flow.value)
@@ -73,11 +89,33 @@ class HelperTest {
 
         dataStore.set("count", 10)
         runCurrent()
-        dataStore.edit { it.remove(intPreferencesKey("count")) }
+        dataStore.remove("count")
         runCurrent()
 
         assertEquals(callsBeforeRemoval + 1, nextDefault)
         assertEquals(nextDefault, flow.value)
+    }
+
+    @Test
+    fun removeDeletesAValueWithoutKnowingItsType() = runTest {
+        val dataStore = TestDataStore()
+
+        dataStore.set("value", 1L)
+        dataStore.remove("value")
+
+        assertEquals(null, dataStore.dataValue(longPreferencesKey("value")))
+    }
+
+    @Test
+    fun removeDoesNotDeleteOtherValues() = runTest {
+        val dataStore = TestDataStore()
+        dataStore.set("remove", "value")
+        dataStore.set("keep", "value")
+
+        dataStore.remove("remove")
+
+        assertEquals(null, dataStore.dataValue(stringPreferencesKey("remove")))
+        assertEquals("value", dataStore.dataValue(stringPreferencesKey("keep")))
     }
 
     @Test

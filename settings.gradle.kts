@@ -17,7 +17,7 @@ pluginManagement {
 
 dependencyResolutionManagement {
     repositories {
-        mavenLocal()
+        mavenCentral()
         google {
             content {
               	includeGroupByRegex("com\\.android.*")
@@ -26,7 +26,7 @@ dependencyResolutionManagement {
               	includeGroupByRegex("android.*")
             }
         }
-        mavenCentral()
+        mavenLocal()
     }
 }
 include(":sharedUI")

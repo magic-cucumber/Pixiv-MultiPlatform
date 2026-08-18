@@ -9,6 +9,7 @@ import org.jetbrains.compose.resources.getString
 import org.orbitmvi.orbit.OrbitContainer
 import org.orbitmvi.orbit.OrbitContainerHost
 import org.orbitmvi.orbit.viewmodel.orbitContainer
+import top.kagg886.pixko.InMemoryTokenStorage
 import top.kagg886.pixko.PixivAccountFactory
 import top.kagg886.pixko.PixivVerification
 import top.kagg886.pixko.TokenStorage
@@ -26,6 +27,7 @@ import top.kagg886.pmf.util.Store
 import top.kagg886.pmf.util.get
 import top.kagg886.pmf.util.preferencePath
 import top.kagg886.pmf.util.set
+import kotlin.math.log
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -56,19 +58,7 @@ class LoginViewModel : ViewModel(),
         logger.i { "Setting state to Verifying and starting browser login verification" }
         reduce { LoginViewModelState.Verifying(progress, emitter) }
 
-        val tokens = object : TokenStorage {
-            override suspend fun getToken(type: TokenType): String? = when (type) {
-                ACCESS -> login.get("access_token") { "" }
-                REFRESH -> login.get("refresh_token") { "" }
-                EXPIRE_TIME -> login.get("expire_time") { "" }
-            }
-
-            override suspend fun setToken(type: TokenType, token: String) = when (type) {
-                ACCESS -> login.set("access_token", token)
-                REFRESH -> login.set("refresh_token", token)
-                EXPIRE_TIME -> login.set("expire_time", token)
-            }
-        }
+        val tokens = InMemoryTokenStorage()
         val client = try {
             logger.d { "Calling the Pixiv browser login verification API" }
             verification.verify(url) { storage = tokens }
@@ -78,23 +68,15 @@ class LoginViewModel : ViewModel(),
             return@intent
         }
 
-        logger.i { "Browser login verification succeeded; fetching the current user profile" }
-        emitter.emit(getString(Lang.string.login_profiling))
+        logger.i { "Browser login verification succeeded;  saving the login profile" }
 
-        val profile = try {
-            logger.d { "Calling the current-user profile API" }
-            client.getCurrentUserSimpleProfile()
-        } catch (e: Exception) {
-            logger.e(e) { "Fetching the current user profile failed; setting state to VerificationFailed" }
-            reduce { LoginViewModelState.VerificationFailed }
-            return@intent
-        }
-
-        logger.i { "Current user profile fetched successfully; saving the login profile" }
-        login.set("profile", Json.encodeToString(profile))
+        login.set("access_token", tokens.getToken(ACCESS)!!)
+        login.set("refresh_token", tokens.getToken(REFRESH)!!)
+        login.set("expire_time", tokens.getExpireTime()!!)
+        login.set("profile", Json.encodeToString(tokens.getProfile()!!))
 
         progress.emit(false)
-        emitter.emit(getString(Lang.string.login_welcome, profile.name))
+        emitter.emit(getString(Lang.string.login_welcome, tokens.getProfile()!!.name))
         logger.i { "Login profile saved successfully; waiting for the welcome message to finish" }
         delay(3.seconds)
         client.close()

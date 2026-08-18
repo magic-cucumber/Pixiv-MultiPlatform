@@ -45,13 +45,27 @@ class MainViewModel : ViewModel(),
                     override suspend fun getToken(type: TokenType): String? = when (type) {
                         ACCESS -> login.get("access_token") { "" }
                         REFRESH -> login.get("refresh_token") { "" }
-                        EXPIRE_TIME -> login.get("expire_time") { "" }
                     }
 
                     override suspend fun setToken(type: TokenType, token: String) = when (type) {
                         ACCESS -> login.set("access_token", token)
                         REFRESH -> login.set("refresh_token", token)
-                        EXPIRE_TIME -> login.set("expire_time", token)
+                    }
+
+                    override suspend fun getExpireTime(): Long? {
+                        return login.get("expire_time") { 0L }.takeIf { it != 0L }
+                    }
+
+                    override suspend fun setExpireTime(expire: Long?) {
+                        if (expire == null) login.remove("expire_name") else login.set("expire_time",expire)
+                    }
+
+                    override suspend fun getProfile(): SimpleMeProfile {
+                        return info.value
+                    }
+
+                    override suspend fun setProfile(profile: SimpleMeProfile) {
+                        login.set("profile", Json.encodeToString(profile))
                     }
                 }
 
@@ -69,12 +83,6 @@ class MainViewModel : ViewModel(),
                 }
             }
 
-            intent {
-                logger.d { "Reading the current user profile and saving it to local preferences" }
-                val profile = factory.getCurrentUserSimpleProfile()
-                login.set("profile", Json.encodeToString(profile))
-                logger.i { "Current user profile saved successfully" }
-            }
 
             try {
                 logger.d { "Preparing to create the account database" }
