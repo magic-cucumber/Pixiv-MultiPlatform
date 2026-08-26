@@ -2,11 +2,12 @@ package top.kagg886.pmf.ui.repository
 
 import androidx.paging.PagingSource
 import top.kagg886.pixko.User
+import top.kagg886.pixko.module.user.RelatedUserResult
 import top.kagg886.pmf.database.account.AppAccountDatabase
-import top.kagg886.pmf.database.account.entity.UserDisplayed
 import top.kagg886.pmf.database.account.entity.AuthorFlow
 import top.kagg886.pmf.database.account.entity.ImageUrlsCache
 import top.kagg886.pmf.database.account.entity.UserCache
+import top.kagg886.pmf.database.account.entity.UserDisplayed
 import top.kagg886.pmf.logger.Logger
 
 /** A forward-only author repository for APIs whose request is a numeric index. */
@@ -37,14 +38,8 @@ abstract class AuthorIndexedRepo(
         val users = request(index)
         val endReached = endOfPaginationReached(index, users)
         val nextIndex = if (endReached) null else index + 1
-        if (users.isEmpty() && !endReached) {
-            logger.w {
-                "Indexed author response was empty but pagination remains open; committing the empty page and continuing with index ${index + 1}"
-            }
-        } else {
-            logger.d {
-                "Indexed author response received (index: $index, itemCount: ${users.size}, endReached: $endReached)"
-            }
+        logger.d {
+            "Indexed author response received (index: $index, itemCount: ${users.size}, endReached: $endReached)"
         }
         return loadedPage(nextIndex, users.size) {
             val summary = database.persistAuthorFlow(flowTag, users)
@@ -65,24 +60,20 @@ abstract class AuthorNextUrlRepo(
     tag: String,
     pageSize: Int = DEFAULT_PAGE_SIZE,
 ) : BaseNextUrlRepo<UserDisplayed>(database, tag, pageSize) {
-    protected abstract suspend fun requestInitial(): LoadedPage<String>
+    protected abstract suspend fun requestInitial(): RelatedUserResult
 
-    protected abstract suspend fun requestNext(nextUrl: String): LoadedPage<String>
+    protected abstract suspend fun requestNext(nextUrl: String): RelatedUserResult
 
     final override suspend fun loadInitial(): LoadedPage<String> {
         logger.i { "Loading initial next-URL author page (tagHash: ${flowTag.hashCode()})" }
-        return requestInitial().also { page ->
-            logLoadedPage(page, "Initial author response received")
-        }
+        return requestInitial().toPage("Initial author response received")
     }
 
     final override suspend fun loadNext(request: String): LoadedPage<String> {
         logger.i {
             "Loading continued next-URL author page (nextUrlLength: ${request.length}, nextUrlHash: ${request.hashCode()}, tagHash: ${flowTag.hashCode()})"
         }
-        return requestNext(request).also { page ->
-            logLoadedPage(page, "Continued author response received")
-        }
+        return requestNext(request).toPage("Continued author response received")
     }
 
     final override suspend fun clearFlow() = database.authorFlowDao().clean(flowTag)
@@ -90,15 +81,17 @@ abstract class AuthorNextUrlRepo(
     final override fun pagingSource(): PagingSource<Int, UserDisplayed> =
         database.authorFlowDao().query(flowTag)
 
-    private fun logLoadedPage(page: LoadedPage<String>, responseLabel: String) {
-        if (page.itemCount == 0 && page.nextRequest != null) {
+    private fun RelatedUserResult.toPage(responseLabel: String): LoadedPage<String> {
+        if (user_previews.isEmpty() && next_url != null) {
             logger.w {
                 "$responseLabel with no items but a continuation URL; committing the empty page and continuing with the supplied URL"
             }
         } else {
-            logger.d {
-                "$responseLabel (itemCount: ${page.itemCount}, endReached: ${page.nextRequest == null})"
-            }
+            logger.d { "$responseLabel (itemCount: ${user_previews.size}, endReached: ${next_url == null})" }
+        }
+        return loadedPage(next_url, user_previews.size) {
+            val summary = database.persistAuthorFlow(flowTag, user_previews)
+            logger.d { summary.logMessage("Next-URL author page persisted") }
         }
     }
 
@@ -123,7 +116,25 @@ private suspend fun AppAccountDatabase.persistAuthorFlow(
     tag: String,
     users: List<User>,
 ): AuthorPersistenceSummary {
-    if (users.isEmpty()) return AuthorPersistenceSummary(0, 0, 0, 0, 0, 0)
+    val summary = cacheAuthors(users)
+    val flowItems = appendAuthorFlow(tag, users)
+    return summary.copy(flowItems = flowItems)
+}
+
+private suspend fun AppAccountDatabase.appendAuthorFlow(tag: String, users: List<User>): Int {
+    if (users.isEmpty()) return 0
+    authorFlowDao().insert(
+        users.map { user ->
+            AuthorFlow(tag = tag, userCacheId = user.id.toLong())
+        },
+    )
+    return users.size
+}
+
+private suspend fun AppAccountDatabase.cacheAuthors(users: List<User>): AuthorPersistenceSummary {
+    if (users.isEmpty()) {
+        return AuthorPersistenceSummary(0, 0, 0, 0, 0, 0)
+    }
 
     val cachedUsers = linkedMapOf<Long, UserCache>()
     val imageUrls = linkedMapOf<String, ImageUrlsCache>()
@@ -131,24 +142,21 @@ private suspend fun AppAccountDatabase.persistAuthorFlow(
     var preservedComments = 0
 
     users.forEach { user ->
-        val incoming = UserCache.fromBean(user)
-        val existing = cachedUsers[incoming.userId] ?: userDao().find(incoming.userId)
-        if (incoming.isFollowed == null && existing?.isFollowed != null) preservedFollowStates++
-        if (incoming.comment == null && existing?.comment != null) preservedComments++
-        val merged = incoming.copy(
-            isFollowed = incoming.isFollowed ?: existing?.isFollowed,
-            comment = incoming.comment ?: existing?.comment,
+        val incomingUser = UserCache.fromBean(user)
+        val existingUser = cachedUsers[incomingUser.userId] ?: userDao().find(incomingUser.userId)
+        if (incomingUser.isFollowed == null && existingUser?.isFollowed != null) preservedFollowStates++
+        if (incomingUser.comment == null && existingUser?.comment != null) preservedComments++
+        val cachedUser = incomingUser.copy(
+            isFollowed = incomingUser.isFollowed ?: existingUser?.isFollowed,
+            comment = incomingUser.comment ?: existingUser?.comment,
         )
-        cachedUsers[merged.userId] = merged
-        imageUrls[merged.profileImageUrlsId] =
-            ImageUrlsCache.fromBean(user.profileImageUrls, merged.profileImageUrlsId)
+        cachedUsers[cachedUser.userId] = cachedUser
+        imageUrls[cachedUser.profileImageUrlsId] =
+            ImageUrlsCache.fromBean(user.profileImageUrls, cachedUser.profileImageUrlsId)
     }
 
     imageUrls.values.forEach { imageUrlsDao().upsert(it) }
     userDao().upsert(cachedUsers.values.toList())
-    authorFlowDao().insert(
-        users.map { user -> AuthorFlow(tag = tag, userCacheId = user.id.toLong()) },
-    )
 
     return AuthorPersistenceSummary(
         inputItems = users.size,
@@ -156,6 +164,6 @@ private suspend fun AppAccountDatabase.persistAuthorFlow(
         imageUrls = imageUrls.size,
         preservedFollowStates = preservedFollowStates,
         preservedComments = preservedComments,
-        flowItems = users.size,
+        flowItems = 0,
     )
 }

@@ -6,12 +6,12 @@ import androidx.paging.PagingSource
 import top.kagg886.pixko.module.novel.Novel
 import top.kagg886.pixko.module.novel.NovelResult
 import top.kagg886.pmf.database.account.AppAccountDatabase
-import top.kagg886.pmf.database.account.entity.ImageUrlsCache
 import top.kagg886.pmf.database.account.entity.NovelCache
 import top.kagg886.pmf.database.account.entity.NovelCacheDisplayed
 import top.kagg886.pmf.database.account.entity.NovelFlow
 import top.kagg886.pmf.database.account.entity.NovelSeriesCache
 import top.kagg886.pmf.database.account.entity.NovelTagCrossRef
+import top.kagg886.pmf.database.account.entity.ImageUrlsCache
 import top.kagg886.pmf.database.account.entity.TagCache
 import top.kagg886.pmf.database.account.entity.UserCache
 import top.kagg886.pmf.logger.Logger
@@ -44,14 +44,8 @@ abstract class NovelIndexedRepo(
         val novels = request(index)
         val endReached = endOfPaginationReached(index, novels)
         val nextIndex = if (endReached) null else index + 1
-        if (novels.isEmpty() && !endReached) {
-            logger.w {
-                "Indexed novel response was empty but pagination remains open; committing the empty page and continuing with index ${index + 1}"
-            }
-        } else {
-            logger.d {
-                "Indexed novel response received (index: $index, itemCount: ${novels.size}, endReached: $endReached)"
-            }
+        logger.d {
+            "Indexed novel response received (index: $index, itemCount: ${novels.size}, endReached: $endReached)"
         }
         return loadedPage(nextIndex, novels.size) {
             val summary = database.persistNovelFlow(flowTag, novels)
