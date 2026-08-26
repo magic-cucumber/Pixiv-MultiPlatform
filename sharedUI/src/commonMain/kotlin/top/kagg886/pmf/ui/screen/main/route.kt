@@ -1,7 +1,9 @@
 package top.kagg886.pmf.ui.screen.main
 
 import top.kagg886.pmf.ui.screen.main.home.HomeRoute
+import top.kagg886.pmf.ui.screen.main.home.HomeRouteGraph
 import top.kagg886.pmf.ui.screen.main.home.HomeScreen
+import top.kagg886.pmf.ui.screen.main.home.recommend.RecommendRoute
 import top.kagg886.pmf.util.nav3.NavGraph
 import top.kagg886.pmf.util.nav3.SerializableNavKey
 
@@ -14,5 +16,10 @@ import top.kagg886.pmf.util.nav3.SerializableNavKey
 
 
 val MainRouteGraph: NavGraph.RouteBuilder<SerializableNavKey>.() -> Unit = {
-    destination<HomeRoute> { HomeScreen() }
+    route<HomeRoute>(
+        parent = HomeRoute,
+        startDestination = RecommendRoute,
+        content = ::HomeScreen,
+        builder = HomeRouteGraph,
+    )
 }

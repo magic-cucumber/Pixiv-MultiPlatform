@@ -1,3 +1,59 @@
 home_login_success:
   en_us: Login successful
   zh_cn: 登录成功
+
+home_recommend:
+  en_us: Recommend
+  zh_cn: 推荐
+
+home_rank:
+  en_us: Rank
+  zh_cn: 排行
+
+home_space:
+  en_us: Space
+  zh_cn: 关注
+
+home_recommend_illust:
+  en_us: Illustrations
+  zh_cn: 插画
+
+home_recommend_novel:
+  en_us: Novels
+  zh_cn: 小说
+
+home_rank_day:
+  en_us: Daily
+  zh_cn: 日榜
+
+home_rank_week:
+  en_us: Weekly
+  zh_cn: 周榜
+
+home_rank_month:
+  en_us: Monthly
+  zh_cn: 月榜
+
+home_rank_day_male:
+  en_us: Male
+  zh_cn: 男性
+
+home_rank_day_female:
+  en_us: Female
+  zh_cn: 女性
+
+home_rank_week_original:
+  en_us: Original
+  zh_cn: 原创
+
+home_rank_week_rookie:
+  en_us: Rookie
+  zh_cn: 新人
+
+home_space_follow:
+  en_us: Following
+  zh_cn: 关注
+
+home_space_latest:
+  en_us: Latest
+  zh_cn: 最新
