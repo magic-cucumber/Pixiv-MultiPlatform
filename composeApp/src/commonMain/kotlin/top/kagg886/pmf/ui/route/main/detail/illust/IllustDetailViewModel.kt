@@ -9,6 +9,7 @@ import korlibs.time.seconds
 import kotlin.time.Clock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.json.Json
@@ -40,9 +41,18 @@ import top.kagg886.pmf.backend.database.dao.WatchLaterItem
 import top.kagg886.pmf.backend.database.dao.WatchLaterType
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.LanguageDetector
+import top.kagg886.pmf.translate.TranslateResult
+import top.kagg886.pmf.translate.TranslateScheduler
+import top.kagg886.pmf.translate.isAiTranslateEnabled
+import top.kagg886.pmf.translate.translationDisplayText
+import top.kagg886.pmf.translate.translationDisplayTextOrNull
+import top.kagg886.pmf.ui.util.RichSegment
 import top.kagg886.pmf.ui.util.container
 import top.kagg886.pmf.ui.util.notifyDislike
 import top.kagg886.pmf.ui.util.notifyLike
+import top.kagg886.pmf.ui.util.parseHtmlSegments
+import top.kagg886.pmf.ui.util.translateRichSegments
 import top.kagg886.pmf.util.UGOIRA_SCHEME
 import top.kagg886.pmf.util.getString
 
@@ -54,6 +64,59 @@ class IllustDetailViewModel(private val illustId: Int) :
         container(IllustDetailViewState.Loading()) { load() }
 
     private val client = PixivConfig.newAccountFromConfig()
+    private val translateScheduler by inject<TranslateScheduler>()
+
+    /** 切换标题+简介的译文显示；未开启/未配置时不响应。 */
+    @OptIn(OrbitExperimental::class)
+    fun toggleTranslate() = intent {
+        runOn<IllustDetailViewState.Success> {
+            val current = state
+            if (current.translating) return@runOn
+            if (current.translated) {
+                reduce {
+                    state.copy(
+                        translated = false,
+                        titleTranslation = null,
+                        captionTranslation = null,
+                    )
+                }
+                return@runOn
+            }
+            if (!isAiTranslateEnabled()) return@runOn
+
+            reduce { state.copy(translating = true) }
+            val target = LanguageDetector.targetLanguageName()
+
+            suspend fun translateBlock(text: String): String? {
+                val result = translateScheduler.translate(text, target)
+                return (result as? TranslateResult.Success)?.text?.translationDisplayTextOrNull()
+            }
+
+            val (titleResult, captionSegments) = coroutineScope {
+                val titleDeferred = async { translateScheduler.translate(current.illust.title, target) }
+                val captionDeferred = async {
+                    translateRichSegments(parseHtmlSegments(current.illust.caption)) { text ->
+                        translateBlock(text)
+                    }
+                }
+                titleDeferred.await() to captionDeferred.await()
+            }
+
+            if (titleResult is TranslateResult.Failure || captionSegments == null) {
+                postSideEffect(IllustDetailSideEffect.Toast(getString(Res.string.ai_translate_failed)))
+                reduce { state.copy(translating = false) }
+            } else {
+                reduce {
+                    state.copy(
+                        translating = false,
+                        translated = true,
+                        titleTranslation = (titleResult as TranslateResult.Success).text.translationDisplayText(),
+                        captionTranslation = captionSegments,
+                    )
+                }
+            }
+        }
+    }
 
     fun toggleOrigin() = intent {
         val s = state
@@ -303,7 +366,15 @@ sealed class IllustDetailViewState {
         IllustDetailViewState()
 
     data object Error : IllustDetailViewState()
-    data class Success(val illust: Illust, val itemInViewLater: Boolean, val data: List<Uri>) :
+    data class Success(
+        val illust: Illust,
+        val itemInViewLater: Boolean,
+        val data: List<Uri>,
+        val translated: Boolean = false,
+        val translating: Boolean = false,
+        val titleTranslation: String? = null,
+        val captionTranslation: List<RichSegment>? = null,
+    ) :
         IllustDetailViewState() {
         constructor(illust: Illust, itemInViewLater: Boolean, data: Uri) : this(illust, itemInViewLater, listOf(data))
     }
