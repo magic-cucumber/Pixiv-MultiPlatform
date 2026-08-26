@@ -7,8 +7,9 @@ description: 设计 Pixiv-MultiPlatform-2 的 route.kt、model.kt、screen.kt、
 
 ## 页面文件
 
-- 功能页面通常按同一目录组织 `route.kt`、`model.kt` 和 `screen.kt`；简单叶子页面可以只有 `screen.kt`。
-- `route.kt` 只组合当前容器的直接子页面。根路由只注册一级页面，子容器继续在自己的 `route.kt` 中注册子页面，不把所有页面平铺到根图。
+- 功能页面通常按同一目录组织 `route.kt`、`model.kt` 和 `screen.kt`；包含子 route 的页面容器必须新增该目录下的 `route.kt`，无子 route 的叶子页面可以只有 `screen.kt`。
+- `route.kt` 只注册当前容器的直接子页面。父容器在上一级 `route.kt` 中使用 `route<...>(parent, startDestination, content, builder)` 注册，并由子容器继续在自己的 `route.kt` 中注册子页面，不把嵌套页面平铺到根图。
+- 嵌套父页面的公开 screen 必须接收并包装 `content: @Composable () -> Unit` 子页面 slot；叶子 screen 不接收子页面 slot。
 - 路由标识定义在对应的 `screen.kt`；一个 `screen.kt` 只能声明一个 route class 和一个与其绑定的公开 screen 入口。
 
 ## model.kt
