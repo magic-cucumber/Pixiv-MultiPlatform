@@ -1,16 +1,9 @@
 package top.kagg886.pmf.ui.component.adaptive
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationRail
@@ -28,13 +21,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
 import androidx.window.core.layout.WindowSizeClass
 import top.kagg886.pmf.ui.component.adaptive.NavigationSuiteType.Companion.NavigationBar
 import top.kagg886.pmf.ui.component.adaptive.NavigationSuiteType.Companion.NavigationRail
-import top.kagg886.pmf.ui.util.rememberCurrentNavigationSuiteType
 import kotlin.jvm.JvmInline
 
 /**
@@ -122,18 +113,21 @@ fun NavigationSuiteScaffold(
                             val menu by scope.menu
                             val fab by scope.fabIcon
                             val fabClick by scope.fabOnClick
+                            val fabBadge by scope.fabBadge
                             val fabModifier by scope.fabModifier
                             val back by scope.back
                             Scaffold(
                                 floatingActionButton = {
                                     if (fab != null) {
-                                        FloatingActionButton(
-                                            modifier = fabModifier,
-                                            onClick = {
-                                                fabClick?.let { it() }
-                                            },
-                                        ) {
-                                            fab?.let { it() }
+                                        FabWithBadge(badge = fabBadge) {
+                                            FloatingActionButton(
+                                                modifier = fabModifier,
+                                                onClick = {
+                                                    fabClick?.let { it() }
+                                                },
+                                            ) {
+                                                fab?.let { it() }
+                                            }
                                         }
                                     }
                                 },
@@ -345,6 +339,7 @@ fun NavigationSuite(
                 val menu by scope.menu
                 val fab by scope.fabIcon
                 val fabClick by scope.fabOnClick
+                val fabBadge by scope.fabBadge
                 val fabModifier by scope.fabModifier
 
                 Spacer(Modifier.height(16.dp))
@@ -362,11 +357,13 @@ fun NavigationSuite(
                     )
                 ) {
                     fab?.let {
-                        FloatingActionButton(
-                            onClick = fabClick ?: {},
-                            modifier = fabModifier
-                        ) {
-                            it()
+                        FabWithBadge(badge = fabBadge) {
+                            FloatingActionButton(
+                                onClick = fabClick ?: {},
+                                modifier = fabModifier
+                            ) {
+                                it()
+                            }
                         }
                     }
                 }
@@ -401,6 +398,7 @@ fun NavigationSuite(
                 val fab by scope.fabIcon
                 val fabText by scope.fabText
                 val fabClick by scope.fabOnClick
+                val fabBadge by scope.fabBadge
                 val fabModifier by scope.fabModifier
                 val back by scope.back
 
@@ -440,20 +438,22 @@ fun NavigationSuite(
                         .padding(horizontal = 16.dp)
                 ) {
                     if (fab != null || fabText != null) {
-                        ExtendedFloatingActionButton(
-                            onClick = fabClick ?: {},
-                            text = {
-                                fabText?.let {
-                                    it()
-                                }
-                            },
-                            icon = {
-                                fab?.let {
-                                    it()
-                                }
-                            },
-                            modifier = fabModifier.fillMaxWidth().sizeIn(minWidth = 80.dp)
-                        )
+                        FabWithBadge(badge = fabBadge) {
+                            ExtendedFloatingActionButton(
+                                onClick = fabClick ?: {},
+                                text = {
+                                    fabText?.let {
+                                        it()
+                                    }
+                                },
+                                icon = {
+                                    fab?.let {
+                                        it()
+                                    }
+                                },
+                                modifier = fabModifier.fillMaxWidth().sizeIn(minWidth = 80.dp)
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.height(16.dp))
@@ -497,6 +497,21 @@ fun NavigationSuite(
 
         NavigationSuiteType.None -> { /* Do nothing. */
         }
+    }
+}
+
+@Composable
+private fun FabWithBadge(
+    badge: (@Composable () -> Unit)?,
+    content: @Composable () -> Unit,
+) {
+    if (badge == null) {
+        content()
+    } else {
+        BadgedBox(
+            badge = { badge() },
+            content = { content() },
+        )
     }
 }
 
@@ -581,6 +596,8 @@ sealed interface NavigationSuiteScope {
         onClick: () -> Unit,
         text: (@Composable () -> Unit)? = null,
         icon: (@Composable () -> Unit)? = null,
+
+        badge: @Composable (() -> Unit)? = null,
         modifier: Modifier = Modifier,
     )
 }
@@ -790,6 +807,7 @@ private interface NavigationSuiteItemProvider {
     val fabText: MutableState<@Composable (() -> Unit)?>
     val fabIcon: MutableState<@Composable (() -> Unit)?>
     val fabOnClick: MutableState<(() -> Unit)?>
+    val fabBadge: MutableState<@Composable (() -> Unit)?>
     val fabModifier: MutableState<Modifier>
 }
 
@@ -855,11 +873,13 @@ private class NavigationSuiteScopeImpl : NavigationSuiteScope,
         onClick: () -> Unit,
         text: (@Composable (() -> Unit))?,
         icon: (@Composable (() -> Unit))?,
+        badge: (@Composable (() -> Unit))?,
         modifier: Modifier
     ) {
         fabText.value = text
         fabIcon.value = icon
         fabOnClick.value = onClick
+        fabBadge.value = badge
         fabModifier.value = modifier
     }
 
@@ -867,6 +887,7 @@ private class NavigationSuiteScopeImpl : NavigationSuiteScope,
     override val fabIcon: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
     override val fabText: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
     override val fabOnClick: MutableState<(() -> Unit)?> = mutableStateOf(null)
+    override val fabBadge: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
     override val fabModifier: MutableState<Modifier> = mutableStateOf(Modifier)
     override val title: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
     override val menu: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
@@ -902,126 +923,3 @@ private fun NavigationItemIcon(
 
 private const val NavigationSuiteLayoutIdTag = "navigationSuite"
 private const val ContentLayoutIdTag = "content"
-
-@PreviewScreenSizes
-@Composable
-private fun NavigationSuiteScaffoldPreview() {
-    MaterialTheme {
-        NavigationSuiteScaffold(
-            modifier = Modifier.fillMaxSize(),
-            layoutType = rememberCurrentNavigationSuiteType(),
-            navigationSuiteItems = {
-                item(
-                    selected = true,
-                    onClick = {},
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Home,
-                            contentDescription = "Home",
-                        )
-                    },
-                    label = { Text("Home") },
-                    badge = { Badge { Text("3") } },
-                )
-                item(
-                    selected = false,
-                    onClick = {},
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Favorites",
-                        )
-                    },
-                    label = { Text("Favorites") },
-                )
-                item(
-                    selected = false,
-                    onClick = {},
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Search,
-                            contentDescription = "Search",
-                        )
-                    },
-                    label = { Text("Search") },
-                )
-                item(
-                    selected = false,
-                    onClick = {},
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Outlined.Settings,
-                            contentDescription = "Settings",
-                        )
-                    },
-                    label = { Text("Settings") },
-                )
-                title { Text("Pixiv Home") }
-                back {
-                    IconButton(onClick = {}) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                        )
-                    }
-                }
-                menu {
-                    IconButton(onClick = {}) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More",
-                        )
-                    }
-                }
-                fab(
-                    onClick = {},
-                    text = { Text("Create") },
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Create",
-                        )
-                    },
-                )
-            },
-            content = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Text(
-                        text = "Adaptive navigation suite",
-                        style = MaterialTheme.typography.headlineSmall,
-                    )
-                    Text(
-                        text = "The navigation layout follows the preview window size.",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        ListItem(
-                            headlineContent = { Text("Featured illustration") },
-                            supportingContent = { Text("A content area for the current destination") },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = Icons.Outlined.FavoriteBorder,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    repeat(3) { index ->
-                        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "Preview content ${index + 1}",
-                                modifier = Modifier.padding(16.dp),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        }
-                    }
-                }
-            },
-        )
-    }
-}

@@ -69,12 +69,6 @@ abstract class AuthorNextUrlRepo(
 
     protected abstract suspend fun requestNext(nextUrl: String): LoadedPage<String>
 
-    protected fun loadedPage(nextRequest: String?, users: List<User>): LoadedPage<String> =
-        loadedPage(nextRequest, users.size) {
-            val summary = database.persistAuthorFlow(flowTag, users)
-            logger.d { summary.logMessage("Next-URL author page persisted") }
-        }
-
     final override suspend fun loadInitial(): LoadedPage<String> {
         logger.i { "Loading initial next-URL author page (tagHash: ${flowTag.hashCode()})" }
         return requestInitial().also { page ->
