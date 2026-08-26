@@ -77,20 +77,20 @@ private fun HomeScreenContent(
                 )
             }
             item(
-                selected = selectedTab == HomeTab.RECOMMEND,
-                onClick = { onTabSelected(HomeTab.RECOMMEND) },
+                selected = selectedTab == RECOMMEND,
+                onClick = { onTabSelected(RECOMMEND) },
                 icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
                 label = { Text(stringResource(Lang.string.home_recommend)) },
             )
             item(
-                selected = selectedTab == HomeTab.RANK,
-                onClick = { onTabSelected(HomeTab.RANK) },
+                selected = selectedTab == RANK,
+                onClick = { onTabSelected(RANK) },
                 icon = { Icon(Icons.Outlined.Star, contentDescription = null) },
                 label = { Text(stringResource(Lang.string.home_rank)) },
             )
             item(
-                selected = selectedTab == HomeTab.SPACE,
-                onClick = { onTabSelected(HomeTab.SPACE) },
+                selected = selectedTab == SPACE,
+                onClick = { onTabSelected(SPACE) },
                 icon = { Icon(Icons.Outlined.FavoriteBorder, contentDescription = null) },
                 label = { Text(stringResource(Lang.string.home_space)) },
             )

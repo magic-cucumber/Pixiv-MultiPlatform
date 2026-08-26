@@ -4,9 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.ViewModelStoreProvider
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -131,17 +133,31 @@ private fun <T : SerializableNavKey> RenderFrame(
                                 val routeOwner = checkNotNull(LocalViewModelStoreOwner.current)
                                 val ancestors = LocalNavRouteViewModelStoreOwners.current
                                 val childFrame = checkNotNull(frameEntry.childFrame)
+                                // An adaptive parent can move this slot between different composition branches
+                                // while a window is resized. Keep the movable content identity stable; otherwise
+                                // the old and new branches may mount the same nested NavDisplay at once and
+                                // register the same SaveableStateProvider key twice.
+                                val currentChildFrame = rememberUpdatedState(childFrame)
+                                val currentChildConfig = rememberUpdatedState(config.merge(node.config))
+                                // Read the latest frame/config inside the stable movable content. Recreating it
+                                // when these values change would discard remember/saveable state that must survive
+                                // the adaptive layout move.
+                                val movableChildContent = remember {
+                                    movableContentOf {
+                                        RenderFrame(
+                                            frame = currentChildFrame.value,
+                                            controller = controller,
+                                            config = currentChildConfig.value,
+                                            decorators = decorators,
+                                        )
+                                    }
+                                }
                                 CompositionLocalProvider(
                                     LocalNavRouteViewModelStoreOwners provides listOf(routeOwner) + ancestors,
                                     LocalNavViewModelContext provides NavViewModelContext(routeOwner, ancestors),
                                 ) {
                                     node.content {
-                                        RenderFrame(
-                                            frame = childFrame,
-                                            controller = controller,
-                                            config = config.merge(node.config),
-                                            decorators = decorators,
-                                        )
+                                        movableChildContent()
                                     }
                                 }
                             }

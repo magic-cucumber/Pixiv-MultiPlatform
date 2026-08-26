@@ -1,6 +1,8 @@
 package top.kagg886.pmf.util.nav3
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -196,6 +198,35 @@ class NavControllerTest {
         assertSame(assertNotNull(level4Model), assertNotNull(level4FromLeaf))
     }
 
+    // 测试内容：父 route 将子 NavDisplay slot 在两个自适应布局分支间移动；预期目标：同一叶子组合只保留一份 saveable 状态。
+    // 两个分支模拟窗口尺寸变化导致的不同 Compose 挂载位置；如果 slot 被重新挂载而不是移动，
+    // 同一个嵌套路由会重复注册 SaveableStateProvider key，从而复现生产环境中的崩溃。
+    @Test
+    fun nestedDisplaySurvivesAdaptiveLayoutBranchChange(): TestResult = runComposeUiTest {
+        val layoutState = AdaptiveLayoutState()
+        val adaptiveGraph = createNavGraph<Key> {
+            route(parent = Root, startDestination = Level1, content = { child ->
+                AdaptiveLayout(layoutState.isRail, child)
+            }) {
+                route(parent = Level1, startDestination = LeafA, content = { child ->
+                    TestNode("adaptive-level1", child)
+                }) {
+                    destination<LeafA> { TestNode("adaptive-leaf") }
+                }
+            }
+        }
+        val controller = NavController(adaptiveGraph, LeafA)
+
+        setContent { NavDisplay(controller, testConfig) }
+        onNodeWithTag("adaptive-leaf").assertIsDisplayed()
+
+        repeat(4) {
+            layoutState.isRail = !layoutState.isRail
+            waitForIdle()
+            onNodeWithTag("adaptive-leaf").assertIsDisplayed()
+        }
+    }
+
     // 测试内容：在普通页面之上导航到 Dialog 并弹出；预期目标：Dialog 作为覆盖层显示、下层页面保持可见，弹出后恢复下层页面。
     @Test
     fun dialogIsAnOverlayAboveItsSiblingAndPopRestoresSibling(): TestResult = runComposeUiTest {
@@ -387,6 +418,22 @@ class NavControllerTest {
         }
 
         private val testConfig = NavConfig<Key>(SerializersModule { })
+
+        private class AdaptiveLayoutState {
+            var isRail by mutableStateOf(false)
+        }
+
+        @Composable
+        private fun AdaptiveLayout(
+            isRail: Boolean,
+            content: @Composable () -> Unit,
+        ) {
+            if (isRail) {
+                Row { Box { content() } }
+            } else {
+                Column { Box { content() } }
+            }
+        }
 
         @Serializable
         private sealed interface MissingParentKey : SerializableNavKey
