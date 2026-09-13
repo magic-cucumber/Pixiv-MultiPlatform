@@ -1,6 +1,9 @@
 package top.kagg886.pmf
 
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import androidx.navigation3.runtime.NavKey
 import co.touchlab.kermit.Logger
@@ -14,13 +17,17 @@ import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
 import java.nio.file.StandardOpenOption
 import javax.swing.JOptionPane
-import kotlin.system.exitProcess
+import korlibs.time.seconds
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.painterResource
+import top.kagg886.pmf.backend.DesktopWindowConfig
 import top.kagg886.pmf.backend.dataPath
 import top.kagg886.pmf.res.Res
 import top.kagg886.pmf.res.kotlin
@@ -37,6 +44,8 @@ import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.mkdirs
 import top.kagg886.pmf.util.parentFile
 import top.kagg886.pmf.util.writeString
+import kotlin.math.roundToInt
+import kotlin.system.exitProcess
 
 fun launch(start: () -> NavKey) {
     setupEnv()
@@ -65,9 +74,63 @@ fun launch(start: () -> NavKey) {
             LocalKeyStateFlow provides remember { MutableSharedFlow() },
         ) {
             CompositionLocalProvider {
+                val density = LocalDensity.current
                 val flow = LocalKeyStateFlow.current as MutableSharedFlow
                 val scope = rememberCoroutineScope()
+                val state = rememberWindowState(
+                    position = with(DesktopWindowConfig) {
+                        val x = x
+                        val y = y
+                        when {
+                            x != null && y != null -> WindowPosition.Absolute(
+                                x = with(density) { x.toDp() },
+                                y = with(density) { y.toDp() }
+                            )
+
+                            else -> WindowPosition.PlatformDefault
+                        }
+                    },
+                    size = with(density) {
+                        DpSize(DesktopWindowConfig.w.toDp(), DesktopWindowConfig.h.toDp())
+                    }
+                )
+
+                LaunchedEffect(state) {
+                    @OptIn(FlowPreview::class)
+                    snapshotFlow { state.position }
+                        .distinctUntilChanged()
+                        .sample(1.seconds)
+                        .collect { position ->
+                            if (position is WindowPosition.PlatformDefault) {
+                                DesktopWindowConfig.x = null
+                                DesktopWindowConfig.y = null
+                                return@collect
+                            }
+                            if (position is WindowPosition.Absolute) {
+                                DesktopWindowConfig.x =
+                                    with(density) { position.x.toPx().roundToInt() }
+                                DesktopWindowConfig.y =
+                                    with(density) { position.y.toPx().roundToInt() }
+                            }
+                        }
+                }
+
+
+                LaunchedEffect(state) {
+                    @OptIn(FlowPreview::class)
+                    snapshotFlow { state.size }
+                        .distinctUntilChanged()
+                        .sample(1.seconds)
+                        .collect { position ->
+                            DesktopWindowConfig.w =
+                                with(density) { position.width.toPx().roundToInt() }
+                            DesktopWindowConfig.h =
+                                with(density) { position.height.toPx().roundToInt() }
+                        }
+                }
+
                 Window(
+                    state = state,
                     onCloseRequest = ::exitApplication,
                     title = BuildConfig.APP_NAME,
                     icon = painterResource(Res.drawable.kotlin),
@@ -133,7 +196,8 @@ fun main() {
     }
 
     val lock: FileLock? = runCatching {
-        FileChannel.open(file.toNioPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE).tryLock()
+        FileChannel.open(file.toNioPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+            .tryLock()
     }.getOrNull()
 
     if (lock == null) {
