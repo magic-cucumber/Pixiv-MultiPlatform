@@ -297,7 +297,9 @@ private fun deserializationError(): Nothing = throw DeserializationException()
 internal fun <V, T : V> KSerializer<T>.deserializeOrElse(decoder: SettingsDecoder, defaultValue: V): V =
     try {
         deserialize(decoder)
-    } catch (_: DeserializationException) {
+    } catch (_: Throwable) {
+        // java.lang.IllegalArgumentException: Polymorphic value has not been read for class null
+        // FIXME: 这里可能存在配置损坏，所以对任何情况都应返回默认值。
         decoder.reset()
         defaultValue
     }
