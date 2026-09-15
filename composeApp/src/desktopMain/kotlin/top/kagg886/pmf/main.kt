@@ -3,7 +3,6 @@ package top.kagg886.pmf
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import androidx.navigation3.runtime.NavKey
 import co.touchlab.kermit.Logger
@@ -18,6 +17,8 @@ import java.nio.channels.FileLock
 import java.nio.file.StandardOpenOption
 import javax.swing.JOptionPane
 import korlibs.time.seconds
+import kotlin.math.roundToInt
+import kotlin.system.exitProcess
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -44,8 +45,6 @@ import top.kagg886.pmf.util.logger
 import top.kagg886.pmf.util.mkdirs
 import top.kagg886.pmf.util.parentFile
 import top.kagg886.pmf.util.writeString
-import kotlin.math.roundToInt
-import kotlin.system.exitProcess
 
 fun launch(start: () -> NavKey) {
     setupEnv()
@@ -84,7 +83,7 @@ fun launch(start: () -> NavKey) {
                         when {
                             x != null && y != null -> WindowPosition.Absolute(
                                 x = with(density) { x.toDp() },
-                                y = with(density) { y.toDp() }
+                                y = with(density) { y.toDp() },
                             )
 
                             else -> WindowPosition.PlatformDefault
@@ -92,7 +91,7 @@ fun launch(start: () -> NavKey) {
                     },
                     size = with(density) {
                         DpSize(DesktopWindowConfig.w.toDp(), DesktopWindowConfig.h.toDp())
-                    }
+                    },
                 )
 
                 LaunchedEffect(state) {
@@ -114,7 +113,6 @@ fun launch(start: () -> NavKey) {
                             }
                         }
                 }
-
 
                 LaunchedEffect(state) {
                     @OptIn(FlowPreview::class)
