@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.Pager
 import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImagePainter
 import kotlinx.coroutines.launch
@@ -52,9 +53,32 @@ fun IllustFetchScreen(
     onLikeItemClicked: suspend (IllustCacheDisplayed, Boolean) -> Unit = { _, _ -> },
     onLikeItemLongClicked: suspend (IllustCacheDisplayed) -> Unit = {},
 ) {
+    IllustFetchScreen(
+        items = pager.flow.collectAsLazyPagingItems(),
+        columns = columns,
+        modifier = modifier,
+        state = state,
+        itemPadding = itemPadding,
+        onIllustItemClicked = onIllustItemClicked,
+        onLikeItemClicked = onLikeItemClicked,
+        onLikeItemLongClicked = onLikeItemLongClicked,
+    )
+}
+
+@Composable
+fun IllustFetchScreen(
+    items: LazyPagingItems<IllustCacheDisplayed>,
+    columns: StaggeredGridCells,
+    modifier: Modifier = Modifier,
+    state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
+    itemPadding: PaddingValues = PaddingValues(4.dp),
+    onIllustItemClicked: suspend (IllustCacheDisplayed) -> Unit = {},
+    onLikeItemClicked: suspend (IllustCacheDisplayed, Boolean) -> Unit = { _, _ -> },
+    onLikeItemLongClicked: suspend (IllustCacheDisplayed) -> Unit = {},
+) {
     val nav = LocalNavController.current
     BaseFetchScreen(
-        pager = pager,
+        items = items,
         scrollState = state,
         modifier = modifier,
         errorContent = { onRetry ->

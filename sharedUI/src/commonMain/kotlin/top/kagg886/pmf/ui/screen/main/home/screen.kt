@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +49,26 @@ import top.kagg886.pmf.util.TraceEffect
 import top.kagg886.pmf.util.i
 import top.kagg886.pmf.util.nav3.SerializableNavKey
 import top.kagg886.pmf.util.nav3.viewModel
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.VerticalAlignTop
+import androidx.compose.ui.draw.rotate
+import top.kagg886.pmf.i18n.home_refresh
+import top.kagg886.pmf.i18n.home_refreshing
+import top.kagg886.pmf.i18n.home_back_to_top
+import top.kagg886.pmf.util.device.Platform
+import top.kagg886.pmf.util.device.Mobile
+import top.kagg886.pmf.util.device.current
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.tooling.preview.Preview
 
 @Serializable
 data object HomeRoute : SerializableNavKey
@@ -63,15 +85,22 @@ fun HomeScreen(content: @Composable () -> Unit) {
             is HomeViewModelEffect.NavigateTo -> nav.update {
                 replaceTop(effect.destination)
             }
+            HomeViewModelEffect.FABClicked, HomeViewModelEffect.RefreshRequested -> Unit
         }
     }
 
-    TraceEffect("HomeScreen", state.selectedTab) {
-        i("Home tab changed (tab=${state.selectedTab})")
+    TraceEffect("HomeScreen", state.selectedTab, state.isRefreshing, state.canBackToTop) {
+        i("Home state changed (tab=${state.selectedTab}, refreshing=${state.isRefreshing}, canBackToTop=${state.canBackToTop})")
     }
 
     HomeScreenContent(
         selectedTab = state.selectedTab,
+        navigationType = rememberCurrentNavigationSuiteType(),
+        mobile = Platform.current is Mobile,
+        isRefreshing = state.isRefreshing,
+        canBackToTop = state.canBackToTop,
+        onFabClicked = model::dispatchFABClicked,
+        onRefresh = model::requestRefresh,
         onTabSelected = model::selectTab,
         content = content,
     )
@@ -80,7 +109,12 @@ fun HomeScreen(content: @Composable () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeScreenContent(
-    navigationType: NavigationSuiteType = rememberCurrentNavigationSuiteType(),
+    navigationType: NavigationSuiteType,
+    mobile: Boolean,
+    isRefreshing: Boolean,
+    canBackToTop: Boolean,
+    onFabClicked: () -> Unit,
+    onRefresh: () -> Unit,
     selectedTab: HomeTab,
     onTabSelected: (HomeTab) -> Unit,
     content: @Composable () -> Unit,
@@ -166,13 +200,119 @@ private fun HomeScreenContent(
                 icon = { Icon(Icons.Outlined.FavoriteBorder, contentDescription = null) },
                 label = { Text(stringResource(Lang.string.home_space)) },
             )
+
+            fab(
+                enabled = canBackToTop || (!mobile && !isRefreshing),
+                wrapper = { button ->
+                    AnimatedVisibility(
+                        visible = !mobile || canBackToTop,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                    ) { button() }
+                },
+            ) {
+                onClick(onFabClicked)
+                icon {
+                    AnimatedContent(
+                        targetState = canBackToTop,
+                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                    ) { backToTop ->
+                        HomeFabIcon(backToTop, isRefreshing)
+                    }
+                }
+                text {
+                    Text(stringResource(when {
+                        canBackToTop -> Lang.string.home_back_to_top
+                        isRefreshing -> Lang.string.home_refreshing
+                        else -> Lang.string.home_refresh
+                    }))
+                }
+            }
         },
         content = {
             Box(Modifier.fillMaxSize().applyIf(collapsible, Modifier.nestedScroll(connection))) {
-                content()
+                if (mobile) {
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = onRefresh,
+                        state = rememberPullToRefreshState(),
+                        modifier = Modifier.fillMaxSize(),
+                    ) { content() }
+                } else {
+                    content()
+                }
             }
         },
     )
+}
+
+@Composable
+private fun HomeFabIcon(backToTop: Boolean, isRefreshing: Boolean) {
+    val rotation = if (!backToTop && isRefreshing) {
+        val transition = rememberInfiniteTransition(label = "Home refresh")
+        val angle by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing)),
+            label = "Refresh rotation",
+        )
+        angle
+    } else 0f
+    Icon(
+        imageVector = if (backToTop) Icons.Outlined.VerticalAlignTop else Icons.Outlined.Refresh,
+        contentDescription = stringResource(when {
+            backToTop -> Lang.string.home_back_to_top
+            isRefreshing -> Lang.string.home_refreshing
+            else -> Lang.string.home_refresh
+        }),
+        modifier = Modifier.rotate(rotation),
+    )
+}
+
+@Preview(name = "Mobile hidden FAB", widthDp = 400, heightDp = 800)
+@Composable
+private fun HomeMobilePreview() = HomePreview(mobile = true)
+
+@Preview(name = "Mobile drawer back to top", widthDp = 1200, heightDp = 800)
+@Composable
+private fun HomeMobileDrawerPreview() = HomePreview(
+    mobile = true,
+    navigationType = NavigationSuiteType.NavigationDrawer,
+    canBackToTop = true,
+)
+
+@Preview(name = "Desktop refresh", widthDp = 800, heightDp = 800)
+@Composable
+private fun HomeDesktopPreview() = HomePreview(mobile = false)
+
+@Preview(name = "Desktop refreshing", widthDp = 1200, heightDp = 800)
+@Composable
+private fun HomeRefreshingPreview() = HomePreview(
+    mobile = false,
+    navigationType = NavigationSuiteType.NavigationDrawer,
+    isRefreshing = true,
+)
+
+@Composable
+private fun HomePreview(
+    mobile: Boolean,
+    navigationType: NavigationSuiteType = NavigationSuiteType.NavigationBar,
+    isRefreshing: Boolean = false,
+    canBackToTop: Boolean = false,
+) {
+    MaterialTheme {
+        HomeScreenContent(
+            navigationType = navigationType,
+            mobile = mobile,
+            isRefreshing = isRefreshing,
+            canBackToTop = canBackToTop,
+            selectedTab = RECOMMEND,
+            onFabClicked = {},
+            onRefresh = {},
+            onTabSelected = {},
+            content = {},
+        )
+    }
 }
 
 /** 只管理标题偏移，不读取或替换子页面的滚动状态。 */

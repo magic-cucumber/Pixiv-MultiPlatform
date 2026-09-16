@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
@@ -152,17 +155,34 @@ private fun NavigationSuiteBody(
 
 @Composable
 private fun NavigationSuiteFab(fab: FabScope, extended: Boolean = false) {
-    FabWithBadge(fab.badge) {
-        if (extended) {
-            ExtendedFloatingActionButton(
+    fab.wrapper {
+        FabWithBadge(fab.badge) {
+            // Material FAB has no enabled parameter; keep one Surface across state changes.
+            Surface(
                 onClick = fab.onClick,
-                modifier = fab.modifier.fillMaxWidth().sizeIn(minWidth = 80.dp),
-                text = { fab.text?.invoke() },
-                icon = { fab.icon?.invoke() },
-            )
-        } else {
-            FloatingActionButton(onClick = fab.onClick, modifier = fab.modifier) {
-                fab.icon?.invoke()
+                enabled = fab.enabled,
+                modifier = (if (extended) {
+                    fab.modifier.fillMaxWidth().sizeIn(minWidth = 80.dp, minHeight = 56.dp)
+                } else {
+                    fab.modifier.size(56.dp)
+                }).semantics { role = Role.Button },
+                shape = FloatingActionButtonDefaults.shape,
+                color = FloatingActionButtonDefaults.containerColor,
+                contentColor = contentColorFor(FloatingActionButtonDefaults.containerColor),
+                tonalElevation = 6.dp,
+                shadowElevation = if (fab.enabled) 6.dp else 0.dp,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = if (extended) 16.dp else 0.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    fab.icon?.invoke()
+                    if (extended) {
+                        Spacer(Modifier.width(12.dp))
+                        ProvideTextStyle(MaterialTheme.typography.labelLarge) { fab.text?.invoke() }
+                    }
+                }
             }
         }
     }
@@ -450,7 +470,11 @@ class TopAppBarScope internal constructor(internal val modifier: Modifier) {
 }
 
 @NavigationSuiteDsl
-class FabScope internal constructor(internal val modifier: Modifier) {
+class FabScope internal constructor(
+    internal val modifier: Modifier,
+    internal val enabled: Boolean,
+    internal val wrapper: @Composable (@Composable () -> Unit) -> Unit,
+) {
     internal var onClick: () -> Unit = {}
         private set
     internal var icon: (@Composable () -> Unit)? = null
@@ -513,8 +537,13 @@ sealed interface NavigationSuiteScope {
     /** 未声明时不显示；空 DSL 仍创建标题栏。modifier 应用于整个标题栏。 */
     fun topAppBar(modifier: Modifier = Modifier, dsl: TopAppBarScope.() -> Unit)
 
-    /** 未声明时不显示；空 DSL 仍创建具有正常尺寸的 FAB。 */
-    fun fab(modifier: Modifier = Modifier, dsl: FabScope.() -> Unit)
+    /** 未声明时不显示；空 DSL 仍创建正常尺寸的 FAB。wrapper 包装整个 FAB（含 badge）。 */
+    fun fab(
+        modifier: Modifier = Modifier,
+        enabled: Boolean = true,
+        wrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
+        dsl: FabScope.() -> Unit,
+    )
 
 }
 
@@ -771,8 +800,13 @@ private class NavigationSuiteScopeImpl : NavigationSuiteScope,
         topAppBar = TopAppBarScope(modifier).apply(dsl)
     }
 
-    override fun fab(modifier: Modifier, dsl: FabScope.() -> Unit) {
-        fab = FabScope(modifier).apply(dsl)
+    override fun fab(
+        modifier: Modifier,
+        enabled: Boolean,
+        wrapper: @Composable (@Composable () -> Unit) -> Unit,
+        dsl: FabScope.() -> Unit,
+    ) {
+        fab = FabScope(modifier, enabled, wrapper).apply(dsl)
     }
 
     override val itemList: MutableVector<NavigationSuiteItem> = mutableVectorOf()

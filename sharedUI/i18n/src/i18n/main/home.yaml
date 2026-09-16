@@ -2,6 +2,18 @@ home_login_success:
   en_us: Login successful
   zh_cn: 登录成功
 
+home_refresh:
+  en_us: Refresh
+  zh_cn: 刷新
+
+home_refreshing:
+  en_us: Refreshing
+  zh_cn: 正在刷新
+
+home_back_to_top:
+  en_us: Back to top
+  zh_cn: 返回顶部
+
 home_recommend:
   en_us: Recommend
   zh_cn: 推荐

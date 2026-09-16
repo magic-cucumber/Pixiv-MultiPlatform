@@ -57,6 +57,19 @@ internal fun <Key : Any, Item : Any, ScrollState : Any> BaseFetchScreen(
     emptyContent: @Composable (onRefresh: () -> Unit) -> Unit = { onRefresh -> EmptyContent(onRefresh) },
 ) {
     val items = pager.flow.collectAsLazyPagingItems()
+    BaseFetchScreen(items, scrollState, errorContent, successContent, modifier, loadingContent, emptyContent)
+}
+
+@Composable
+internal fun <Item : Any, ScrollState : Any> BaseFetchScreen(
+    items: LazyPagingItems<Item>,
+    scrollState: ScrollState,
+    errorContent: @Composable (onRetry: () -> Unit) -> Unit,
+    successContent: @Composable (items: LazyPagingItems<Item>, scrollState: ScrollState) -> Unit,
+    modifier: Modifier = Modifier,
+    loadingContent: @Composable () -> Unit = { LoadingContent() },
+    emptyContent: @Composable (onRefresh: () -> Unit) -> Unit = { onRefresh -> EmptyContent(onRefresh) },
+) {
     val screenState = when (items.itemCount) {
         0 if items.loadState.refresh is LoadState.Loading -> FetchScreenState.Loading
         0 if items.loadState.refresh is LoadState.Error -> FetchScreenState.Error
