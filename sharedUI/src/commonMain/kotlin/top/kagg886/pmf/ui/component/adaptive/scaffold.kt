@@ -1,6 +1,5 @@
 package top.kagg886.pmf.ui.component.adaptive
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -17,9 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
@@ -64,6 +60,7 @@ fun NavigationSuiteScaffold(
     contentColor: Color = NavigationSuiteScaffoldDefaults.contentColor,
     content: @Composable () -> Unit = {},
 ) {
+    val scope by rememberStateOfItems(navigationSuiteItems)
     Surface(modifier = modifier, color = containerColor, contentColor = contentColor) {
         NavigationSuiteScaffoldLayout(
             navigationSuite = {
@@ -71,7 +68,7 @@ fun NavigationSuiteScaffold(
                     enable = enableNavigation,
                     layoutType = layoutType,
                     colors = navigationSuiteColors,
-                    content = navigationSuiteItems,
+                    scope = scope,
                     modifier = navigationSuiteModifier
                 )
             },
@@ -93,7 +90,6 @@ fun NavigationSuiteScaffold(
                         }
                     )
                 ) {
-                    val scope by rememberStateOfItems(navigationSuiteItems)
                     val contentTopPadding = when (layoutType) {
                         NavigationRail -> NavigationRailDefaults.windowInsets
                             .asPaddingValues()
@@ -107,97 +103,68 @@ fun NavigationSuiteScaffold(
                         else -> 0.dp
                     }
 
-                    when (layoutType) {
-                        NavigationBar -> {
-                            val title by scope.title
-                            val menu by scope.menu
-                            val fab by scope.fabIcon
-                            val fabClick by scope.fabOnClick
-                            val fabBadge by scope.fabBadge
-                            val fabModifier by scope.fabModifier
-                            val back by scope.back
-                            Scaffold(
-                                floatingActionButton = {
-                                    if (fab != null) {
-                                        FabWithBadge(badge = fabBadge) {
-                                            FloatingActionButton(
-                                                modifier = fabModifier,
-                                                onClick = {
-                                                    fabClick?.let { it() }
-                                                },
-                                            ) {
-                                                fab?.let { it() }
-                                            }
-                                        }
-                                    }
-                                },
-                                topBar = {
-                                    if (title != null || menu != null || back != null) {
-                                        TopAppBar(
-                                            title = {
-                                                ProvideTextStyle(
-                                                    MaterialTheme.typography.headlineSmall.copy(
-                                                        fontWeight = FontWeight.Bold,
-                                                    )
-                                                ) {
-                                                    title?.let { it() }
-                                                }
-                                            },
-                                            navigationIcon = {
-                                                back?.let { it() }
-                                            },
-                                            actions = {
-                                                menu?.let { it() }
-                                            }
-                                        )
-                                    }
-                                }
-                            ) { padding ->
-                                Box(Modifier.fillMaxSize().padding(padding)) {
-                                    content()
-                                }
-                            }
-                        }
-
-                        NavigationRail -> {
-                            val title by scope.title
-                            val back by scope.back
-                            Scaffold(
-                                modifier = Modifier.padding(top = contentTopPadding),
-                                topBar = {
-                                    if (title != null) {
-                                        TopAppBar(
-                                            title = {
-                                                ProvideTextStyle(
-                                                    MaterialTheme.typography.headlineSmall.copy(
-                                                        fontWeight = FontWeight.Bold,
-                                                    )
-                                                ) {
-                                                    title?.let { it() }
-                                                }
-                                            },
-                                            navigationIcon = {
-                                                back?.let { it() }
-                                            },
-                                        )
-                                    }
-                                }
-                            ) { padding ->
-                                Box(Modifier.fillMaxSize().padding(padding)) {
-                                    content()
-                                }
-                            }
-                        }
-
-                        NavigationSuiteType.NavigationDrawer -> {
-                            Box(Modifier.fillMaxSize().padding(top = contentTopPadding)) {
-                                content()
-                            }
-                        }
-                    }
+                    NavigationSuiteBody(
+                        scope = scope,
+                        layoutType = layoutType,
+                        modifier = Modifier.padding(top = contentTopPadding),
+                        content = content,
+                    )
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NavigationSuiteBody(
+    scope: NavigationSuiteItemProvider,
+    layoutType: NavigationSuiteType,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val bar = scope.topAppBar.takeIf { layoutType == NavigationBar || layoutType == NavigationRail }
+    Box(modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            if (bar != null) {
+                TopAppBar(
+                    modifier = bar.modifier,
+                    title = {
+                        ProvideTextStyle(MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)) {
+                            bar.title?.invoke()
+                        }
+                    },
+                    navigationIcon = { bar.back?.invoke() },
+                    actions = { if (layoutType == NavigationBar) bar.menu?.invoke() },
+                )
+            }
+            Box(Modifier.fillMaxWidth().weight(1f)) { content() }
+        }
+        if (layoutType == NavigationBar) {
+            scope.fab?.let { fab ->
+                Box(Modifier.align(Alignment.BottomEnd).padding(16.dp)) {
+                    NavigationSuiteFab(fab)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavigationSuiteFab(fab: FabScope, extended: Boolean = false) {
+    FabWithBadge(fab.badge) {
+        if (extended) {
+            ExtendedFloatingActionButton(
+                onClick = fab.onClick,
+                modifier = fab.modifier.fillMaxWidth().sizeIn(minWidth = 80.dp),
+                text = { fab.text?.invoke() },
+                icon = { fab.icon?.invoke() },
+            )
+        } else {
+            FloatingActionButton(onClick = fab.onClick, modifier = fab.modifier) {
+                fab.icon?.invoke()
+            }
+        }
     }
 }
 
@@ -302,6 +269,17 @@ fun NavigationSuite(
     content: NavigationSuiteScope.() -> Unit
 ) {
     val scope by rememberStateOfItems(content)
+    NavigationSuite(enable, modifier, layoutType, colors, scope)
+}
+
+@Composable
+private fun NavigationSuite(
+    enable: Boolean,
+    modifier: Modifier,
+    layoutType: NavigationSuiteType,
+    colors: NavigationSuiteColors,
+    scope: NavigationSuiteItemProvider,
+) {
     // Define defaultItemColors here since we can't set NavigationSuiteDefaults.itemColors() as a
     // default for the colors param of the NavigationSuiteScope.item non-composable function.
     val defaultItemColors = NavigationSuiteDefaults.itemColors()
@@ -336,38 +314,15 @@ fun NavigationSuite(
                 containerColor = colors.navigationRailContainerColor,
                 contentColor = colors.navigationRailContentColor
             ) {
-                val menu by scope.menu
-                val fab by scope.fabIcon
-                val fabClick by scope.fabOnClick
-                val fabBadge by scope.fabBadge
-                val fabModifier by scope.fabModifier
-
+                // 菜单与 FAB 的槽位始终保留，避免导航项随配置上下跳动。
                 Spacer(Modifier.height(16.dp))
                 Box(Modifier.size(40.dp)) {
-                    menu?.let {
-                        it()
-                    }
+                    scope.topAppBar?.menu?.invoke()
                 }
                 Spacer(Modifier.height(24.dp))
-
-                Box(
-                    Modifier.defaultMinSize(
-                        minWidth = 56.dp,
-                        minHeight = 56.dp,
-                    )
-                ) {
-                    fab?.let {
-                        FabWithBadge(badge = fabBadge) {
-                            FloatingActionButton(
-                                onClick = fabClick ?: {},
-                                modifier = fabModifier
-                            ) {
-                                it()
-                            }
-                        }
-                    }
+                Box(Modifier.defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)) {
+                    scope.fab?.let { fab -> NavigationSuiteFab(fab) }
                 }
-
                 Spacer(Modifier.height(16.dp))
 
                 scope.itemList.forEach {
@@ -393,67 +348,29 @@ fun NavigationSuite(
                 drawerContainerColor = colors.navigationDrawerContainerColor,
                 drawerContentColor = colors.navigationDrawerContentColor
             ) {
-                val title by scope.title
-                val menu by scope.menu
-                val fab by scope.fabIcon
-                val fabText by scope.fabText
-                val fabClick by scope.fabOnClick
-                val fabBadge by scope.fabBadge
-                val fabModifier by scope.fabModifier
-                val back by scope.back
-
+                val bar = scope.topAppBar
                 Box(
-                    Modifier
-                        .semantics { role = Role.Tab }
-                        .heightIn(min = 56.dp)
-                        .fillMaxWidth(),
+                    modifier = (bar?.modifier ?: Modifier).heightIn(min = 56.dp).fillMaxWidth(),
                 ) {
                     Box(Modifier.align(Alignment.CenterStart)) {
-                        ProvideTextStyle(
-                            MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                            )
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Spacer(Modifier.width(8.dp))
-                                Box(Modifier.sizeIn(48.dp), contentAlignment = Alignment.Center) {
-                                    back?.let { it() }
-                                }
-                                Spacer(Modifier.width(8.dp))
-                                title?.let { it() }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Spacer(Modifier.width(8.dp))
+                            Box(Modifier.sizeIn(48.dp), contentAlignment = Alignment.Center) {
+                                bar?.back?.invoke()
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            ProvideTextStyle(MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)) {
+                                bar?.title?.invoke()
                             }
                         }
                     }
                     Box(Modifier.align(Alignment.CenterEnd)) {
-                        menu?.let {
-                            it()
-                        }
+                        bar?.menu?.invoke()
                     }
                 }
-                Box(
-                    Modifier
-                        .semantics { role = Role.Button }
-                        .heightIn(min = 56.dp)
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                ) {
-                    if (fab != null || fabText != null) {
-                        FabWithBadge(badge = fabBadge) {
-                            ExtendedFloatingActionButton(
-                                onClick = fabClick ?: {},
-                                text = {
-                                    fabText?.let {
-                                        it()
-                                    }
-                                },
-                                icon = {
-                                    fab?.let {
-                                        it()
-                                    }
-                                },
-                                modifier = fabModifier.fillMaxWidth().sizeIn(minWidth = 80.dp)
-                            )
-                        }
+                Box(Modifier.heightIn(min = 56.dp).fillMaxWidth().padding(horizontal = 16.dp)) {
+                    scope.fab?.let { fab ->
+                        NavigationSuiteFab(fab, extended = true)
                     }
                 }
                 Spacer(Modifier.height(16.dp))
@@ -515,7 +432,42 @@ private fun FabWithBadge(
     }
 }
 
+@DslMarker
+annotation class NavigationSuiteDsl
+
+@NavigationSuiteDsl
+class TopAppBarScope internal constructor(internal val modifier: Modifier) {
+    internal var title: (@Composable () -> Unit)? = null
+        private set
+    internal var back: (@Composable () -> Unit)? = null
+        private set
+    internal var menu: (@Composable () -> Unit)? = null
+        private set
+
+    fun title(content: @Composable () -> Unit) { title = content }
+    fun back(content: @Composable () -> Unit) { back = content }
+    fun menu(content: @Composable () -> Unit) { menu = content }
+}
+
+@NavigationSuiteDsl
+class FabScope internal constructor(internal val modifier: Modifier) {
+    internal var onClick: () -> Unit = {}
+        private set
+    internal var icon: (@Composable () -> Unit)? = null
+        private set
+    internal var text: (@Composable () -> Unit)? = null
+        private set
+    internal var badge: (@Composable () -> Unit)? = null
+        private set
+
+    fun onClick(action: () -> Unit) { onClick = action }
+    fun icon(content: @Composable () -> Unit) { icon = content }
+    fun text(content: @Composable () -> Unit) { text = content }
+    fun badge(content: @Composable () -> Unit) { badge = content }
+}
+
 /** The scope associated with the [NavigationSuiteScope]. */
+@NavigationSuiteDsl
 sealed interface NavigationSuiteScope {
 
     /**
@@ -558,48 +510,12 @@ sealed interface NavigationSuiteScope {
         interactionSource: MutableInteractionSource? = null
     )
 
-    /**
-     * 程序的标题
-     * drawer模式下显示在drawer的左上角
-     * navigationBar，navigationRail模式下显示在content代表的top-bar里
-     */
-    fun title(
-        title: (@Composable () -> Unit)?,
-    )
+    /** 未声明时不显示；空 DSL 仍创建标题栏。modifier 应用于整个标题栏。 */
+    fun topAppBar(modifier: Modifier = Modifier, dsl: TopAppBarScope.() -> Unit)
 
-    /**
-     * 返回按钮
-     * drawer模式下显示在drawer的左上角
-     * navigationBar，navigationRail模式下显示在content代表的top-bar
-     */
-    fun back(
-        back: (@Composable () -> Unit)?,
-    )
+    /** 未声明时不显示；空 DSL 仍创建具有正常尺寸的 FAB。 */
+    fun fab(modifier: Modifier = Modifier, dsl: FabScope.() -> Unit)
 
-    /**
-     * 程序的菜单
-     * drawer模式显示在title右侧
-     * navigationBar模式显示在屏幕右上
-     * navigationRail模式显示在title上侧
-     */
-    fun menu(
-        menu: (@Composable () -> Unit)?,
-    )
-
-    /**
-     * FAB按钮
-     * drawer模式下作为extend显示在title下方
-     * navigationRail模式下显示在menu下方
-     * navigationBar模式下显示在屏幕底端
-     */
-    fun fab(
-        onClick: () -> Unit,
-        text: (@Composable () -> Unit)? = null,
-        icon: (@Composable () -> Unit)? = null,
-
-        badge: @Composable (() -> Unit)? = null,
-        modifier: Modifier = Modifier,
-    )
 }
 
 /**
@@ -800,15 +716,9 @@ private interface NavigationSuiteItemProvider {
     val itemsCount: Int
     val itemList: MutableVector<NavigationSuiteItem>
 
-    val title: MutableState<@Composable (() -> Unit)?>
-    val menu: MutableState<@Composable (() -> Unit)?>
-    val back: MutableState<@Composable (() -> Unit)?>
+    val topAppBar: TopAppBarScope?
+    val fab: FabScope?
 
-    val fabText: MutableState<@Composable (() -> Unit)?>
-    val fabIcon: MutableState<@Composable (() -> Unit)?>
-    val fabOnClick: MutableState<(() -> Unit)?>
-    val fabBadge: MutableState<@Composable (() -> Unit)?>
-    val fabModifier: MutableState<Modifier>
 }
 
 private class NavigationSuiteItem(
@@ -857,41 +767,19 @@ private class NavigationSuiteScopeImpl : NavigationSuiteScope,
         )
     }
 
-    override fun title(title: @Composable (() -> Unit)?) {
-        this.title.value = title
+    override fun topAppBar(modifier: Modifier, dsl: TopAppBarScope.() -> Unit) {
+        topAppBar = TopAppBarScope(modifier).apply(dsl)
     }
 
-    override fun back(back: @Composable (() -> Unit)?) {
-        this.back.value = back
-    }
-
-    override fun menu(menu: @Composable (() -> Unit)?) {
-        this.menu.value = menu
-    }
-
-    override fun fab(
-        onClick: () -> Unit,
-        text: (@Composable (() -> Unit))?,
-        icon: (@Composable (() -> Unit))?,
-        badge: (@Composable (() -> Unit))?,
-        modifier: Modifier
-    ) {
-        fabText.value = text
-        fabIcon.value = icon
-        fabOnClick.value = onClick
-        fabBadge.value = badge
-        fabModifier.value = modifier
+    override fun fab(modifier: Modifier, dsl: FabScope.() -> Unit) {
+        fab = FabScope(modifier).apply(dsl)
     }
 
     override val itemList: MutableVector<NavigationSuiteItem> = mutableVectorOf()
-    override val fabIcon: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
-    override val fabText: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
-    override val fabOnClick: MutableState<(() -> Unit)?> = mutableStateOf(null)
-    override val fabBadge: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
-    override val fabModifier: MutableState<Modifier> = mutableStateOf(Modifier)
-    override val title: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
-    override val menu: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
-    override val back: MutableState<@Composable (() -> Unit)?> = mutableStateOf(null)
+    override var topAppBar: TopAppBarScope? = null
+        private set
+    override var fab: FabScope? = null
+        private set
 
     override val itemsCount: Int
         get() = itemList.size
