@@ -56,7 +56,10 @@ import top.kagg886.pmf.backend.Platform
 import top.kagg886.pmf.backend.currentPlatform
 import top.kagg886.pmf.backend.useTempFile
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.LanguageDetector
+import top.kagg886.pmf.translate.isAiTranslateEnabled
 import top.kagg886.pmf.ui.component.*
+import top.kagg886.pmf.ui.component.AiTranslateButton
 import top.kagg886.pmf.ui.component.dialog.TagFavoriteDialog
 import top.kagg886.pmf.ui.component.icon.Copy
 import top.kagg886.pmf.ui.component.icon.Download
@@ -570,11 +573,12 @@ private fun IllustPreview(
                             )
                         },
                         headlineContent = {
+                            val title = state.titleTranslation ?: illust.title
                             Text(
                                 text = buildAnnotatedString {
-                                    withClickable(theme, illust.title) {
+                                    withClickable(theme, title) {
                                         model.intent {
-                                            clipboard.setText(illust.title)
+                                            clipboard.setText(title)
                                             postSideEffect(
                                                 IllustDetailSideEffect.Toast(
                                                     getString(Res.string.copy_title_success),
@@ -650,12 +654,47 @@ private fun IllustPreview(
                             }
                         },
                         supportingContent = {
-                            SelectionContainer {
-                                HTMLRichText(
-                                    html = illust.caption.ifEmpty { stringResource(Res.string.no_description) },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = ListItemDefaults.colors().supportingTextColor,
-                                )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.Bottom,
+                            ) {
+                                Box(Modifier.weight(1f)) {
+                                    if (state.translated && state.captionTranslation != null) {
+                                        SelectionContainer {
+                                            Text(
+                                                text = buildRichAnnotatedString(
+                                                    state.captionTranslation,
+                                                    MaterialTheme.colorScheme,
+                                                ),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = ListItemDefaults.colors().supportingTextColor,
+                                            )
+                                        }
+                                    } else {
+                                        SelectionContainer {
+                                            HTMLRichText(
+                                                html = illust.caption.ifEmpty { stringResource(Res.string.no_description) },
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = ListItemDefaults.colors().supportingTextColor,
+                                            )
+                                        }
+                                    }
+                                }
+                                if (state.translated ||
+                                    state.translating ||
+                                    (isAiTranslateEnabled() && LanguageDetector.isForeign(illust.title + illust.caption))
+                                ) {
+                                    AiTranslateButton(
+                                        translated = state.translated,
+                                        translating = state.translating,
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        iconSize = 18.dp,
+                                        touchSize = 24.dp,
+                                        onClick = {
+                                            model.toggleTranslate()
+                                        },
+                                    )
+                                }
                             }
                         },
                     )
