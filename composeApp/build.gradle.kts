@@ -11,6 +11,8 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.desktop.application.internal.JvmRuntimeProperties
+import org.jetbrains.compose.desktop.application.tasks.AbstractJLinkTask
 import org.jetbrains.compose.desktop.application.tasks.AbstractProguardTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi
 
@@ -375,6 +377,22 @@ compose.desktop {
 
         jvmArgs += "--enable-native-access=ALL-UNNAMED"
         buildTypes.release.proguard { version = "7.9.1" }
+    }
+}
+
+// https://github.com/NucleusFramework/Nucleus/pull/682
+// JEP 493 JDKs cannot include jdk.jlink in a runtime image without packaged modules.
+gradle.projectsEvaluated {
+    tasks.withType<AbstractJLinkTask>().configureEach {
+        if (includeAllModules.get()) {
+            includeAllModules.set(false)
+            modules.set(
+                javaRuntimePropertiesFile.map { runtimeProperties ->
+                    JvmRuntimeProperties.readFromFile(runtimeProperties.asFile).availableModules
+                        .filterNot { it == "jdk.jlink" }
+                },
+            )
+        }
     }
 }
 
