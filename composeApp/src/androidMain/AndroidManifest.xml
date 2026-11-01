@@ -11,7 +11,7 @@
             android:icon="@mipmap/ic_launcher"
             android:label="${APP_NAME}"
             android:supportsRtl="true"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            android:theme="@style/Theme.PMF">
         <activity
                 android:exported="true"
                 android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
