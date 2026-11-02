@@ -17,7 +17,12 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '25'
-          distribution: 'temurin'
+          distribution: 'zulu'
+
+      # Compose ProGuard reads JDK classes from jmods; Temurin 25 omits them.
+      - name: Check JDK modules for ProGuard
+        shell: bash
+        run: test -f "$JAVA_HOME/jmods/java.base.jmod"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -95,10 +100,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '25'
-          distribution: 'temurin'
+          distribution: 'zulu'
 
       - name: Install XDG development
         run: sudo apt update && sudo apt install libwayland-dev
+
+      # Compose ProGuard reads JDK classes from jmods; Temurin 25 omits them.
+      - name: Check JDK modules for ProGuard
+        shell: bash
+        run: test -f "$JAVA_HOME/jmods/java.base.jmod"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -213,7 +223,12 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '25'
-          distribution: 'temurin'
+          distribution: 'zulu'
+
+      # Compose ProGuard reads JDK classes from jmods; Temurin 25 omits them.
+      - name: Check JDK modules for ProGuard
+        shell: bash
+        run: test -f "$JAVA_HOME/jmods/java.base.jmod"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
