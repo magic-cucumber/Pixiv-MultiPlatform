@@ -5,6 +5,7 @@ import com.mikepenz.aboutlibraries.plugin.DuplicateMode.MERGE
 import com.mikepenz.aboutlibraries.plugin.DuplicateRule.GROUP
 import java.io.BufferedOutputStream
 import java.io.FileOutputStream
+import java.lang.module.ModuleFinder
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import org.gradle.api.file.DirectoryProperty
@@ -42,7 +43,7 @@ val gitSha = run {
 val proguardEnable = (System.getenv("PROGUARD_ENABLE") ?: prop("PROGUARD_ENABLE")).toBooleanStrictOrNull() ?: true
 
 // JEP 493 JDKs cannot link a runtime image containing jdk.jlink.
-val desktopRuntimeModules = java.lang.module.ModuleFinder.ofSystem().findAll()
+val desktopRuntimeModules = ModuleFinder.ofSystem().findAll()
     .map { it.descriptor().name() }
     .filterNot { it == "jdk.jlink" }
     .sorted()
