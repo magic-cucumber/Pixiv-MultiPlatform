@@ -1,3 +1,11 @@
+# wvbridge JNI: native platform settings and cookie internals.
+-keep class top.kagg886.wvbridge.config.internal.** {
+    *;
+}
+-keep class top.kagg886.wvbridge.internal.cookie.** {
+    *;
+}
+
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn androidx.test.platform.app.InstrumentationRegistry
 

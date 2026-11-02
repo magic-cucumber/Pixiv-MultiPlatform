@@ -6,6 +6,16 @@
 -keep class * extends com.sun.jna.* { *; }
 -keepclassmembers class * extends com.sun.jna.* { public *; }
 
+# wvbridge
+-keep class top.kagg886.wvbridge.internal.WebViewBridgePanel { *; }
+-keep class top.kagg886.wvbridge.internal.listener.NativeBridge { *; }
+-keep class top.kagg886.wvbridge.bridge.WebMessageConsumer { *; }
+
+# Cookie constructor/fields and platform settings accessed through JNI.
+-keep class top.kagg886.wvbridge.internal.cookie.StructedCookie { *; }
+-keep class top.kagg886.wvbridge.config.internal.** { *; }
+
+
 -ignorewarnings
 
 -optimizations !method/inlining/unique
