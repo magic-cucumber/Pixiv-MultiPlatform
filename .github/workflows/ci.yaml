@@ -51,15 +51,14 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Upload jlink logs
+      - name: Upload build diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: jlink-diagnostics-${{ runner.os }}
-          path: |
-            composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
-            composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
-            composeApp/build/compose/tmp/createRuntimeImage.args.txt
+          name: compose-build-${{ runner.os }}
+          path: composeApp/build/
+          include-hidden-files: true
+          retention-days: 7
           if-no-files-found: warn
 
       - name: Rename msi artifict
@@ -135,15 +134,14 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Upload jlink logs
+      - name: Upload build diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: jlink-diagnostics-${{ runner.os }}
-          path: |
-            composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
-            composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
-            composeApp/build/compose/tmp/createRuntimeImage.args.txt
+          name: compose-build-${{ runner.os }}
+          path: composeApp/build/
+          include-hidden-files: true
+          retention-days: 7
           if-no-files-found: warn
 
       - name: Zip artifact
@@ -162,6 +160,8 @@ jobs:
           path: composeApp/build/compose/binaries/main-release/proguard
           if-no-files-found: error
   build-android:
+    # Temporarily disabled while fixing desktop packaging.
+    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -247,15 +247,14 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Upload jlink logs
+      - name: Upload build diagnostics
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: jlink-diagnostics-${{ runner.os }}
-          path: |
-            composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
-            composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
-            composeApp/build/compose/tmp/createRuntimeImage.args.txt
+          name: compose-build-${{ runner.os }}
+          path: composeApp/build/
+          include-hidden-files: true
+          retention-days: 7
           if-no-files-found: warn
 
       - name: Rename artifact
@@ -277,6 +276,8 @@ jobs:
           if-no-files-found: error
 
   build-ios:
+    # Temporarily disabled while fixing desktop packaging.
+    if: false
     runs-on: macos-26
     permissions:
       contents: read
