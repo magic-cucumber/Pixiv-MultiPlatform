@@ -384,15 +384,14 @@ compose.desktop {
 // JEP 493 JDKs cannot include jdk.jlink in a runtime image without packaged modules.
 gradle.projectsEvaluated {
     tasks.withType<AbstractJLinkTask>().configureEach {
-        if (includeAllModules.get()) {
-            includeAllModules.set(false)
-            modules.set(
-                javaRuntimePropertiesFile.map { runtimeProperties ->
-                    JvmRuntimeProperties.readFromFile(runtimeProperties.asFile).availableModules
-                        .filterNot { it == "jdk.jlink" }
-                },
-            )
-        }
+        // includeAllModules bypasses the modules property in Compose Gradle Plugin.
+        includeAllModules.set(false)
+        modules.set(
+            javaRuntimePropertiesFile.map { runtimeProperties ->
+                JvmRuntimeProperties.readFromFile(runtimeProperties.asFile).availableModules
+                    .filterNot { it == "jdk.jlink" }
+            },
+        )
     }
 }
 
