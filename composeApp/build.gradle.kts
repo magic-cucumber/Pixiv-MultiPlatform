@@ -412,7 +412,7 @@ if (proguardEnable) {
             proguardFile.bufferedWriter().use { proguardFileWriter ->
                 sourceSets["desktopMain"].runtimeClasspath.filter { it.extension == "jar" }.forEach { jar ->
                     val zip = zipTree(jar)
-                    zip.matching { include("META-INF/**/*.pro") }.forEach { file ->
+                    zip.matching { include("META-INF/**/proguard/*.pro") }.forEach { file ->
                         proguardFileWriter.appendLine("########   ${jar.name} ${file.name}")
                         val content = file.readLines()
                             .map { line -> line.replace("kotlin.Metadata", "kotlin.AAA") }
