@@ -102,10 +102,16 @@ import top.kagg886.pmf.backend.PlatformConfig
 import top.kagg886.pmf.backend.PlatformEngine
 import top.kagg886.pmf.backend.cachePath
 import top.kagg886.pmf.backend.currentPlatform
+import top.kagg886.pmf.backend.database.AppDatabase
 import top.kagg886.pmf.backend.database.databaseBuilder
 import top.kagg886.pmf.backend.pixiv.PixivConfig
 import top.kagg886.pmf.backend.pixiv.PixivTokenStorage
 import top.kagg886.pmf.res.*
+import top.kagg886.pmf.translate.KoogTranslator
+import top.kagg886.pmf.translate.RoomTranslateCache
+import top.kagg886.pmf.translate.TranslateCache
+import top.kagg886.pmf.translate.TranslateScheduler
+import top.kagg886.pmf.translate.TranslateViewModel
 import top.kagg886.pmf.ui.component.dialog.CheckUpdateDialog
 import top.kagg886.pmf.ui.route.login.v2.LoginRoute
 import top.kagg886.pmf.ui.route.login.v2.LoginScreen
@@ -278,6 +284,8 @@ fun App(start: NavKey = WelcomeRoute) {
                 ) {
                     val s = LocalSnackBarHost.current
                     CheckUpdateDialog()
+                    // 实例化全局翻译宿主：init 中按需预热 koog 客户端
+                    globalViewModel<TranslateViewModel>()
                     val model = globalViewModel<DownloadScreenModel>()
                     model.collectSideEffect { toast ->
                         when (toast) {
@@ -467,6 +475,9 @@ fun setupEnv() {
     // init logger
     initFileLogger()
 
+    // 旧版本可能持久化了 JSON prompt；任何翻译发生前先迁移到按行协议
+    AppConfig.migrateLegacyAiTranslatePrompt()
+
     // init koin
     startKoin {
         logger(
@@ -595,6 +606,20 @@ fun setupEnv() {
                         fallbackToDestructiveMigrationFrom(true, 1, 2, 3, 4, 5, 6)
                         setQueryCoroutineContext(Dispatchers.IO)
                     }.build()
+                }
+
+                single<TranslateCache> { RoomTranslateCache(get<AppDatabase>().aiTranslateCacheDAO()) }
+                single { KoogTranslator() }
+                // 全局翻译宿主：随全局 ViewModelStore 存活，负责启动/配置变更时的客户端预热
+                single { TranslateViewModel(get()) }
+                // configDrivenConcurrency：并发上限与重试次数随设置动态调整（修改即时生效）
+                single {
+                    TranslateScheduler(
+                        get<KoogTranslator>(),
+                        get<TranslateCache>(),
+                        retryAttempts = AppConfig.aiTranslateRetryAttempts,
+                        configDrivenConcurrency = true,
+                    )
                 }
 
                 single { DownloadScreenModel() }

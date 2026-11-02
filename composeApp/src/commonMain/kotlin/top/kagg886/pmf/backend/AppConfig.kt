@@ -66,6 +66,73 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
 
     var customShareDomain by string("custom_share_domain", "https://pixiv.net")
 
+    var aiTranslateApiKey by string("ai_translate_api_key", "")
+    var aiTranslateProvider by serializedValue("ai_translate_provider", AiTranslateProvider.DEEPSEEK)
+    var aiTranslateBaseUrl by string("ai_translate_base_url", "")
+    var aiTranslateEnabled by boolean("ai_translate_enabled", false)
+    var aiTranslatePrompt by string("ai_translate_prompt", DEFAULT_AI_TRANSLATE_PROMPT)
+    var aiTranslateProperNouns by string("ai_translate_proper_nouns", DEFAULT_AI_TRANSLATE_PROPER_NOUNS)
+    var aiTranslateModel by string("ai_translate_model", "")
+    var aiTranslateCacheEnabled by boolean("ai_translate_cache_enabled", true)
+    var aiTranslateParagraphContext by boolean("ai_translate_paragraph_context", true)
+    var aiTranslateMaxConcurrency by int("ai_translate_max_concurrency", 2)
+    var aiTranslateRetryAttempts by int("ai_translate_retry_attempts", 2)
+
+    const val DEFAULT_AI_TRANSLATE_PROMPT =
+        "You are a professional translator. Translate the user-provided text into %lang%. " +
+            "Preserve the original meaning, tone, punctuation, line breaks, and formatting. " +
+            "Split the source text into sentences and translate sentence by sentence. " +
+            "Keep every punctuation mark and blank line exactly as in the source. " +
+            "Do not invent sentence-ending punctuation or surrounding quotation marks when they are absent. " +
+            "Do not add any symbols that are not present in the source, such as book-title marks 《》, quotation marks, or brackets. " +
+            "Never return the source text unchanged: even when it contains proper nouns, translate every translatable part. " +
+            "Return only the translations, one translated sentence per line, " +
+            "in exactly the same order and line count. " +
+            "Do not return JSON, numbering, quotation marks around sentences, markdown, or any extra text.\n" +
+            "你是一名专业翻译。请将用户提供的文本翻译成%lang%。" +
+            "保留原意、语气、标点、换行与格式；不要增删标点、自行补句末标点或合并句子。" +
+            "不要添加原文中没有的符号（如书名号《》、引号、括号等）。" +
+            "不要整段原样返回原文：即使包含专有名词，也要把可翻译的部分翻译出来。" +
+            "把源文本按句拆分并逐句翻译，只返回译文：" +
+            "每行一句译文，顺序、标点、空行与原文完全一致。" +
+            "不要返回 JSON、编号、句子引号、Markdown 或任何多余内容。"
+
+    const val DEFAULT_AI_TRANSLATE_PROPER_NOUNS =
+        "Proper nouns (character names, work titles, place names) should keep the original form " +
+            "or use the commonly accepted translation; do not translate them literally.\n" +
+            "人名、作品名、地名等专有名词保持原文或使用通行的译法，不要直译。"
+
+    /** 旧版本持久化的 JSON prompt；检测到时迁移为按行返回的纯文本 prompt。 */
+    const val LEGACY_JSON_AI_TRANSLATE_PROMPT =
+        "You are a professional translator. Translate the user-provided text into %lang%. " +
+            "Preserve the original meaning, tone and formatting. " +
+            "Split the source text into sentences and translate sentence by sentence, " +
+            "keeping the same order and sentence count. " +
+            "Respond with a JSON object only: {\"sentences\": [\"translated sentence 1\", \"translated sentence 2\", ...]}. " +
+            "No explanations, no markdown, no extra text.\n" +
+            "你是一名专业翻译。请将用户提供的文本翻译成%lang%。保留原意、语气与格式，" +
+            "把源文本按句子逐句翻译，保持顺序与句数一致。" +
+            "只返回 JSON 对象：{\"sentences\": [\"译文1\", \"译文2\", ...]}，" +
+            "不要添加任何解释、Markdown 或多余内容。"
+
+    fun migrateLegacyAiTranslatePrompt() {
+        if (aiTranslatePrompt == LEGACY_JSON_AI_TRANSLATE_PROMPT) {
+            aiTranslatePrompt = DEFAULT_AI_TRANSLATE_PROMPT
+        }
+    }
+
+    /** AI 翻译提供商（预设）。 */
+    @Serializable
+    enum class AiTranslateProvider {
+        OPENAI,
+        DEEPSEEK,
+        GLM,
+        ANTHROPIC,
+        GOOGLE,
+        OLLAMA,
+        CUSTOM,
+    }
+
     @Serializable
     enum class LanguageSettings(val tag: StringResource, val locale: Locale) {
         EN(Res.string.language_en, Locale("en-US")),
@@ -132,6 +199,8 @@ object AppConfig : Settings by SystemConfig.getConfig("app") {
         data class Proxy(
             val host: String = "localhost",
             val port: Int = 7890,
+            // 序列化名避开多态区分符 "type"，否则 JsonEncodingException（既有 bug）
+            @SerialName("proxy_type")
             val type: ProxyType = ProxyType.HTTP,
         ) : BypassSetting {
 

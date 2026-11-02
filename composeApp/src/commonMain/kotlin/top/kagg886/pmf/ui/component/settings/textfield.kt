@@ -12,6 +12,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import com.alorma.compose.settings.ui.SettingsTileScaffold
 import top.kagg886.pmf.res.*
 import top.kagg886.pmf.util.stringResource
@@ -26,6 +28,7 @@ fun SettingsTextField(
     dialogPlaceHolder: @Composable () -> Unit = { Text(stringResource(Res.string.please_input)) },
     value: String,
     onValueChange: (String) -> Unit,
+    secret: Boolean = false,
 ) {
     var expand by remember {
         mutableStateOf(false)
@@ -57,6 +60,7 @@ fun SettingsTextField(
                     modifier = Modifier.fillMaxWidth(),
                     label = dialogLabel,
                     placeholder = dialogPlaceHolder,
+                    visualTransformation = if (secret) PasswordVisualTransformation() else VisualTransformation.None,
                 )
             },
         )
@@ -68,5 +72,9 @@ fun SettingsTextField(
         modifier = modifier.clickable {
             expand = true
         },
-    )
+    ) {
+        if (secret && value.isNotEmpty()) {
+            Text("••••••••")
+        }
+    }
 }

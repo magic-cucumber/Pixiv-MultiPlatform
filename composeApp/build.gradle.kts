@@ -79,7 +79,7 @@ buildConfig {
     buildConfigField("APP_VERSION_NAME", pkgVersion)
     buildConfigField("APP_VERSION_CODE", pkgCode)
 
-    buildConfigField("DATABASE_VERSION", 11)
+    buildConfigField("DATABASE_VERSION", 12)
     buildConfigField("APP_COMMIT_ID", gitSha)
 }
 
@@ -188,6 +188,13 @@ kotlin {
 
             // logging
             implementation(libs.kermit)
+
+            // ai translate (koog)
+            implementation(libs.koog.http.client.ktor)
+            implementation(libs.koog.prompt.executor.clients)
+            implementation(libs.koog.prompt.executor.openai.client)
+            implementation(libs.koog.prompt.executor.anthropic.client)
+            implementation(libs.koog.prompt.executor.ollama.client)
 
             // epub module
             implementation(project(":lib:epub"))
