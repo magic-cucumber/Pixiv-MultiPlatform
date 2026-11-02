@@ -453,9 +453,6 @@ fun getGitHeaderCommitIdShort(): String {
         .redirectErrorStream(true)
         .start()
     val rtn = process.inputStream.readAllBytes().decodeToString().trim()
-    check(rtn.length == 7) {
-        throw IllegalStateException("git rev-parse failed, rtn:\n$rtn")
-    }
     return rtn
 }
 
