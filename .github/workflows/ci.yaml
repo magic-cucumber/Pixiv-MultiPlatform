@@ -31,6 +31,32 @@ jobs:
       - name: Build MSI And Content with Gradle Wrapper
         run: ./gradlew packageReleaseDistributionForCurrentOS
 
+      - name: Dump jlink logs
+        if: failure()
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
+          if ((${#files[@]} == 0)); then
+            echo "No jlink logs found"
+            exit 0
+          fi
+          for file in "${files[@]}"; do
+            echo "::group::$file"
+            cat "$file"
+            echo "::endgroup::"
+          done
+
+      - name: Upload jlink logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jlink-diagnostics-${{ runner.os }}
+          path: |
+            composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
+            composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
+          if-no-files-found: warn
+
       - name: Rename msi artifict
         run: powershell -Command "& { `$msi = Get-ChildItem 'composeApp\build\compose\binaries\main-release\msi' -Filter '*.msi'; Rename-Item -Path `$msi.FullName -NewName 'windows.msi' }"
 
@@ -83,6 +109,32 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew packageReleaseDistributionForCurrentOS
+
+      - name: Dump jlink logs
+        if: failure()
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
+          if ((${#files[@]} == 0)); then
+            echo "No jlink logs found"
+            exit 0
+          fi
+          for file in "${files[@]}"; do
+            echo "::group::$file"
+            cat "$file"
+            echo "::endgroup::"
+          done
+
+      - name: Upload jlink logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jlink-diagnostics-${{ runner.os }}
+          path: |
+            composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
+            composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
+          if-no-files-found: warn
 
       - name: Zip artifact
         run: tar -czvf linux.tar.gz -C composeApp/build/compose/binaries/main-release/app .
@@ -164,6 +216,32 @@ jobs:
 
       - name: Build with Gradle Wrapper
         run: ./gradlew packageReleaseDmg
+
+      - name: Dump jlink logs
+        if: failure()
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
+          if ((${#files[@]} == 0)); then
+            echo "No jlink logs found"
+            exit 0
+          fi
+          for file in "${files[@]}"; do
+            echo "::group::$file"
+            cat "$file"
+            echo "::endgroup::"
+          done
+
+      - name: Upload jlink logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jlink-diagnostics-${{ runner.os }}
+          path: |
+            composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
+            composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
+          if-no-files-found: warn
 
       - name: Rename artifact
         run: |
