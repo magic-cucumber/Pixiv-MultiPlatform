@@ -42,10 +42,10 @@ val gitSha = run {
 
 val proguardEnable = (System.getenv("PROGUARD_ENABLE") ?: prop("PROGUARD_ENABLE")).toBooleanStrictOrNull() ?: true
 
-// JEP 493 JDKs cannot link a runtime image containing jdk.jlink.
+// JEP 493 JDKs cannot link images containing jdk.jlink. jdk.jpackage requires jdk.jlink.
 val desktopRuntimeModules = ModuleFinder.ofSystem().findAll()
     .map { it.descriptor().name() }
-    .filterNot { it == "jdk.jlink" }
+    .filterNot { it == "jdk.jlink" || it == "jdk.jpackage" }
     .sorted()
 
 println("APP_VERSION: $pkgVersion($pkgCode)")
