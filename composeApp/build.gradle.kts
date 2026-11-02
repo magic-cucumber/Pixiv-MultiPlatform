@@ -11,8 +11,6 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.compose.desktop.application.internal.JvmRuntimeProperties
-import org.jetbrains.compose.desktop.application.tasks.AbstractJLinkTask
 import org.jetbrains.compose.desktop.application.tasks.AbstractProguardTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCacheApi
 
@@ -42,6 +40,12 @@ val gitSha = run {
 }
 
 val proguardEnable = (System.getenv("PROGUARD_ENABLE") ?: prop("PROGUARD_ENABLE")).toBooleanStrictOrNull() ?: true
+
+// JEP 493 JDKs cannot link a runtime image containing jdk.jlink.
+val desktopRuntimeModules = java.lang.module.ModuleFinder.ofSystem().findAll()
+    .map { it.descriptor().name() }
+    .filterNot { it == "jdk.jlink" }
+    .sorted()
 
 println("APP_VERSION: $pkgVersion($pkgCode)")
 println("PROGUARD_ENABLE: $proguardEnable")
@@ -351,7 +355,9 @@ compose.desktop {
     application {
         mainClass = "$pkgName.MainKt"
         nativeDistributions {
-            includeAllModules = true
+            includeAllModules = false
+            modules.clear()
+            modules.addAll(desktopRuntimeModules)
             targetFormats(
                 *buildList {
                     add(TargetFormat.Msi)
@@ -380,20 +386,6 @@ compose.desktop {
     }
 }
 
-// https://github.com/NucleusFramework/Nucleus/pull/682
-// JEP 493 JDKs cannot include jdk.jlink in a runtime image without packaged modules.
-gradle.projectsEvaluated {
-    tasks.withType<AbstractJLinkTask>().configureEach {
-        // includeAllModules bypasses the modules property in Compose Gradle Plugin.
-        includeAllModules.set(false)
-        modules.set(
-            javaRuntimePropertiesFile.map { runtimeProperties ->
-                JvmRuntimeProperties.readFromFile(runtimeProperties.asFile).availableModules
-                    .filterNot { it == "jdk.jlink" }
-            },
-        )
-    }
-}
 
 if (proguardEnable) {
     /**
