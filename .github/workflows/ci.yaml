@@ -37,8 +37,12 @@ jobs:
         run: |
           shopt -s nullglob
           files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
+          args_file=composeApp/build/compose/tmp/createRuntimeImage.args.txt
+          if [[ -f "$args_file" ]]; then
+            files+=("$args_file")
+          fi
           if ((${#files[@]} == 0)); then
-            echo "No jlink logs found"
+            echo "No jlink diagnostics found"
             exit 0
           fi
           for file in "${files[@]}"; do
@@ -55,6 +59,7 @@ jobs:
           path: |
             composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
             composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
+            composeApp/build/compose/tmp/createRuntimeImage.args.txt
           if-no-files-found: warn
 
       - name: Rename msi artifict
@@ -116,8 +121,12 @@ jobs:
         run: |
           shopt -s nullglob
           files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
+          args_file=composeApp/build/compose/tmp/createRuntimeImage.args.txt
+          if [[ -f "$args_file" ]]; then
+            files+=("$args_file")
+          fi
           if ((${#files[@]} == 0)); then
-            echo "No jlink logs found"
+            echo "No jlink diagnostics found"
             exit 0
           fi
           for file in "${files[@]}"; do
@@ -134,6 +143,7 @@ jobs:
           path: |
             composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
             composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
+            composeApp/build/compose/tmp/createRuntimeImage.args.txt
           if-no-files-found: warn
 
       - name: Zip artifact
@@ -223,8 +233,12 @@ jobs:
         run: |
           shopt -s nullglob
           files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
+          args_file=composeApp/build/compose/tmp/createRuntimeImage.args.txt
+          if [[ -f "$args_file" ]]; then
+            files+=("$args_file")
+          fi
           if ((${#files[@]} == 0)); then
-            echo "No jlink logs found"
+            echo "No jlink diagnostics found"
             exit 0
           fi
           for file in "${files[@]}"; do
@@ -241,6 +255,7 @@ jobs:
           path: |
             composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt
             composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt
+            composeApp/build/compose/tmp/createRuntimeImage.args.txt
           if-no-files-found: warn
 
       - name: Rename artifact
