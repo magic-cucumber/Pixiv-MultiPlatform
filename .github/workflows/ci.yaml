@@ -19,11 +19,6 @@ jobs:
           java-version: '25'
           distribution: 'zulu'
 
-      # Compose ProGuard reads JDK classes from jmods; Temurin 25 omits them.
-      - name: Check JDK modules for ProGuard
-        shell: bash
-        run: test -f "$JAVA_HOME/jmods/java.base.jmod"
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
@@ -35,36 +30,6 @@ jobs:
 
       - name: Build MSI And Content with Gradle Wrapper
         run: ./gradlew packageReleaseDistributionForCurrentOS
-
-      - name: Dump jlink logs
-        if: failure()
-        shell: bash
-        run: |
-          shopt -s nullglob
-          files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
-          args_file=composeApp/build/compose/tmp/createRuntimeImage.args.txt
-          if [[ -f "$args_file" ]]; then
-            files+=("$args_file")
-          fi
-          if ((${#files[@]} == 0)); then
-            echo "No jlink diagnostics found"
-            exit 0
-          fi
-          for file in "${files[@]}"; do
-            echo "::group::$file"
-            cat "$file"
-            echo "::endgroup::"
-          done
-
-      - name: Upload build diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: compose-build-${{ runner.os }}
-          path: composeApp/build/
-          include-hidden-files: true
-          retention-days: 7
-          if-no-files-found: warn
 
       - name: Rename msi artifict
         run: powershell -Command "& { `$msi = Get-ChildItem 'composeApp\build\compose\binaries\main-release\msi' -Filter '*.msi'; Rename-Item -Path `$msi.FullName -NewName 'windows.msi' }"
@@ -105,11 +70,6 @@ jobs:
       - name: Install XDG development
         run: sudo apt update && sudo apt install libwayland-dev
 
-      # Compose ProGuard reads JDK classes from jmods; Temurin 25 omits them.
-      - name: Check JDK modules for ProGuard
-        shell: bash
-        run: test -f "$JAVA_HOME/jmods/java.base.jmod"
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
@@ -123,36 +83,6 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew packageReleaseDistributionForCurrentOS
-
-      - name: Dump jlink logs
-        if: failure()
-        shell: bash
-        run: |
-          shopt -s nullglob
-          files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
-          args_file=composeApp/build/compose/tmp/createRuntimeImage.args.txt
-          if [[ -f "$args_file" ]]; then
-            files+=("$args_file")
-          fi
-          if ((${#files[@]} == 0)); then
-            echo "No jlink diagnostics found"
-            exit 0
-          fi
-          for file in "${files[@]}"; do
-            echo "::group::$file"
-            cat "$file"
-            echo "::endgroup::"
-          done
-
-      - name: Upload build diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: compose-build-${{ runner.os }}
-          path: composeApp/build/
-          include-hidden-files: true
-          retention-days: 7
-          if-no-files-found: warn
 
       - name: Zip artifact
         run: tar -czvf linux.tar.gz -C composeApp/build/compose/binaries/main-release/app .
@@ -170,8 +100,6 @@ jobs:
           path: composeApp/build/compose/binaries/main-release/proguard
           if-no-files-found: error
   build-android:
-    # Temporarily disabled while fixing desktop packaging.
-    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -225,11 +153,6 @@ jobs:
           java-version: '25'
           distribution: 'zulu'
 
-      # Compose ProGuard reads JDK classes from jmods; Temurin 25 omits them.
-      - name: Check JDK modules for ProGuard
-        shell: bash
-        run: test -f "$JAVA_HOME/jmods/java.base.jmod"
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
@@ -241,36 +164,6 @@ jobs:
 
       - name: Build with Gradle Wrapper
         run: ./gradlew packageReleaseDmg
-
-      - name: Dump jlink logs
-        if: failure()
-        shell: bash
-        run: |
-          shopt -s nullglob
-          files=(composeApp/build/compose/logs/createRuntimeImage/jlink-*-err.txt composeApp/build/compose/logs/createRuntimeImage/jlink-*-out.txt)
-          args_file=composeApp/build/compose/tmp/createRuntimeImage.args.txt
-          if [[ -f "$args_file" ]]; then
-            files+=("$args_file")
-          fi
-          if ((${#files[@]} == 0)); then
-            echo "No jlink diagnostics found"
-            exit 0
-          fi
-          for file in "${files[@]}"; do
-            echo "::group::$file"
-            cat "$file"
-            echo "::endgroup::"
-          done
-
-      - name: Upload build diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: compose-build-${{ runner.os }}
-          path: composeApp/build/
-          include-hidden-files: true
-          retention-days: 7
-          if-no-files-found: warn
 
       - name: Rename artifact
         run: |
@@ -291,8 +184,6 @@ jobs:
           if-no-files-found: error
 
   build-ios:
-    # Temporarily disabled while fixing desktop packaging.
-    if: false
     runs-on: macos-26
     permissions:
       contents: read
